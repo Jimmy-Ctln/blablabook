@@ -1,0 +1,43 @@
+@baseUrl = http://localhost:3000
+@userId = 1
+@bookId = 1
+
+############################################################
+# BOOKS SERVICE
+############################################################
+
+### Get all books
+GET {{baseUrl}}/books
+
+###
+### Get user library
+GET {{baseUrl}}/books/library/{{userId}}
+
+###
+### Add a book to user library
+POST {{baseUrl}}/books/library/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "The Pragmatic Programmer",
+  "coverId": "https://example.com/cover.jpg",
+  "author": "Andrew Hunt, David Thomas",
+  "description": "Classic book on pragmatic software craftsmanship.",
+  "isbn": "9780135957059",
+  "publishingHouse": "Addison-Wesley",
+  "publishedAt": "1999-10-30"
+}
+
+###
+### Update reading dates (drives computed status)
+PATCH {{baseUrl}}/books/library/{{userId}}/book/{{bookId}}/status
+Content-Type: application/json
+
+{
+  "readStart": "2025-12-30T10:00:00.000Z",
+  "readEnd": null
+}
+
+###
+### Remove a book from user library
+DELETE {{baseUrl}}/books/library/{{userId}}/book/{{bookId}}

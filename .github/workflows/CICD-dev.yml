@@ -1,0 +1,162 @@
+name: CICD-dev
+
+# à chaque push ce workflow va se lancer
+on:
+  push:
+    branches:
+      - dev
+  # à chaque pull request vers dev ce workflow va se lancer
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  ### FRONT CI ###
+  ci-frontend:
+    # le job s’exécute sur une machine virtuelle Ubuntu dernière version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # va chercher blablabook/frontend
+        working-directory: frontend
+    steps:
+      # clone le repo sur la VM de Github
+      - uses: actions/checkout@v4
+
+      # installe Node.js version 20 dans la VM
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # Active le cache NPM pour accélérer les builds suivants
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # installe les dépendances du front
+      - name: Frontend CI
+        run: npm ci
+
+      # génère le dossier dist du front
+      - run: npm run build
+
+  ### BACK CI ###
+  ci-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    steps:
+      # Clone repo
+      - uses: actions/checkout@v4
+
+      # Node.js setup
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # Install deps
+      - name: Backend ci
+        run: npm ci
+
+      # Build backend
+      - run: npm run build
+
+      # Build Docker image si besoin
+      - run: docker build -t blablabook-back .
+
+  ### DOCKER CI ###
+  ci-docker:
+    runs-on: ubuntu-latest
+    needs: [ci-frontend, ci-backend]
+    defaults:
+      run:
+        working-directory: .
+
+    env:
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      FRONTEND_URL_CORS: "http://localhost:5173"
+      VITE_BACKEND_URL: "http://localhost:3000"
+      NODE_ENV: "dev"
+
+    steps:
+      # Clone le repo
+      - uses: actions/checkout@v4
+
+      # Vérifie la version de Docker
+      - name: Check Docker
+        run: docker --version
+
+      - name: Start docker compose
+        # injecte les env GitHub directement dans le shell
+        # le | c'est pour un script multi lignes
+        run: docker compose -f docker-compose.yml up -d --build
+
+      # vérifie si on accède à Postgres via le container postgres
+      - name: Wait for Postgres
+        run: |
+          max_attempts=10
+          attempt=1
+          until docker exec postgres pg_isready -U blablabook || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for postgres..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Postgres failed to start in time!"
+            exit 1
+          fi
+
+      # vérifie si le container du front marche bien via http://localhost:5173
+      - name: Wait for Frontend
+        run: |
+          max_attempts=10
+          attempt=1
+          until curl -f http://localhost:5173 || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for frontend..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Frontend failed to start in time!"
+            docker compose logs frontend
+            exit 1
+          fi
+
+      # vérifie si le container du back marche bien via http://localhost:3000/health
+      - name: Wait for Backend
+        run: |
+          max_attempts=10
+          attempt=1
+          until docker exec backend curl -f http://localhost:3000/health || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for backend..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Backend failed to start in time!"
+            docker compose logs backend
+            exit 1
+          fi
+
+      # vérifie que le back fcontionne dans le container
+      #- name: Run backend tests
+      #  run: docker exec backend npm run test
+
+      # Vérifie que les containers tournent
+      - name: Docker status
+        run: docker compose ps
+
+      # Stop proprement
+      - name: Stop containers
+        run: docker compose down

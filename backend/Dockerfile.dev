@@ -1,0 +1,26 @@
+# Dockerfile.dev for the Node.js backend (development)
+
+# Use Node.js 20 Alpine as a lightweight base image
+FROM node:20-alpine
+
+# Install curl for healthchecks or testing, then remove the package cache to reduce image size
+RUN apk add --update \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory inside the container
+WORKDIR /app
+
+# Copy package.json and package-lock.json (if exists) to install dependencies
+COPY package.json package-lock.json* ./
+
+# Install all dependencies (including dev dependencies for development)
+RUN npm install
+
+# Expose backend API port for the host
+EXPOSE 3000
+
+# Start the backend in development mode (package.json must contain "start:dev": "nest start --watch")
+# CMD npm run migrate && npm run start:dev
+# CMD ["./start.sh"] # failed but I don't know why 
+CMD [ "sh", "-c", "npm run migrate && npm run start:dev"]

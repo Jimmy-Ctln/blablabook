@@ -1,0 +1,99 @@
+services:
+  # PostgreSQL service
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      # Database environment variables
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      # Persist database data
+      - pgdata:/var/lib/postgresql/data
+      # Initialize database with SQL script
+      # - ../init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      # Map host port 5433 to container 5432 for external access
+      - "5433:5432"
+    healthcheck:
+      # Check if PostgreSQL is ready to accept connections
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME}"]
+      start_period: 15s
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Backend service (NestJS + Drizzle ORM)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      # Database connection variables
+      - PGHOST=${DB_HOST}
+      - PGUSER=${DB_USER}
+      - PGDATABASE=${DB_NAME}
+      - PGPASSWORD=${DB_PASSWORD}
+      - PGPORT=${DB_PORT}
+      # url pour drizzle
+      - DATABASE_URL=${DATABASE_URL}
+      # Redis variables
+      # - REDIS_HOST=${REDIS_HOST}
+      # - REDIS_PORT=${REDIS_PORT}
+      # - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL_CORS=${FRONTEND_URL_CORS}
+      - NODE_ENV=${NODE_ENV}
+    ports:
+      # Publish backend port to host for direct access
+      - "3000:3000"
+    healthcheck:
+      # Check if backend API is responding
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      # Ensure Postgres is healthy before starting backend
+      postgres:
+        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
+
+  # Frontend service (React/Vite build)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     # Publish frontend port to host for direct browser access
+  #     - "5173:80"
+
+  # Redis service
+  # redis:
+  #   image: redis:7-alpine
+  #   command: ["redis-server", "--requirepass", "mysecretpassword"]
+  #   environment:
+  #     REDIS_PASSWORD: mysecretpassword
+  #   volumes:
+  #     - redisdata:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "-a", "mysecretpassword", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  # Persistent volume for PostgreSQL data
+  pgdata:
+  # Persistent volume for Redis data
+  # redisdata:

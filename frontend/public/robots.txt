@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pooka-blablabook.surge.sh/sitemap.xml

@@ -1,0 +1,33 @@
+### Open Library API Requests
+@baseUrl = https://openlibrary.org
+@isbn = 9780140328721
+@workId = OL45804W
+@authorId = OL34184A
+@coverId = 15152634
+
+### 1. GET Book ISBN Data
+### Used in getOpenLibIsbnData(isbn)
+### Returns the specific edition data including 'works' and 'authors' keys.
+GET {{baseUrl}}/isbn/{{isbn}}.json
+Content-Type: application/json
+
+###
+
+### 2. GET Book Work Data
+### Used in getOpenLibWorkData(workKey)
+### Returns the abstract "Work" details, including the description and subjects.
+GET {{baseUrl}}/works/{{workId}}.json
+Content-Type: application/json
+
+###
+
+### 3. GET Book Author Data
+### Used in getOpenLibAuthorData(authorKey)
+### Returns detailed information about the author (bio, name, etc.).
+GET {{baseUrl}}/authors/{{authorId}}.json
+Content-Type: application/json
+
+###
+
+### 4. GET Cover Image (Large)
+GET https://covers.openlibrary.org/b/id/{{coverId}}-L.jpg

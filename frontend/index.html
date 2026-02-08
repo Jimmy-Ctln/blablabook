@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <!-- Character encoding and viewport settings -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="Blablabook - Découvrez et partagez vos lectures favoris. Gérez votre bibliothèque personnelle, explorez les meilleures ventes et connectez-vous avec d'autres lecteurs."
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="application-name" content="Blablabook" />
+
+    <!-- Open Graph Meta Tags for Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pooka-blablabook.surge.sh" />
+    <meta
+      property="og:title"
+      content="Blablabook - Votre bibliothèque numérique"
+    />
+    <meta
+      property="og:description"
+      content="Découvrez et partagez vos lectures favoris. Gérez votre bibliothèque personnelle et explorez les meilleures sélections."
+    />
+    <meta
+      property="og:image"
+      content="https://pooka-blablabook.surge.sh/og-image.jpg"
+    />
+
+    <!-- Twitter Meta Tags for Social Media -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://pooka-blablabook.surge.sh" />
+    <meta
+      property="twitter:title"
+      content="Blablabook - Votre bibliothèque numérique"
+    />
+    <meta
+      property="twitter:description"
+      content="Découvrez et partagez vos lectures favoris."
+    />
+    <meta
+      property="twitter:image"
+      content="https://pooka-blablabook.surge.sh/og-image.jpg"
+    />
+
+    <!-- Favicon and canonical URL -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href="https://pooka-blablabook.surge.sh" />
+
+    <!-- Preconnect and DNS-prefetch for performance optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://pooka-blablabook.surge.sh" />
+
+    <!-- Google Fonts with async loading using media="print" trick for non-blocking load -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <!-- Fallback for users with JavaScript disabled -->
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+
+    <!-- Page title for browser tabs and search results -->
+    <title>
+      Blablabook - Votre bibliothèque numérique | Découvrez des livres
+    </title>
+  </head>
+  <body>
+    <!-- React root element where the app will be mounted -->
+    <div id="root"></div>
+    <!-- Main application entry point -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,204 @@
+name: CICD-prod
+
+# à chaque push ce workflow va se lancer
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+### FRONT CI ###
+  ci-frontend:
+    # le job s’exécute sur une machine virtuelle Ubuntu dernière version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # va chercher blablabook/frontend
+        working-directory: frontend
+    steps:
+      # clone le repo sur la VM de Github
+      - uses: actions/checkout@v4
+
+      # installe Node.js version 20 dans la VM
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # Active le cache NPM pour accélérer les builds suivants
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # installe les dépendances du front
+      - name: Frontend CI
+        run: npm ci
+
+      # build du front avec l'URL du back
+      - name: Build frontend with backend URL
+        run: |
+          export VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
+          npm run build
+
+      # Sauvegarde le build pour le déploiement
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+
+### BACK CI ###
+  ci-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  
+    steps:
+      # Clone repo
+      - uses: actions/checkout@v4
+
+      # Node.js setup
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # Install deps
+      - name: Backend ci
+        run: npm ci
+
+      # Synch Drizzle Schema to Db supabase
+      - name: Push Schema to Supabase
+        run: npx drizzle-kit push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Build backend
+      - run: npm run build
+
+      # Build Docker image si besoin
+      - run: docker build -t blablabook-back .
+
+
+### DOCKER CI ###
+  ci-docker:
+    runs-on: ubuntu-latest
+    needs: [ci-frontend, ci-backend]
+    defaults:
+      run:
+        working-directory: .
+    # Bien mettre ces variables dans le secret de GitHub (settings > Secrets and variables > Secrets)
+    env:
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      FRONTEND_URL_CORS: "https://pooka-blablabook.surge.sh"
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
+      NODE_ENV: "prod"
+
+    steps:
+      # Clone le repo
+      - uses: actions/checkout@v4
+
+      # Vérifie la version de Docker
+      - name: Check Docker
+        run: docker --version
+
+      - name: Start docker compose
+        # injecte les env GitHub directement dans le shell
+        # le | c'est pour un script multi lignes
+        run: docker compose -f docker-compose.yml up -d --build
+
+      # vérifie si on accède à Postgres via le container postgres
+      - name: Wait for Postgres
+        run: |
+          max_attempts=10
+          attempt=1
+          until docker exec postgres pg_isready -U blablabook || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for postgres..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Postgres failed to start in time!"
+            exit 1
+          fi
+
+      # vérifie si le container du back marche bien via http://localhost:3000/health
+      - name: Wait for Backend
+        run: |
+          max_attempts=10
+          attempt=1
+          until docker exec backend curl -f http://localhost:3000/health || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for backend..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Backend failed to start in time!"
+            docker compose logs backend
+            exit 1
+          fi
+
+
+      # vérifie que le back fcontionne dans le container 
+      #- name: Run backend tests
+      #  run: docker exec backend npm run test
+
+
+      # Vérifie que les containers tournent
+      - name: Docker status
+        run: docker compose ps
+
+      # Stop proprement
+      - name: Stop containers
+        run: docker compose down
+
+
+
+### DEPLOY FRONTEND TO SURGE ###
+  deploy-frontend:
+    needs: ci-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+      
+      - name: Create 200.html for SPA routing
+        run: cp frontend/dist/index.html frontend/dist/200.html
+      
+      - name: Deploy to Surge
+      # ne pas oublier de mettre SURGE_DOMAIN et SURGE_TOKEN dans le secret de GitHub
+        run: |
+          npm install -g surge
+          surge frontend/dist ${{ secrets.SURGE_DOMAIN }} \
+            --token ${{ secrets.SURGE_TOKEN }}
+
+### DEPLOY BACKEND TO RENDER ###
+  deploy-backend:
+    needs: ci-docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy via API
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": true}' \
+            https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}

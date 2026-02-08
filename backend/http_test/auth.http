@@ -1,0 +1,31 @@
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@mail.com",
+  "username": "admin",
+  "password": "12345678",
+  "confirmPassword": "12345678"
+}
+
+###
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@mail.com",
+  "username": "user",
+  "password": "12345678",
+  "confirmPassword": "12345678"
+}
+
+############################################################
+# TEST LOGIN
+#############################################################
+POST http://localhost:3000/auth/login 
+Content-Type: application/json 
+
+{ 
+  "username": "user",
+  "password": "12345678"
+}

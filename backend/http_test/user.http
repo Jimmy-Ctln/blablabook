@@ -1,0 +1,13 @@
+GET http://localhost:3000/user/1
+
+###
+
+PATCH http://localhost:3000/user/1
+Content-Type: application/json
+
+{
+  "email": "titi@mail.com",
+  "username": "toto",
+  "password": "12345678",
+  "image": "image3.jpg",
+}
