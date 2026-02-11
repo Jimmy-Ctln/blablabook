@@ -19,71 +19,53 @@ export default function Header() {
 
   const navigate = useNavigate();
 
-  const themes = [
-    {
-      title: "Tout",
-    },
-    {
-      title: "Fantasy & Magie",
-    },
-    {
-      title: "Amour",
-    },
-    {
-      title: "Horreur",
-    },
-  ];
-
   return (
-    <header className="bg-background flex h-24 items-center border-b px-4">
+    <header className="flex h-20 justify-between bg-background items-center px-4">
       <SidebarTrigger className="mr-4" />
-      <div className="flex gap-2">
-        {themes.map((theme) => (
-          <Button variant={"outline"}>{theme.title}</Button>
-        ))}
-      </div>
-      <div className="flex-2 flex justify-center">
-        <SearchBar onSearch={setSearch} />
-      </div>
-      {user ? (
-        <div className="hidden md:flex items-center ml-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="cursor-pointer" asChild>
-              <Avatar className="w-10 h-10 border-2 border-bookbeige hover:border-secondary transition-all">
-                <AvatarImage
-                  key={user.image}
-                  src={user.image ? `/images/${user.image}` : undefined}
-                  alt={`Avatar de ${user.username || "X"}`}
-                />
-                <AvatarFallback className="bg-bookbeige/50 border-bookbeige font-bold text-white">
-                  {user.username ? user.username[0].toUpperCase() : "X"}
-                </AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                className={`cursor-pointer`}
-                onClick={() => navigate({ to: "/profile" })}
-              >
-                Mon profil
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-500 font-semibold cursor-pointer"
-                onClick={() => {
-                  logout();
-                  navigate({ to: "/" });
-                }}
-              >
-                Déconnexion
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <div className="flex justify-end">
+        <div className="flex items-center">
+          <SearchBar onSearch={setSearch} />
+          {user ? (
+            <div className="hidden md:flex items-center ml-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="cursor-pointer" asChild>
+                  <Avatar className="w-10 h-10 border-2 border-bookbeige hover:border-secondary transition-all">
+                    <AvatarImage
+                      key={user.image}
+                      src={user.image ? `/images/${user.image}` : undefined}
+                      alt={`Avatar de ${user.username || "X"}`}
+                    />
+                    <AvatarFallback className="bg-bookbeige/50 border-bookbeige font-bold text-white">
+                      {user.username ? user.username[0].toUpperCase() : "X"}
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    className={`cursor-pointer`}
+                    onClick={() => navigate({ to: "/profile" })}
+                  >
+                    Mon profil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-500 font-semibold cursor-pointer"
+                    onClick={() => {
+                      logout();
+                      navigate({ to: "/" });
+                    }}
+                  >
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <Link to="/login" className="">
+              <Button>Se connecter</Button>
+            </Link>
+          )}
         </div>
-      ) : (
-        <Link to="/login" className="">
-          <Button>Se connecter</Button>
-        </Link>
-      )}
+      </div>
     </header>
   );
 }

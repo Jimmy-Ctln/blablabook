@@ -32,19 +32,17 @@ export default function SearchBar({
 
   return (
     <form
-      className={`w-full max-w-md border mx-auto flex items-center bg-chart-2 rounded-full shadow gap-2 py-1 px-6 sm:max-w-lg md:max-w-2xl ${
-        spacingClassName ?? "mt-10 mb-10"
-      }`}
+      className={`w-full max-w-md border mx-auto flex items-center bg-chart-2 rounded-xl shadow gap-2 px-6 sm:max-w-lg md:max-w-xl`}
       onSubmit={(e) => {
         e.preventDefault();
         onSearch(query);
       }}
       role="search"
     >
-      <Search className="h-5 w-5 text-primary" aria-hidden="true" />
+      <Search className="h-5 w-5" aria-hidden="true" />
       <Input
         type="text"
-        placeholder={placeholder ?? "Rechercher un livre..."}
+        placeholder={placeholder ?? "Rechercher..."}
         value={query}
         onChange={handleChange}
         aria-label="Rechercher un livre ou un auteur"

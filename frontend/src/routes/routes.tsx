@@ -13,7 +13,7 @@ import SeeAllPage from "@/pages/SeeAllPage";
 import LibraryPage from "@/pages/LibraryPage";
 import ProfileRoute from "@/pages/ProfilePage/ProfileRoute";
 import BookDetails from "@/pages/Book/BookDetails";
-import HomePageV2 from "@/pages/HomePageV2";
+import HomePage from "@/pages/HomePage";
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,
@@ -35,7 +35,7 @@ const protectedRoute = createRoute({
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => <HomePageV2 />,
+  component: () => <HomePage />,
 });
 
 export const seeAllRoute = createRoute({

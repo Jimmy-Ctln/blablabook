@@ -52,7 +52,7 @@ export default function CarouselDisplay({
           ? Array.from({ length: 4 }).map((_, i) => (
               <CarouselItem
                 key={i}
-                className="basis-full md:basis-1/3 lg:basis-1/4"
+                className="basis-full md:basis-1/3 lg:basis-1/6"
               >
                 <BookCardSkeleton />
               </CarouselItem>
@@ -60,7 +60,7 @@ export default function CarouselDisplay({
           : books.map((book) => (
               <CarouselItem
                 key={book.key}
-                className="basis-full md:basis-1/3 lg:basis-1/4"
+                className="basis-full md:basis-1/3 lg:basis-1/6"
               >
                 <BookCardCarousel book={book} />
               </CarouselItem>

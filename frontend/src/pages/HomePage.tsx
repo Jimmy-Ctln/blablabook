@@ -1,6 +1,5 @@
 import CarouselDisplay from "@/components/CarouselDisplay";
 import Hero from "@/components/Hero";
-import SearchBar from "@/components/SearchBar";
 import { useEffect, useState } from "react";
 import { useExternalBooks } from "@/hooks/useExternalBooks";
 import { getBooks, getRandomBooks } from "@/api/books";
@@ -90,37 +89,20 @@ export default function HomePage() {
           title={"Suggestions Aléatoire"}
           books={(randomBooks || [])?.map(mapBookRowToDisplay)}
           isLoading={!randomBooks}
-          seeAllButton={true}
         />
         <CarouselDisplay
-          title={"Fantasy et Magie"}
-          books={fantasyBooks?.map(mapBookRowToDisplay)}
-          isLoading={!internalBooks}
-          seeAllButton={true}
-        />
-        <CarouselDisplay
-          title={"Romance"}
-          books={loveBooks?.map(mapBookRowToDisplay)}
-          isLoading={!internalBooks}
-          seeAllButton={true}
-        />
-        <CarouselDisplay
-          title={"Frissons et Horreur"}
-          books={horrorBooks?.map(mapBookRowToDisplay)}
-          isLoading={!internalBooks}
-          seeAllButton={true}
+          title={"Horreur"}
+          books={(horrorBooks || [])?.map(mapBookRowToDisplay)}
+          isLoading={!horrorBooks}
         />
       </>
     );
   }
 
   return (
-    <div className="flex-col w-full">
-      <div className="sticky top-0 z-20 bg-background pb-2">
-        <Hero />
-        <SearchBar onSearch={setSearch} />
-      </div>
-      <div className="min-h-125">{content}</div>
+    <div className="flex-col w-full mx-auto">
+      <Hero />
+      <div>{content}</div>
     </div>
   );
 }
