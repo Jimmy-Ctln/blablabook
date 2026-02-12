@@ -44,7 +44,7 @@ export default function ProfilePage({ currentUser }: { currentUser: User }) {
                 alt={`Avatar de ${currentUser.username}`}
               />
             )}
-            <AvatarFallback className="text-4xl bg-bookbeige/50 font-bold">
+            <AvatarFallback className="text-4xl bg-foreground font-bold">
               {currentUser.username
                 ? currentUser.username[0].toUpperCase()
                 : "X"}

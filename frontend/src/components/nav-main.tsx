@@ -20,8 +20,12 @@ export function NavMain({
   return (
     <SidebarMenu>
       {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild isActive={item.isActive}>
+        <SidebarMenuItem key={item.title} className="text-foreground">
+          <SidebarMenuButton
+            className={`hover:bg-primary ${item.isActive ?? "hover:bg-primary"}`}
+            asChild
+            isActive={item.isActive}
+          >
             <Link to={item.url}>
               <item.icon />
               <span>{item.title}</span>

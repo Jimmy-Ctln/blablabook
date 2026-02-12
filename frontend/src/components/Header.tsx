@@ -20,8 +20,8 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="flex h-20 justify-between bg-background items-center px-4">
-      <SidebarTrigger className="mr-4" />
+    <header className="flex h-20 justify-between bg-secondary items-center px-4">
+      <SidebarTrigger className="mr-4 text-foreground" />
       <div className="flex justify-end">
         <div className="flex items-center">
           <SearchBar onSearch={setSearch} />
@@ -29,13 +29,13 @@ export default function Header() {
             <div className="hidden md:flex items-center ml-2">
               <DropdownMenu>
                 <DropdownMenuTrigger className="cursor-pointer" asChild>
-                  <Avatar className="w-10 h-10 border-2 border-bookbeige hover:border-secondary transition-all">
+                  <Avatar className="w-10 h-10 border-2 bg-foreground hover:border-primary transition-all">
                     <AvatarImage
                       key={user.image}
                       src={user.image ? `/images/${user.image}` : undefined}
                       alt={`Avatar de ${user.username || "X"}`}
                     />
-                    <AvatarFallback className="bg-bookbeige/50 border-bookbeige font-bold text-white">
+                    <AvatarFallback className="bg-bookbeige/50">
                       {user.username ? user.username[0].toUpperCase() : "X"}
                     </AvatarFallback>
                   </Avatar>

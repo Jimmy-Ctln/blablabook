@@ -73,16 +73,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   return (
-    <Sidebar className="px-4" {...props}>
+    <Sidebar className="px-4 bg-secondary" {...props}>
       <SidebarHeader className="mt-6 gap-6">
         <Link
           to="/"
           className="text-2xl cursor-pointer flex items-center gap-2"
         >
-          <div>
+          <div className="flex items-center gap-2 text-foreground">
             <BookOpen />
+            Blablabook
           </div>
-          Blablabook
         </Link>
         <SearchBar onSearch={setSearch} />
       </SidebarHeader>
@@ -93,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={items.discover} />
         <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
       </SidebarContent>
-      <SidebarFooter className="mb-4">
+      <SidebarFooter className="mb-4 text-foreground">
         {items.general.map((general) => (
           <Link
             className="flex items-center gap-2"

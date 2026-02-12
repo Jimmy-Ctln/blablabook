@@ -102,7 +102,7 @@ export default function HomePage() {
   return (
     <div className="flex-col w-full mx-auto">
       <Hero />
-      <div>{content}</div>
+      <div className="absolute">{content}</div>
     </div>
   );
 }
