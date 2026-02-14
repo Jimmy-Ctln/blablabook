@@ -12,7 +12,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { SidebarTrigger } from "./ui/sidebar";
 
-export default function Header() {
+export default function AvatarInfo() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const [search, setSearch] = useState("");
@@ -20,7 +20,7 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="flex h-20 justify-between bg-secondary items-center px-4">
+    <div className="flex h-20 justify-between bg-secondary items-center px-4">
       <SidebarTrigger className="mr-4 text-foreground" />
       <div className="flex justify-end">
         <div className="flex items-center">
@@ -66,6 +66,6 @@ export default function Header() {
           )}
         </div>
       </div>
-    </header>
+    </div>
   );
 }

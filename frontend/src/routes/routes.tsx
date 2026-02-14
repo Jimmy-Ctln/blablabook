@@ -1,5 +1,4 @@
 import RootLayout from "@/layouts/RootLayout";
-import { lazy } from "react";
 import {
   createRouter,
   createRootRoute,
@@ -7,16 +6,14 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { useAuthStore } from "@/stores/authStore";
-
-// Lazy-loaded pages for code splitting - each route downloads only when visited
-const LoginPage = lazy(() => import("@/pages/Auth/LoginPage/LoginPage"));
-const RegisterPage = lazy(() => import("@/pages/Auth/RegisterPage/RegisterPage"));
-const HomePage = lazy(() => import("@/pages/HomePage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-const LibraryPage = lazy(() => import("@/pages/LibraryPage"));
-const ProfileRoute = lazy(() => import("@/pages/ProfilePage/ProfileRoute"));
-const BookDetails = lazy(() => import("@/pages/Book/BookDetails"));
-const SeeAllPage = lazy(() => import("@/pages/SeeAllPage"));
+import RegisterPage from "@/pages/Auth/RegisterPage/RegisterPage";
+import LoginPage from "@/pages/Auth/LoginPage/LoginPage";
+import NotFound from "@/pages/NotFound";
+import SeeAllPage from "@/pages/SeeAllPage";
+import LibraryPage from "@/pages/LibraryPage";
+import ProfileRoute from "@/pages/ProfilePage/ProfileRoute";
+import BookDetails from "@/pages/Book/BookDetails";
+import HomePage from "@/pages/HomePage";
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,

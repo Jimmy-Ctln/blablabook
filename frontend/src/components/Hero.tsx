@@ -1,45 +1,48 @@
+import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { Button } from "./ui/button";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { MoveRight } from "lucide-react";
+import background from "@/assets/hero-bg.jpg";
 
 export default function Hero() {
-  const { isAuthenticated = false } = useCurrentUser();
-
-  const title = isAuthenticated
-    ? "Ravi de vous retrouver !"
-    : "Explorez, lisez et partagez vos coups de cœur";
-
-  const paragraph = isAuthenticated
-    ? "Quel livre allez-vous découvrir aujourd’hui ?"
-    : "Créez votre bibliothèque, explorez de nouveaux ouvrages et échangez avec une communauté de passionnés.";
-
-  const link = isAuthenticated ? "/library" : "/login";
-
-  const actionButton = isAuthenticated
-    ? "Accéder à ma bibliothèque"
-    : "Commencer l’aventure";
-
   return (
-    <section className="w-full mt-2 px-2">
-      <div className="w-full py-8 rounded-xl shadow-xl bg-card flex flex-col items-center bg-chart-2">
-        <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4 sm:mb-6 text-foreground">
-          {title}
+    <section className="relative h-screen">
+      <div className=" bg-black/50">
+        <img
+          src={background}
+          alt=""
+          className=" absolute inset-0 object-cover h-full w-full"
+        />
+      </div>
+      <div className="relative z-10 px-10 flex h-full gap-8 flex-col items-start text-center">
+        <div className="flex items-center border rounded-full gap-2 p-2 font-bold text-left mt-20 text-primary">
+          <Sparkles width={20} />
+          Votre prochaine aventure litteraire commence ici
+        </div>
+        <h1 className="text-7xl font-bold text-left text-white">
+          Lisez. <span className="text-primary">Collectionnez.</span>
+          <br />
+          Partagez.
         </h1>
-        <p className="text-center mb-6 sm:mb-8 max-w-xs sm:max-w-md md:max-w-xl lg:text-2xl text-base sm:text-lg md:text-xl text-muted-foreground">
-          {paragraph}
+        <p className="mt-4 text-xl text-left text-white/90 w-1/2">
+          Blablabook est votre bibliotheque personnelle en ligne. Decouvrez des
+          livres, suivez vos lectures et explorez les collections de la
+          communaute.
         </p>
-        <Link to={link} className="w-full flex justify-center">
-          <Button
-            size="lg"
-            className="w-[80%] sm:w-auto whitespace-normal text-center mt-2"
+        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <Link
+            to="/library"
+            className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-primary/90 px-8 py-4 text-sm font-semibold text-white shadow-[0_8px_32px_rgba(59,130,246,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:shadow-[0_12px_40px_rgba(59,130,246,0.45)]"
           >
-            <div className="flex items-center gap-2 font-bold">
-              {actionButton}
-              <MoveRight />
-            </div>
-          </Button>
-        </Link>
+            <BookOpen className="h-4 w-4" />
+            Ma Bibliotheque
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+          <Link
+            to="/community"
+            className="glass-strong inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-sm font-semibold text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white"
+          >
+            Explorer la Communaute
+          </Link>
+        </div>
       </div>
     </section>
   );

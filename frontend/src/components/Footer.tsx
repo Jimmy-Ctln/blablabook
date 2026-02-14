@@ -1,10 +1,5 @@
 import { Mail, Lock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import logo from "@/assets/Blablabook-svg.svg";
 
 export default function Footer() {
@@ -26,7 +21,7 @@ export default function Footer() {
           </div>
           {/* Navigation / Liens */}
           <nav className="flex flex-wrap items-center gap-3 justify-center">
-            <Tooltip>
+            {/* <Tooltip>
               <TooltipTrigger asChild>
                 <a href="mailto:contact@blablabook.com">
                   <Button
@@ -72,7 +67,7 @@ export default function Footer() {
                 </a>
               </TooltipTrigger>
               <TooltipContent>Politique de confidentialité</TooltipContent>
-            </Tooltip>
+            </Tooltip> */}
           </nav>
 
           {/* Copyright */}
