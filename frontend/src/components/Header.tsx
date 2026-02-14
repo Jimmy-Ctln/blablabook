@@ -23,7 +23,7 @@ export default function Header() {
     <header className="flex h-20 justify-between bg-secondary items-center px-4">
       <SidebarTrigger className="mr-4 text-foreground" />
       <div className="flex justify-end">
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <SearchBar onSearch={setSearch} />
           {user ? (
             <div className="hidden md:flex items-center ml-2">

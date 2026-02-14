@@ -78,7 +78,7 @@ export default function LoginPage() {
 
   return (
     <form
-      className="w-70 md:w-150 flex flex-col items-center mx-auto"
+      className="w-70 md:w-150 flex flex-col items-center mx-auto text-foreground"
       onSubmit={(e) => {
         e.preventDefault();
         e.stopPropagation();

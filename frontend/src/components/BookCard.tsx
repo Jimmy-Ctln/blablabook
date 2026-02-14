@@ -10,6 +10,7 @@ import {
 import { Trash2, ChevronDown } from "lucide-react";
 import type { BookRow } from "../@types/books";
 import { useRouter } from "@tanstack/react-router";
+import { Button } from "./ui/button";
 
 type Props = {
   readonly book: BookRow;
@@ -42,7 +43,7 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
               type="button"
               onClick={(e) => e.stopPropagation()}
               className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -50,7 +51,7 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
             >
               {book.status}
               <ChevronDown size={12} aria-hidden="true" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             {statuses.map((status) => (
@@ -80,13 +81,13 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
 
   return (
     <div
-      className="w-full max-w-sm min-h-[460px] transform hover:scale-101 transition-transform duration-500 cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 rounded-xl"
+      className="w-full max-w-sm min-h-115 transform hover:scale-101 transition-transform duration-500 cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 rounded-xl"
       onClick={() => goToBookDetails()}
       role="article"
     >
       <Card className="w-full shadow-lg relative rounded-xl overflow-hidden p-0 gap-2 flex flex-col h-full bg-chart-2">
         {/* Book cover (fallback placeholder when no cover) */}
-        <div className="relative flex-shrink-0">
+        <div className="relative shrink-0">
           {book.coverId ? (
             <img
               //src={`https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`}
