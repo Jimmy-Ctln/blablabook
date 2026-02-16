@@ -21,6 +21,7 @@ import {
 import { NavMain } from "./nav-main";
 import { Link } from "@tanstack/react-router";
 import SearchBar from "./SearchBar";
+import UserCard from "./user-card";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const store = useAuthStore();
@@ -94,16 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
       </SidebarContent>
       <SidebarFooter className="mb-4 text-foreground">
-        {items.general.map((general) => (
-          <Link
-            className="flex items-center gap-2"
-            to={general.url}
-            key={general.title}
-          >
-            <general.icon />
-            {general.title}
-          </Link>
-        ))}
+        <UserCard />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
