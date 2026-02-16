@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "use-debounce";
-import { Input } from "@/components/ui/input";
+import { CustomInput } from "./customInput";
 
 type SearchBarProps = {
   readonly onSearch: (query: string) => void;
@@ -32,7 +32,7 @@ export default function SearchBar({ onSearch, placeholder }: SearchBarProps) {
       }}
       role="search"
     >
-      <Input
+      <CustomInput
         type="text"
         placeholder={placeholder ?? "Rechercher..."}
         value={query}

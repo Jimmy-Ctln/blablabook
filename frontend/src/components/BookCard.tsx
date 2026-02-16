@@ -34,19 +34,17 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
     });
   }
 
-  // Render status badge based on whether it's interactive or not
   const renderStatusBadge = () => {
     if (!book.status) return null;
 
     if (onStatusChange) {
-      // Interactive dropdown menu
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow bg-chart-2 glass transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2"
               aria-label={`Statut de lecture: ${book.status}. Cliquer pour changer`}
             >
               {book.status}
@@ -86,12 +84,10 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
       role="article"
     >
       <Card className="w-full shadow-lg relative rounded-xl overflow-hidden p-0 gap-2 flex flex-col h-full bg-chart-2">
-        {/* Book cover (fallback placeholder when no cover) */}
         <div className="relative shrink-0">
           {book.coverId ? (
             <img
-              //src={`https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`}
-              src={book.coverId} // dev
+              src={book.coverId}
               alt={`Couverture de ${book.name}`}
               width="320"
               height="192"
@@ -102,16 +98,12 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
           )}
 
           {book.categories && book.categories.length > 0 && (
-            <span className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground">
+            <span className="absolute bottom-3 border glass right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground">
               {book.categories[0]}
             </span>
           )}
-
-          {/* Status badge: displays reading status if available with dropdown to change it */}
           {renderStatusBadge()}
-
-          {/* Delete button: removes the book from the user's list */}
-          <button
+          <Button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -125,16 +117,16 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
               className="text-red-600 transition-colors group-hover:text-white"
               aria-hidden="true"
             />
-          </button>
+          </Button>
         </div>
 
         <CardContent className="px-4 pt-0 pb-4 flex flex-col items-start">
-          <div className="text-left w-full">
+          <div className="text-left w-full flex flex-col gap-2">
             <h3 className="font-semibold text-lg">{book.name}</h3>
             <p className="text-sm text-gray-600">{book.author}</p>
             {book.description && (
-              <div className="mt-2 max-h-20 overflow-y-auto overflow-x-hidden pr-2">
-                <p className="text-sm text-gray-700 text-justify">
+              <div className="mt-3 max-h-20 overflow-y-auto overflow-x-hidden pr-2">
+                <p className="text-sm text-muted-foreground text-justify">
                   {book.description}
                 </p>
               </div>

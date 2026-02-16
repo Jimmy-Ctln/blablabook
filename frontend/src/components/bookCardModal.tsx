@@ -10,17 +10,22 @@ type BookCardModalProps = {
 export default function BookCardModal({ book }: BookCardModalProps) {
   return (
     <Card>
-      <CardContent>
-        <div className="flex">
-          <div className="w-full">
-            {book.cover && <img src={book.cover} width={30} height={30} />}
-          </div>
+      <CardContent className="flex justify-between items-center">
+        <div className="w-full flex gap-2">
+          {book.cover && (
+            <img
+              src={book.cover}
+              width={50}
+              height={50}
+              className="rounded-xl"
+            />
+          )}
           <div>
             <h4>{book.title}</h4>
             <span>{book.author}</span>
           </div>
         </div>
-        <Button>
+        <Button className="glass">
           <Plus />
         </Button>
       </CardContent>

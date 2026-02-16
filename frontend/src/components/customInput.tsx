@@ -1,10 +1,16 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function CustomInput({
+  className,
+  type,
+  ...props
+}: React.ComponentProps<"input">) {
   return (
     <div className="relative flex items-center w-full">
+      <Search width={20} className="absolute left-3 text-muted-foreground" />
       <input
         type={type}
         data-slot="input"
@@ -19,4 +25,4 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   );
 }
 
-export { Input };
+export { CustomInput };

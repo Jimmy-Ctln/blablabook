@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Check, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Loader } from "@/components/Loader";
 
 import { useQuery } from "@tanstack/react-query";
@@ -22,11 +23,11 @@ import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 
 type AddBookModalProps = {
   readonly isOpen: boolean;
-  readonly onClose?: () => void;
+  setOpen: Dispatch<SetStateAction<boolean>>;
   readonly userId?: number;
 };
 
-export function AddBookModal({ isOpen, userId }: AddBookModalProps) {
+export function AddBookModal({ isOpen, setOpen, userId }: AddBookModalProps) {
   const [query, setQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -45,10 +46,12 @@ export function AddBookModal({ isOpen, userId }: AddBookModalProps) {
   // Mutation hook to add a book to the user's list
   const addBookMutation = useAddBook(userId);
 
-  // Reset query and results when modal closes
-  const handleClose = () => {
-    setQuery("");
-    setHasSearched(false);
+  const handleOpenChange = () => {
+    if (!open) {
+      setQuery("");
+      setHasSearched(false);
+    }
+    setOpen(false);
   };
 
   // TanStack Query to look for books
@@ -88,8 +91,8 @@ export function AddBookModal({ isOpen, userId }: AddBookModalProps) {
   const tenBooks = Allbooks.slice(0, 10).map(mapBookRowToDisplay);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="mx-auto max-h-210 overflow-y-auto rounded-4xl text-foreground lg:max-w-3xl h-full sm:h-auto">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="mx-auto max-h-210 rounded-4xl text-foreground lg:max-w-3xl h-full sm:h-auto">
         <DialogHeader>
           <DialogTitle className="flex gap-2 text-xl mb-4 text-foreground font-semibold">
             <div className="glass-accent flex h-10 w-10 items-center justify-center rounded-xl">
@@ -107,7 +110,7 @@ export function AddBookModal({ isOpen, userId }: AddBookModalProps) {
 
         <Separator />
 
-        <div>
+        <div className="max-h-110 overflow-y-auto">
           <span className="text-muted-foreground text-sm">
             {Allbooks.length} livres disponible
           </span>
@@ -124,86 +127,13 @@ export function AddBookModal({ isOpen, userId }: AddBookModalProps) {
           <p className="mt-4 text-sm text-gray-600">Aucun livre trouvé.</p>
         )}
 
-        <div className="max-h-125 overflow-y-auto mt-4 pr-4">
-          {results.map((book) => {
-            const alreadyInLibrary = isInLibrary(book);
-
-            // Keyboard support for the whole clickable row (Enter/Space)
-            const handleKeyDown = (e: React.KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                handleCardClick(book);
-              }
-            };
-
-            return (
-              <div
-                key={book.key}
-                tabIndex={0}
-                onClick={() => handleCardClick(book)}
-                onKeyDown={handleKeyDown}
-                className={`
-                  relative w-full bg-white flex items-center gap-4
-                  mb-4 p-3 border rounded-xl shadow-sm text-left
-                  focus-visible:ring-2 focus-visible:ring-offset-2
-                  transition-transform hover:scale-101 cursor-pointer
-                  ${alreadyInLibrary ? "opacity-60" : ""}
-                `}
-              >
-                {/* ✔️ Already in library */}
-                {alreadyInLibrary && (
-                  <Check
-                    data-testid="check-icon"
-                    className="absolute top-2 right-2 text-green-600"
-                    size={22}
-                  />
-                )}
-
-                {/* ➕ Add to library */}
-                {!alreadyInLibrary && (
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addBookMutation.mutate(book);
-                    }}
-                    className="
-                      absolute top-2 right-2 border
-                      flex items-center justify-center
-                      rounded-full
-                      sm:flex w-8 h-8 hover:bg-primary hover:text-secondary
-                    "
-                    aria-label="Ajouter à la librairie"
-                  >
-                    +
-                  </Button>
-                )}
-
-                {book.cover ? (
-                  <img
-                    src={book.cover}
-                    alt={`Couverture de ${book.title}`}
-                    className="w-20 h-32 object-cover rounded shrink-0"
-                  />
-                ) : (
-                  <div className="w-20 h-32 rounded shrink-0" />
-                )}
-
-                <div>
-                  <p className="font-semibold text-lg">{book.title}</p>
-                  <p className="text-sm ">{book.author || "Unknown"}</p>
-                  {book.publishDate && (
-                    <p className="text-xs ">{book.publishDate}</p>
-                  )}
-                  {book.categories && book.categories.length > 0 && (
-                    <span className="inline-block mt-2 px-3 py-1.5 text-xs font-semibold rounded-full border">
-                      {book.categories[0]}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <Separator />
+        <DialogFooter className="flex items-center">
+          <span className="w-full text-sm text-muted-foreground">
+            Parcourez le catalogue pour enrichir votre collection
+          </span>
+          <Button onClick={() => handleOpenChange}>Terminer</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

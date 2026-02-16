@@ -46,7 +46,7 @@ export default function LibraryPage() {
 
   return (
     <div className="flex w-full flex-col gap-6 px-4 pb-10 md:px-6">
-      <AddBookModal isOpen={open} />
+      <AddBookModal isOpen={open} setOpen={setOpen} />
       <div className="flex flex-col gap-8 mt-12">
         <div className="flex gap-2 ">
           <div className="glass-accent flex h-10 w-10 items-center justify-center rounded-xl">
@@ -60,8 +60,9 @@ export default function LibraryPage() {
             </Button>
           </div>
         </div>
-        <p className="text-foreground text-lg w-1/2">
-          Gerez votre collection de livres. Filtrez par statut et retrouvez
+        <p className="text-lg w-1/2 text-muted-foreground">
+          Gerez votre collection de livres. Filtrez par statut et retrouvez{" "}
+          <br />
           facilement vos lectures.
         </p>
       </div>
@@ -86,7 +87,7 @@ export default function LibraryPage() {
         <SearchBar onSearch={setSearch} placeholder="Rechercher..." />
       </div>
 
-      <div className="grid mx-auto sm:gap-4 sm:grid-cols-2 md:grid-cols-3 md:max-w-300">
+      <div className="grid mt-8 w-full sm:gap-4 sm:grid-cols-3 md:grid-cols-4">
         {filteredBooks.length === 0 ? (
           <p
             className="text-muted-foreground text-center"

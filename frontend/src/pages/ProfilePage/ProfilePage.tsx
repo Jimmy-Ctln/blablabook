@@ -1,96 +1,72 @@
-import { useState } from "react";
-import { Pencil } from "lucide-react";
-import ProfilePageModal from "./ProfilePageModale";
-import { useQueryClient } from "@tanstack/react-query";
-import type { User } from "../../@types/user";
-import { Button } from "@/components/ui/button";
-import { useDeleteUser } from "./mutation/deleteUser.mutation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { useAuthStore } from "@/stores/authStore";
+import { Heart, Mail, Sparkles, User2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FieldLabel } from "@/components/ui/field";
+import type { User } from "@/@types/user";
 
 export default function ProfilePage({ currentUser }: { currentUser: User }) {
-  const queryClient = useQueryClient();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const deleteUserMutation = useDeleteUser(currentUser.id);
+  const store = useAuthStore();
+  const user = store.user;
 
   return (
-    <div className="flex w-full flex-col items-center justify-center py-6 md:py-0">
-      {/* Carré principal */}
-      <div
-        className="w-full max-w-md md:max-w-lg lg:max-w-2xl border border-bookbeige shadow-sm rounded-xl p-4 lg:p-4 flex flex-col justify-between
-          min-h-[500px] md:min-h-[550px] lg:min-h-[600px]
-          "
-      >
-        {/* Bloc supérieur : crayon + image + infos */}
-        <div>
-          {/* Crayon */}
-          <div className="flex justify-end mb-2">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="w-10 h-10 flex items-center bg-primary justify-center rounded-full border border-bookbeige cursor-pointer transition"
-              title="Modifier profil"
-              aria-label="Modifier le profil"
-            >
-              <Pencil size={20} color="white" />
-            </button>
+    <div className="flex flex-col w-full px-10 mt-6 text-foreground">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-5xl">Mon Profil</h2>
+        <span className="text-muted-foreground text-xl">
+          Gerez vos informations personnelles et vos preferences de lecture.
+        </span>
+      </div>
+      <div className="flex flex-1 gap-12 mt-10">
+        <div className="flex flex-col gap-8">
+          <Card className="flex justify-center items-center border w-72 h-56 rounded-4xl">
+            <img src={user?.image ?? ""} alt="" />
+            <p className="text-xl">{user?.username}</p>
+          </Card>
+          <Card className="flex justify-center items-center border w-72 h-56 rounded-4xl">
+            <div className="flex items-center gap-2">
+              <Sparkles />
+              <h4>Statistiques</h4>
+            </div>
+          </Card>
+          <Card className="flex justify-center items-center border w-72 h-56 rounded-4xl">
+            <div className="flex items-center gap-2">
+              <Heart />
+              <h4 className="text-xl">Genres preferes</h4>
+            </div>
+          </Card>
+        </div>
+        <div className="flex flex-col w-full gap-2">
+          <h3 className="text-xl">Informations personnelles</h3>
+          <span className="text-muted-foreground">
+            Cliquez sur un champ pour le modifier.
+          </span>
+          <div className="flex flex-col mt-8 gap-4">
+            <FieldLabel htmlFor="input-field-username">
+              <User2 width={20} />
+              Nom complet
+            </FieldLabel>
+            <Input
+              id="input-field-username"
+              type="text"
+              placeholder="Votre prenom et nom"
+              value={user?.username}
+            />
           </div>
-
-          {/* Image */}
-          <Avatar className="w-28 h-28 mx-auto mb-16 border border-bookbeige shadow">
-            {currentUser.image && (
-              <AvatarImage
-                src={`/images/${currentUser.image}`}
-                alt={`Avatar de ${currentUser.username}`}
-              />
-            )}
-            <AvatarFallback className="text-4xl bg-foreground font-bold">
-              {currentUser.username
-                ? currentUser.username[0].toUpperCase()
-                : "X"}
-            </AvatarFallback>
-          </Avatar>
-          {/* Infos utilisateur alignées */}
-          <div className="grid grid-cols-[max-content_1fr] gap-x-4 md:gap-x-8 lg:gap-x-12 gap-y-2 md:w-[400px] lg:w-[400px] mx-auto">
-            <span className="font-semibold">Nom d'utilisateur :</span>
-            <span className="break-words min-w-0">{currentUser?.username}</span>
-
-            <span className="font-semibold">Email :</span>
-            <span className="break-words min-w-0">
-              {currentUser?.email.toLowerCase()}
-            </span>
-
-            <span className="font-semibold">Mot de passe :</span>
-            <span className="tracking-widest break-words min-w-0">
-              ••••••••••••
-            </span>
+          <div className="flex flex-col mt-8 gap-4">
+            <FieldLabel htmlFor="input-field-username">
+              <Mail width={20} />
+              Email
+            </FieldLabel>
+            <Input
+              id="input-field-email"
+              type="text"
+              placeholder="thomas@gmail.com"
+              value={user?.email}
+            />
           </div>
         </div>
-
-        {/* Bouton supprimer en bas */}
-        <Button
-          disabled={deleteUserMutation.isPending}
-          onClick={() => deleteUserMutation.mutate()}
-          size={"delete"}
-          className="mx-auto cursor-pointer bg-destructive"
-        >
-          {deleteUserMutation.isPending
-            ? "Suppression..."
-            : "Supprimer mon compte"}
-        </Button>
       </div>
-
-      {/* Modale */}
-      {isModalOpen && currentUser && (
-        <ProfilePageModal
-          userId={currentUser.id}
-          onClose={() => setIsModalOpen(false)}
-          onUpdate={(updatedUser) => {
-            // au lieu de setUser (useEffect)
-            queryClient.setQueryData(["user", currentUser.id], updatedUser);
-          }}
-        />
-      )}
     </div>
   );
 }
