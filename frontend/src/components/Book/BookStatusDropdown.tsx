@@ -22,16 +22,17 @@ export const BookStatusDropdown: React.FC<BookStatusDropdownProps> = ({
 }) => {
   // configuration for each status
   const statusConfig: Record<BookStatus, { icon: React.ElementType }> = {
-    "Lu": { icon: CheckCircle },
+    Lu: { icon: CheckCircle },
     "En cours": { icon: BookOpen },
     "À lire": { icon: Clock },
   };
 
-  const badgeVariantMap: Record<BookStatus, "success" | "warning" | "default"> = {
-    "Lu": "success",
-    "En cours": "warning",
-    "À lire": "default",
-  };
+  const badgeVariantMap: Record<BookStatus, "success" | "warning" | "default"> =
+    {
+      Lu: "success",
+      "En cours": "warning",
+      "À lire": "default",
+    };
 
   const Icon = statusConfig[status].icon;
 
@@ -55,7 +56,7 @@ export const BookStatusDropdown: React.FC<BookStatusDropdownProps> = ({
           <DropdownMenuItem
             key={s}
             onSelect={() => {
-                onChangeStatus?.(s);
+              onChangeStatus?.(s);
             }}
             disabled={isUpdatingStatus || s === status} // Disable if updating or same status
           >

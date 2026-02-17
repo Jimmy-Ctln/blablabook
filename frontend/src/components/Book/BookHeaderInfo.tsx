@@ -1,3 +1,4 @@
+import { Calendar } from "lucide-react";
 import React from "react";
 
 // Props for the BookHeaderInfo component
@@ -6,18 +7,16 @@ interface BookHeaderInfoProps {
   author: string;
 }
 
-export const BookHeaderInfo: React.FC<BookHeaderInfoProps> = ({ 
-  title, 
+export const BookHeaderInfo: React.FC<BookHeaderInfoProps> = ({
+  title,
   author,
 }) => (
-  <div className="flex flex-col gap-4 items-start">
-    <div>
-      <h1 className="text-4xl md:text-5xl font-sans text-foreground mb-2 leading-tight">
-        {title}
-      </h1>
-      <p className="text-lg text-foreground">
-        By <span className="font-sans text-foreground underline decoration-bookochre/50 underline-offset-4">{author}</span>
-      </p>
+  <div className="flex flex-col w-full border">
+    <h2 className="text-5xl md:text-5x text-foreground mb-2">{title}</h2>
+    <div className="text-lg text-foreground">
+      <span className="mr-2 text-muted-foreground">par</span>{" "}
+      <span className=" text-foreground">{author}</span>
     </div>
+    <div className="text-foreground mt-4"></div>
   </div>
 );

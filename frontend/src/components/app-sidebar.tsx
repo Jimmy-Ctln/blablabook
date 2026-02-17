@@ -22,12 +22,19 @@ import { NavMain } from "./nav-main";
 import { Link } from "@tanstack/react-router";
 import SearchBar from "./SearchBar";
 import UserCard from "./user-card";
+import { useUserBooks } from "@/hooks/useUserBooks";
+import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const store = useAuthStore();
   const [search, setSearch] = React.useState("");
 
   const logout = store.logout;
+
+  const rawUserBooks = useUserBooks();
+
+  const userBooks = rawUserBooks.books.map(mapBookRowToDisplay);
+  console.log(userBooks);
 
   const items = {
     navMain: [
@@ -93,6 +100,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenuItem className="opacity-50 mt-4">DECOUVRIR</SidebarMenuItem>
         <NavMain items={items.discover} />
         <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
+        <div>
+          {userBooks.map((book) => (
+            <div>
+              <img src={book.cover} alt="" />
+              <div>
+                <span>{book.title}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </SidebarContent>
       <SidebarFooter className="mb-4 text-foreground">
         <UserCard />

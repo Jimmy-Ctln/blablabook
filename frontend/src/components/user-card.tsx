@@ -14,7 +14,7 @@ export default function UserCardButton(
     <Button
       asChild
       variant="ghost"
-      className="glass cursor-pointer rounded-2xl max-h-18 flex items-center w-full p-0"
+      className="glass cursor-pointer rounded-2xl max-h-18 flex items-center h-16 w-full p-0"
       {...props}
     >
       <Link to="/profile" className="w-full">
