@@ -1,5 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,37 +13,29 @@ import { useQuery } from "@tanstack/react-query";
 import { getBooks, getUserBooks } from "@/api/books";
 import type { ExternalBook } from "@/@types/externalBooks";
 import { searchExternalBooks } from "@/api/externalBooks";
-import { useAddBook } from "@/hooks/useAddBook";
 import SearchBar from "./SearchBar";
 import { Button } from "./ui/button";
 import { Separator } from "@/components/ui/separator";
 import BookCardModal from "./bookCardModal";
-import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
+import {
+  mapBookRowToDisplay,
+  mapExternalBookToDisplay,
+} from "@/lib/bookDisplayMapper";
 
 type AddBookModalProps = {
   readonly isOpen: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  readonly userId?: number;
 };
 
-export function AddBookModal({ isOpen, setOpen, userId }: AddBookModalProps) {
+export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   const [query, setQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-
-  const { data: userBooks = [] } = useQuery({
-    queryKey: ["userBooks", userId],
-    queryFn: () => getUserBooks(userId!),
-    enabled: !!userId,
-  });
 
   const { data: Allbooks = [] } = useQuery({
     queryKey: ["Allbooks"],
     queryFn: () => getBooks(),
     enabled: isOpen,
   });
-
-  // Mutation hook to add a book to the user's list
-  const addBookMutation = useAddBook(userId);
 
   const handleOpenChange = () => {
     if (!open) {
@@ -53,12 +44,11 @@ export function AddBookModal({ isOpen, setOpen, userId }: AddBookModalProps) {
     }
     setOpen(false);
   };
-
-  // TanStack Query to look for books
+  // TanStack Query to look external books
   const {
-    data: results = [],
+    data: externalBookResult = [],
     isFetching,
-    refetch,
+    refetch: refetchExternalBooks,
   } = useQuery<ExternalBook[]>({
     enabled: false, // don't fetch on mount
     queryKey: ["externalBooks", query],
@@ -66,34 +56,34 @@ export function AddBookModal({ isOpen, setOpen, userId }: AddBookModalProps) {
       searchExternalBooks({ type: "searchText", searchText: query }),
   });
 
-  // Trigger a search only when input is non-empty
-  const handleSearch = () => {
-    if (!query.trim()) return;
-    setHasSearched(true);
-    refetch();
-  };
-
-  const navigate = useNavigate();
-
-  // Navigate to internal book details page using the ISBN
-  const handleCardClick = (book: ExternalBook) => {
-    if (!book.isbn) return;
-    navigate({ to: `/books/${book.isbn}` });
-  };
-
-  // Check if a book result is already in the library
-  const isInLibrary = (externalBook: ExternalBook) => {
-    if (!externalBook.isbn?.length) return false;
-
-    return userBooks.some((b) => externalBook.isbn.includes(b.isbn));
-  };
+  useEffect(() => {
+    if (query.trim().length >= 2) {
+      refetchExternalBooks();
+      setHasSearched(true);
+    } else if (query.trim().length === 0) {
+      setHasSearched(false);
+    }
+  }, [query, refetchExternalBooks]);
 
   const tenBooks = Allbooks.slice(0, 10).map(mapBookRowToDisplay);
+
+  let content;
+  if (hasSearched && query.length > 0) {
+    content = (
+      <div className="mt-6 flex flex-col gap-4">
+        {externalBookResult.map(mapExternalBookToDisplay).map((book) => (
+          <BookCardModal book={book} />
+        ))}
+      </div>
+    );
+  } else {
+    content = tenBooks.map((book) => <BookCardModal book={book} />);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="mx-auto max-h-210 rounded-4xl text-foreground lg:max-w-3xl h-full sm:h-auto">
-        <DialogHeader>
+        <DialogHeader className="">
           <DialogTitle className="flex gap-2 text-xl mb-4 text-foreground font-semibold">
             <div className="glass-accent flex h-10 w-10 items-center justify-center rounded-xl">
               <Plus className="h-5 w-5 text-primary" />
@@ -105,26 +95,25 @@ export function AddBookModal({ isOpen, setOpen, userId }: AddBookModalProps) {
               </p>
             </div>
           </DialogTitle>
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar onSearch={setQuery} />
         </DialogHeader>
-
         <Separator />
 
         <div className="max-h-110 overflow-y-auto">
           <span className="text-muted-foreground text-sm">
-            {Allbooks.length} livres disponible
+            {hasSearched && query.length > 0
+              ? `Résultat pour "${query}"`
+              : `${tenBooks.length} proposition de livre`}
           </span>
-          <div className="mt-6 flex flex-col gap-4">
-            {tenBooks.map((book) => (
-              <BookCardModal book={book} />
-            ))}
-          </div>
+          <div className="mt-6 flex flex-col gap-4">{content}</div>
         </div>
 
         {isFetching && <Loader className="text-sm" />}
 
-        {!isFetching && hasSearched && results.length === 0 && (
-          <p className="mt-4 text-sm text-gray-600">Aucun livre trouvé.</p>
+        {!isFetching && hasSearched && externalBookResult.length === 0 && (
+          <p className="mt-4 text-sm text-gray-600 w-full">
+            Aucun livre trouvé.
+          </p>
         )}
 
         <Separator />
@@ -132,7 +121,7 @@ export function AddBookModal({ isOpen, setOpen, userId }: AddBookModalProps) {
           <span className="w-full text-sm text-muted-foreground">
             Parcourez le catalogue pour enrichir votre collection
           </span>
-          <Button onClick={() => handleOpenChange}>Terminer</Button>
+          <Button onClick={() => handleOpenChange()}>Terminer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
