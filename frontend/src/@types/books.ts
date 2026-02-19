@@ -43,8 +43,11 @@ export interface BookRow {
 export interface BookDisplay {
   key: string;
   title: string;
+  description?: string;
   author: string;
   cover: string;
-  isbn?: string;
-  categories?: string[];
+  isbn: string;
+  publisher: string;
+  publishDate: string;
+  categories: string[];
 }
