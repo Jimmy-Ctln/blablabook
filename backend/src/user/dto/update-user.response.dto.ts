@@ -17,4 +17,8 @@ export class UpdateUserResponseDto {
   @ApiProperty()
   @Expose()
   image: string;
+
+  @ApiProperty()
+  @Expose()
+  role: string;
 }
