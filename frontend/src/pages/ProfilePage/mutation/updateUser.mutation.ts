@@ -1,20 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/axios";
-import type { UpdateUserInput } from "../../../@types/user";
+import { useAuthStore } from "@/stores/authStore";
 
-export const useUpdateUser = (userId: number, options?: { onSuccess?: () => void }) => {
+export const useUpdateUser = (
+  userId: number,
+  options?: { onSuccess?: (data: UserProps) => void },
+) => {
   const queryClient = useQueryClient();
+  const { updateUser } = useAuthStore();
 
   return useMutation({
-    mutationFn: (updatedData: UpdateUserInput) => api.patch(`/user/${userId}`, updatedData),
-    onSuccess: (_, updatedData) => {
-      queryClient.setQueryData(["user", userId], updatedData);
-      //TODO Modale génétique pour les alertes
-      options?.onSuccess?.();
+    mutationFn: (updatedData: UserProps) =>
+      api.patch(`/user/${userId}`, updatedData),
+    onSuccess: (response) => {
+      const backendData = response.data;
+      updateUser(backendData.user);
+      queryClient.setQueryData(["user", userId], backendData);
+      options?.onSuccess?.(backendData);
     },
     onError: (error) => {
       console.error(error);
-      alert("Erreur lors de la mise à jour.");
     },
   });
 };
