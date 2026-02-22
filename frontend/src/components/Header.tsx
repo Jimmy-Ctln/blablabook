@@ -32,7 +32,7 @@ export default function Header() {
                   <Avatar className="w-10 h-10 border-2 bg-foreground hover:border-primary transition-all">
                     <AvatarImage
                       key={user.image}
-                      src={user.image ? `/images/${user.image}` : undefined}
+                      src={user.image ? `${user.image}` : undefined}
                       alt={`Avatar de ${user.username || "X"}`}
                     />
                     <AvatarFallback className="bg-bookbeige/50">

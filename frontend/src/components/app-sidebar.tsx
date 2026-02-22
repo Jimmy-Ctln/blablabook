@@ -1,14 +1,5 @@
 import * as React from "react";
-import {
-  BookOpen,
-  Users,
-  Home,
-  Settings,
-  Compass,
-  TrendingUp,
-  Book,
-  Share2,
-} from "lucide-react";
+import { BookOpen, Home, Settings, Book } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import {
   Sidebar,
@@ -48,28 +39,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/library",
         icon: Book,
       },
-      {
-        title: "Communaute",
-        url: "/community",
-        icon: Users,
-      },
-    ],
-    discover: [
-      {
-        title: "Explorer",
-        url: "/",
-        icon: Compass,
-      },
-      {
-        title: "Tendances",
-        url: "/",
-        icon: TrendingUp,
-      },
-      {
-        title: "Ma biblio publique",
-        url: "/",
-        icon: Share2,
-      },
     ],
     general: [
       {
@@ -97,8 +66,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent className="mt-6">
         <SidebarMenuItem className="opacity-50">MENU</SidebarMenuItem>
         <NavMain items={items.navMain} />
-        <SidebarMenuItem className="opacity-50 mt-4">DECOUVRIR</SidebarMenuItem>
-        <NavMain items={items.discover} />
         <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
         <div>
           {userBooks.map((book) => (
