@@ -10,19 +10,19 @@ export const useDeleteUser = (userId: number) => {
 
   return useMutation({
     mutationFn: async () => {
-      const confirmed = confirm("Êtes-vous sûr de vouloir supprimer votre compte ?");
+      const confirmed = confirm(
+        "Êtes-vous sûr de vouloir supprimer votre compte ?",
+      );
       if (!confirmed) throw new Error("Suppression annulée");
       return api.patch(`/user/${userId}/soft-delete`);
     },
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: ["user", userId] });
-      logout(); 
-      alert("Compte supprimé !");
+      logout();
       navigate({ to: "/" });
     },
     onError: (error) => {
       if (error.message !== "Suppression annulée") {
-        alert("Erreur lors de la suppression du compte");
         console.error(error);
       }
     },

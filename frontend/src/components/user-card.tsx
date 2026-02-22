@@ -22,7 +22,7 @@ export default function UserCardButton(
           <Avatar className="w-10 h-10 border-2 bg-foreground hover:border-primary transition-all">
             {user.image ? (
               <AvatarImage
-                src={`/images/${user.image}`}
+                src={`${user.image}`}
                 alt={`Avatar de ${user.username ?? "X"}`}
               />
             ) : (
