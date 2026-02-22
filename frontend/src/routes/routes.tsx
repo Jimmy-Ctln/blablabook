@@ -11,9 +11,9 @@ import LoginPage from "@/pages/Auth/LoginPage/LoginPage";
 import NotFound from "@/pages/NotFound";
 import SeeAllPage from "@/pages/SeeAllPage";
 import LibraryPage from "@/pages/LibraryPage";
-import ProfileRoute from "@/pages/ProfilePage/ProfileRoute";
 import BookDetails from "@/pages/Book/BookDetails";
 import HomePage from "@/pages/HomePage";
+import ProfilePage from "@/pages/ProfilePage/ProfilePage";
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,
@@ -67,10 +67,9 @@ const libraryRoute = createRoute({
 const profilePage = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/profile",
-  component: ProfileRoute,
+  component: () => <ProfilePage />,
 });
 
-// Dynamic route with ISBN parameter: /books/:isbn
 export const bookDetailsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/books/$isbn",
