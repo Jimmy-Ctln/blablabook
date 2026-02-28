@@ -52,7 +52,7 @@ export default function BookCardModal({ book }: BookCardModalProps) {
             />
           )}
           <div>
-            <h4>{book.title}</h4>
+            <h4>{book.name}</h4>
             <span>{book.author}</span>
           </div>
         </div>
