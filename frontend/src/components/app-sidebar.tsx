@@ -1,6 +1,5 @@
 import * as React from "react";
 import { BookOpen, Home, Settings, Book } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
 import {
   Sidebar,
   SidebarContent,
@@ -10,22 +9,29 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavMain } from "./nav-main";
-import { Link } from "@tanstack/react-router";
-import SearchBar from "./SearchBar";
+import { Link, useNavigate } from "@tanstack/react-router";
 import UserCard from "./user-card";
 import { useUserBooks } from "@/hooks/useUserBooks";
-import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
+import { useAuthStore } from "@/stores/authStore";
+import type { BookStatus } from "@/@types/books";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const store = useAuthStore();
-  const [search, setSearch] = React.useState("");
+  const currentUser = useAuthStore();
+  const navigate = useNavigate();
 
-  const logout = store.logout;
+  const STATUSBOOK: BookStatus = "En cours";
 
-  const rawUserBooks = useUserBooks();
+  const userId = currentUser.user?.id;
 
-  const userBooks = rawUserBooks.books.map(mapBookRowToDisplay);
-  console.log(userBooks);
+  const { books: BookRow } = useUserBooks(userId);
+
+  const inProgressBooks = BookRow.filter(
+    (inProgressBook) => inProgressBook.status === STATUSBOOK,
+  );
+
+  const handleClick = (bookIsbn: string) => {
+    navigate({ to: `/books/${bookIsbn}` });
+  };
 
   const items = {
     navMain: [
@@ -61,18 +67,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             Blablabook
           </div>
         </Link>
-        <SearchBar onSearch={setSearch} />
       </SidebarHeader>
       <SidebarContent className="mt-6">
         <SidebarMenuItem className="opacity-50">MENU</SidebarMenuItem>
         <NavMain items={items.navMain} />
         <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
-        <div>
-          {userBooks.map((book) => (
-            <div>
-              <img src={book.cover} alt="" />
+        <div className="flex flex-col gap-8 w-full mx-auto mt-2">
+          {inProgressBooks.map((book) => (
+            <div
+              key={book.id}
+              className="flex gap-4 items-center cursor-pointer hover:scale-105 transition-transform duration-200"
+              onClick={() => handleClick(book.isbn)}
+            >
+              <img
+                src={book.cover}
+                className="w-12 h-auto rounded-2xl"
+                alt=""
+              />
               <div>
-                <span>{book.title}</span>
+                <span>{book.name}</span>
               </div>
             </div>
           ))}
