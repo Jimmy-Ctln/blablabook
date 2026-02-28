@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { Loader } from "@/components/Loader";
 
 import { useQuery } from "@tanstack/react-query";
-import { getBooks, getUserBooks } from "@/api/books";
+import { getBooks } from "@/api/books";
 import type { ExternalBook } from "@/@types/externalBooks";
 import { searchExternalBooks } from "@/api/externalBooks";
 import SearchBar from "./SearchBar";
