@@ -64,7 +64,7 @@ export const useAddBook = (userId?: number) => {
 
       const createBookDto: CreateBookDto = {
         // Fallbacks ensure minimal valid payloads if external fields are missing
-        name: BookDisplay.title || "Unknown Title",
+        name: BookDisplay.name || "Unknown Title",
         author: BookDisplay.author || "Unknown Author",
         isbn: BookDisplay.isbn || "N/A",
         coverId: BookDisplay.cover || "default_cover.png",
