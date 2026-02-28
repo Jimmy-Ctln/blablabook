@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
 import { useUserBooks } from "@/hooks/useUserBooks";
 import SearchBar from "@/components/SearchBar";
-import type { BookRow } from "../@types/books";
+import type { BookDisplay } from "../@types/books";
 import { AddBookModal } from "@/components/AddBookModal";
 import {
   BookOpen,
@@ -28,8 +28,8 @@ export default function LibraryPage() {
     if (userId) refetch();
   }, [userId, refetch]);
 
-  const filteredBooks: BookRow[] =
-    books?.filter((b: BookRow) => {
+  const filteredBooks: BookDisplay[] =
+    books?.filter((b: BookDisplay) => {
       const searchLower = search.toLowerCase();
       return (
         b.name.toLowerCase().includes(searchLower) ||
@@ -38,11 +38,11 @@ export default function LibraryPage() {
     }) || [];
 
   const readCount =
-    books?.filter((b: BookRow) => b.status === "Lu").length || 0;
+    books?.filter((b: BookDisplay) => b.status === "Lu").length || 0;
   const readingCount =
-    books?.filter((b: BookRow) => b.status === "En cours").length || 0;
+    books?.filter((b: BookDisplay) => b.status === "En cours").length || 0;
   const toReadCount =
-    books?.filter((b: BookRow) => b.status === "À lire").length || 0;
+    books?.filter((b: BookDisplay) => b.status === "À lire").length || 0;
 
   return (
     <div className="flex w-full flex-col gap-6 px-4 pb-10 md:px-6">
@@ -101,14 +101,20 @@ export default function LibraryPage() {
             <BookCard
               key={book.id}
               book={book}
-              onRemove={() => removeBook(book.id)}
-              onStatusChange={(newStatus) =>
-                updateStatus({
-                  bookId: book.id,
-                  status: newStatus,
-                  currentBook: book,
-                })
-              }
+              onRemove={() => {
+                if (book.internalId !== undefined) {
+                  removeBook(book.internalId);
+                }
+              }}
+              onStatusChange={(newStatus) => {
+                if (book.internalId !== undefined) {
+                  updateStatus({
+                    bookId: book.internalId,
+                    status: newStatus,
+                    currentBook: book,
+                  });
+                }
+              }}
             />
           ))
         )}
