@@ -10,7 +10,8 @@ import {
   removeBookFromUserList,
   updateBookStatus,
 } from "@/api/books";
-import type { BookRow, BookStatus } from "@/@types/books";
+import type { BookDisplay, BookRow, BookStatus } from "@/@types/books";
+import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 
 export const useUserBooks = (userId?: number) => {
   const queryClient = useQueryClient();
@@ -41,7 +42,7 @@ export const useUserBooks = (userId?: number) => {
     }: {
       bookId: number;
       status: BookStatus;
-      currentBook: BookRow;
+      currentBook: BookDisplay;
     }) => {
       if (!userId) throw new Error("UserId is required");
       return updateBookStatus(userId, bookId, status, currentBook);
@@ -52,7 +53,9 @@ export const useUserBooks = (userId?: number) => {
 
   return {
     // Query
-    books: Array.isArray(booksQuery.data) ? booksQuery.data : [],
+    books: Array.isArray(booksQuery.data)
+      ? booksQuery.data.map(mapBookRowToDisplay)
+      : [],
     isLoading: booksQuery.isLoading,
     isError: booksQuery.isError,
     refetch: booksQuery.refetch,
