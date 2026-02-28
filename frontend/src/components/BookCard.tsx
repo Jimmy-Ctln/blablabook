@@ -8,12 +8,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Trash2, ChevronDown } from "lucide-react";
-import type { BookRow } from "../@types/books";
+import type { BookDisplay } from "../@types/books";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "./ui/button";
 
 type Props = {
-  readonly book: BookRow;
+  readonly book: BookDisplay;
   readonly onRemove: () => void;
   readonly onStatusChange?: (newStatus: "Lu" | "En cours" | "À lire") => void;
 };
@@ -85,9 +85,9 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
     >
       <Card className="w-full shadow-lg relative rounded-xl overflow-hidden p-0 gap-2 flex flex-col h-full bg-chart-2">
         <div className="relative shrink-0">
-          {book.coverId ? (
+          {book.cover ? (
             <img
-              src={book.coverId}
+              src={book.cover}
               alt={`Couverture de ${book.name}`}
               width="320"
               height="192"
