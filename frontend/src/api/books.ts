@@ -1,7 +1,7 @@
 // Frontend client for our internal backend Book APIs.
 // Wraps axios calls and provides typed responses.
 import type { GetExternalBooksParams } from "../@types/externalBooks";
-import type { CreateBookDto, BookRow } from "../@types/books";
+import type { CreateBookDto, BookRow, BookDisplay } from "../@types/books";
 import api from "./axios";
 
 // -----------------------------
@@ -80,7 +80,7 @@ export const updateBookStatus = async (
   userId: number,
   bookId: number,
   status: "Lu" | "En cours" | "À lire",
-  currentBook: BookRow,
+  currentBook: BookDisplay,
 ): Promise<BookRow> => {
   const now = new Date().toISOString();
 
