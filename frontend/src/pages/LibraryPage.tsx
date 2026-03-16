@@ -45,52 +45,64 @@ export default function LibraryPage() {
     books?.filter((b: BookDisplay) => b.status === "À lire").length || 0;
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 pb-10 md:px-6">
+    <div className="flex w-full flex-col gap-5 px-4 pb-10 md:px-6">
       <AddBookModal isOpen={open} setOpen={setOpen} />
-      <div className="flex flex-col gap-8 mt-12">
-        <div className="flex gap-2 ">
-          <div className="glass-accent flex h-10 w-10 items-center justify-center rounded-xl">
+
+      {/* En-tête */}
+      <div className="flex flex-col gap-3 mt-6 md:mt-12">
+        <div className="flex items-center gap-2">
+          <div className="glass-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
             <Library className="h-5 w-5 text-primary" />
           </div>
-          <div className="flex justify-between items-center w-full">
-            <h2 className="text-foreground text-4xl">Ma bibliothèque</h2>
-            <Button variant={"secondary"} onClick={() => setOpen(true)}>
-              <Plus />
-              Ajouter un livre
-            </Button>
-          </div>
+          <h2 className="text-foreground text-2xl sm:text-3xl md:text-4xl">
+            Ma bibliothèque
+          </h2>
         </div>
-        <p className="text-lg w-1/2 text-muted-foreground">
-          Gerez votre collection de livres. Filtrez par statut et retrouvez{" "}
-          <br />
-          facilement vos lectures.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-prose">
+            Gérez votre collection de livres. Filtrez par statut et retrouvez
+            facilement vos lectures.
+          </p>
+          <Button
+            variant={"secondary"}
+            onClick={() => setOpen(true)}
+            className="w-full sm:w-auto shrink-0"
+          >
+            <Plus />
+            Ajouter un livre
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center mt-6 justify-between">
-        <div className="flex flex-col sm:gap-4 sm:flex-row sm:justify-start">
-          <Button className="px-3 py-1.5  border-border rounded-md shadow-sm text-foreground">
+
+      {/* Filtres + recherche */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <Button className="px-3 py-1.5 border-border rounded-md shadow-sm text-foreground">
             <LayoutGrid />
             Tous : <strong>{books?.length || 0}</strong>
           </Button>
-          <Button className="px-3 py-1.5  border-border rounded-md shadow-sm text-foreground">
+          <Button className="px-3 py-1.5 border-border rounded-md shadow-sm text-foreground">
             <BookOpen />
             En cours : <strong>{readingCount}</strong>
           </Button>
-          <Button className="px-3 py-1.5  border-border rounded-md shadow-sm text-foreground">
+          <Button className="px-3 py-1.5 border-border rounded-md shadow-sm text-foreground">
             <Clock /> À lire : <strong>{toReadCount}</strong>
           </Button>
-          <Button className="px-3 py-1.5  border-border rounded-md shadow-sm text-foreground">
+          <Button className="px-3 py-1.5 border-border rounded-md shadow-sm text-foreground">
             <CheckCircle2 />
             Lus : <strong>{readCount}</strong>
           </Button>
         </div>
-        <SearchBar onSearch={setSearch} placeholder="Rechercher..." />
+        <div className="w-full md:max-w-xs">
+          <SearchBar onSearch={setSearch} placeholder="Rechercher..." />
+        </div>
       </div>
 
-      <div className="grid mt-8 w-full sm:gap-4 sm:grid-cols-3 md:grid-cols-4">
+      {/* Grille de livres */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {filteredBooks.length === 0 ? (
           <p
-            className="text-muted-foreground text-center"
+            className="col-span-full text-muted-foreground text-center py-10"
             role="status"
             aria-live="polite"
           >
