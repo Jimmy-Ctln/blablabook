@@ -8,18 +8,27 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { SidebarTrigger } from "./ui/sidebar";
+import { SidebarTrigger, useSidebar } from "./ui/sidebar";
+import { BookOpen } from "lucide-react";
 
 export default function Header() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { openMobile } = useSidebar();
 
   const navigate = useNavigate();
 
   return (
     <header className="flex h-20 justify-between bg-secondary items-center px-4">
-      <SidebarTrigger className="mr-4 text-foreground" />
-      <div className="flex justify-end">
+      <SidebarTrigger className="hidden md:flex mr-4 text-foreground" />
+      <Link
+        to="/"
+        className="flex md:hidden items-center gap-2 text-foreground text-lg font-semibold"
+      >
+        <BookOpen className="w-5 h-5" />
+        Blablabook
+      </Link>
+      <div className="flex items-center justify-end gap-2">
         <div className="flex items-center gap-4">
           {user ? (
             <div className="hidden md:flex items-center ml-2">
@@ -61,6 +70,10 @@ export default function Header() {
             </Link>
           )}
         </div>
+        {/* Mobile : trigger à droite */}
+        <SidebarTrigger
+          className={`md:hidden text-foreground bg-secondary/90 hover:bg-secondary ${openMobile ? "hidden" : "inline-flex"}`}
+        />
       </div>
     </header>
   );

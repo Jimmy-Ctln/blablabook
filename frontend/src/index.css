@@ -109,6 +109,13 @@
 /* Premium smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overscroll-behavior: none;
+  background-color: hsl(225 15% 6%);
+}
+
+body {
+  overscroll-behavior: none;
+  background-color: hsl(225 15% 6%);
 }
 
 /* Custom selection color */

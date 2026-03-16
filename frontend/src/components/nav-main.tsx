@@ -9,6 +9,7 @@ import { Link } from "@tanstack/react-router";
 
 export function NavMain({
   items,
+  onItemClick,
 }: {
   items: {
     title: string;
@@ -16,6 +17,7 @@ export function NavMain({
     icon: LucideIcon;
     isActive?: boolean;
   }[];
+  onItemClick?: () => void;
 }) {
   return (
     <SidebarMenu>
@@ -26,7 +28,7 @@ export function NavMain({
             asChild
             isActive={item.isActive}
           >
-            <Link to={item.url}>
+            <Link to={item.url} onClick={onItemClick}>
               <item.icon />
               <span>{item.title}</span>
             </Link>
