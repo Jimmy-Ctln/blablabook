@@ -1,5 +1,5 @@
 import * as React from "react";
-import { BookOpen, Home, Settings, Book } from "lucide-react";
+import { BookOpen, Home, Book } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,16 +12,16 @@ import { NavMain } from "./nav-main";
 import { Link, useNavigate } from "@tanstack/react-router";
 import UserCard from "./user-card";
 import { useUserBooks } from "@/hooks/useUserBooks";
-import { useAuthStore } from "@/stores/authStore";
 import type { BookStatus } from "@/@types/books";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const currentUser = useAuthStore();
+  const currentUser = useCurrentUser();
   const navigate = useNavigate();
 
   const STATUSBOOK: BookStatus = "En cours";
 
-  const userId = currentUser.user?.id;
+  const userId = currentUser.data?.id;
 
   const { books: BookRow } = useUserBooks(userId);
 
@@ -46,13 +46,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Book,
       },
     ],
-    general: [
-      {
-        title: "Parametres",
-        url: "/",
-        icon: Settings,
-      },
-    ],
   };
 
   return (
@@ -71,7 +64,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent className="mt-6">
         <SidebarMenuItem className="opacity-50">MENU</SidebarMenuItem>
         <NavMain items={items.navMain} />
-        <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
+        {currentUser.isAuthenticated && (
+          <SidebarMenuItem className="opacity-50 mt-4">
+            EN COURS
+          </SidebarMenuItem>
+        )}
         <div className="flex flex-col gap-8 w-full mx-auto mt-2">
           {inProgressBooks.map((book) => (
             <div
