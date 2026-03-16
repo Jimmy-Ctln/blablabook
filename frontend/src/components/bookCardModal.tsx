@@ -40,28 +40,45 @@ export default function BookCardModal({ book }: BookCardModalProps) {
   const addBook = useAddBook(userId);
 
   return (
-    <Card className="cursor-pointer" onClick={() => handleCardClick(book)}>
-      <CardContent className="flex justify-between items-center">
-        <div className="w-full flex gap-2">
+    <Card
+      className="cursor-pointer border bg-background/80 transition hover:border-primary/40"
+      onClick={() => handleCardClick(book)}
+    >
+      <CardContent className="flex items-start justify-between gap-3 p-3 sm:items-center sm:p-4">
+        <div className="flex w-full min-w-0 gap-3">
           {book.cover && (
             <img
               src={book.cover}
+              alt={`Couverture de ${book.name}`}
               width={50}
-              height={50}
-              className="rounded-xl"
+              height={72}
+              className="h-18 w-13 shrink-0 rounded-lg object-cover"
             />
           )}
-          <div>
-            <h4>{book.name}</h4>
-            <span>{book.author}</span>
+          <div className="min-w-0">
+            <h4 className="line-clamp-2 text-sm font-semibold leading-tight sm:text-base">
+              {book.name}
+            </h4>
+            <span className="mt-1 block truncate text-xs text-muted-foreground sm:text-sm">
+              {book.author}
+            </span>
+            {book.categories?.length ? (
+              <span className="mt-2 inline-flex rounded-full bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground sm:text-xs">
+                {book.categories[0]}
+              </span>
+            ) : null}
           </div>
         </div>
         {isInLibrary(book) ? (
-          <Check className="text-primary" />
+          <Check
+            className="mt-1 shrink-0 text-primary sm:mt-0"
+            data-testid="check-icon"
+          />
         ) : (
           <Button
-            className="glass"
+            className="glass h-9 w-9 shrink-0 p-0"
             disabled={addBook.isPending}
+            aria-label="Ajouter a la bibliotheque"
             onClick={(e) => {
               e.stopPropagation();
               addBook.mutate(book);
