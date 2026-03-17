@@ -51,7 +51,8 @@ export interface BookDisplay {
   isbn: string;
   publisher: string;
   publishDate: string;
-  status?: string; //The status is optionnal because externals books don't have status;
+  status?: string; //The status is optionnal because externals books don't have status
+  categories?: string[];
   categoryName?: string;
   readStart?: Date | null;
   readEnd?: Date | null;

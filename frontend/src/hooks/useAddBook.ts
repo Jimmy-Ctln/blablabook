@@ -67,11 +67,12 @@ export const useAddBook = (userId?: number) => {
         name: BookDisplay.name || "Unknown Title",
         author: BookDisplay.author || "Unknown Author",
         isbn: BookDisplay.isbn || "N/A",
-        coverId: BookDisplay.cover || "default_cover.png",
+        coverUrl:
+          BookDisplay.cover_url || BookDisplay.cover || "default_cover.png",
         description: description || "Pas de description pour ce livre",
         publishingHouse: BookDisplay.publisher || "Unknown publisher",
         publishedAt: toIsoDate(BookDisplay.publishDate),
-        categories: BookDisplay.categories || "Unknown category",
+        categories: BookDisplay.categories || [],
       };
 
       return addBookToUserList(userId, createBookDto);
