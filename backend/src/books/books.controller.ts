@@ -112,20 +112,4 @@ export class BooksController {
       readEnd,
     );
   }
-
-  /**
-   * GET /books/:bookId/categories
-   * Get all categories for a specific book
-   */
-  @Get(':bookId/categories')
-  @ApiOperation({ summary: 'Get all categories for a book' })
-  @ApiResponse({
-    status: 200,
-    description: 'Categories retrieved successfully',
-  })
-  async getCategoriesForBook(
-    @Param('bookId', ParseIntPipe) bookId: number,
-  ): Promise<{ id: number; name: string }[]> {
-    return this.booksService.getCategoriesForBook(bookId);
-  }
 }
