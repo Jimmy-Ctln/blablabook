@@ -18,7 +18,7 @@ export const user = pgTable('user', {
   email: varchar().unique().notNull(),
   password: varchar().notNull(),
   username: varchar({ length: 50 }).notNull().unique(),
-  image: varchar(),
+  avatar_url: varchar('avatar_url', { length: 500 }),
   role: userRoleEnum().default('USER').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -27,9 +27,10 @@ export const user = pgTable('user', {
 
 export const list = pgTable('list', {
   id: serial().primaryKey(),
-  name: varchar({ length: 150 }),
+  name: varchar({ length: 150 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
   userId: integer('user_id')
     .references(() => user.id, { onDelete: 'cascade' })
     .notNull(),
@@ -38,34 +39,31 @@ export const list = pgTable('list', {
 export const book = pgTable('book', {
   id: serial().primaryKey(),
   name: varchar({ length: 255 }).notNull(),
-  coverId: varchar('cover_id', { length: 255 }).notNull(),
+  cover_url: varchar('cover_url', { length: 500 }).notNull(),
   author: varchar({ length: 255 }).notNull(),
   description: text().notNull(),
   isbn: varchar('isbn', { length: 255 }).notNull().unique(),
   publishingHouse: varchar('publishing_house', { length: 255 }).notNull(),
   publishedAt: date('published_at').notNull(),
+  categoryId: integer('category_id')
+    .references(() => category.id)
+    .default(1) // ← Default category “Unknown” (id: 1)
+    .notNull(),
+});
+
+export const keyword = pgTable('keyword', {
+  id: serial().primaryKey().unique(),
+  name: varchar({ length: 100 }).notNull().unique(),
+  categoryId: integer('category_id')
+    .references(() => category.id)
+    .notNull(),
 });
 
 export const category = pgTable('category', {
-  id: serial().primaryKey(),
+  id: serial().primaryKey().unique(),
   name: varchar({ length: 100 }).notNull().unique(),
   isActive: boolean('is_active').default(true),
 });
-
-export const bookCategory = pgTable(
-  'book_category',
-  {
-    id: serial().primaryKey(),
-    categoryId: integer('category_id')
-      .references(() => category.id)
-      .notNull(),
-    bookId: integer('book_id')
-      .references(() => book.id)
-      .notNull(),
-  },
-  // prevent duplicate category for book
-  (t) => [unique('unique_category_book').on(t.bookId, t.categoryId)],
-);
 
 export const userCategory = pgTable(
   'user_category',
@@ -106,8 +104,8 @@ export const listBook = pgTable(
 
 export const review = pgTable('review', {
   id: serial().primaryKey(),
-  review: text(),
-  note: integer().notNull(),
+  review_text: text(),
+  rating: integer().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
@@ -121,8 +119,9 @@ export const review = pgTable('review', {
 
 export const refreshToken = pgTable('refresh_token', {
   id: serial().primaryKey(),
-  token: varchar().notNull(),
+  token: varchar().notNull().unique(),
   createdAt: timestamp().defaultNow().notNull(),
+  // expiresAt: timestamp('expires_at').notNull(),
   userId: integer('user_id')
     .references(() => user.id, { onDelete: 'cascade' })
     .notNull(),
