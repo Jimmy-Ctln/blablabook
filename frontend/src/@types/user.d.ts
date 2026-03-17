@@ -2,6 +2,6 @@ interface UserProps {
   id: number;
   username: string;
   email: string;
-  image?: string | null;
+  avatar: string | null;
   roles: string;
 }

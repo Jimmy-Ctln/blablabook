@@ -85,9 +85,9 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
     >
       <Card className="w-full shadow-lg relative rounded-xl overflow-hidden p-0 gap-2 flex flex-col h-full bg-chart-2">
         <div className="relative shrink-0">
-          {book.cover ? (
+          {book.cover_url ? (
             <img
-              src={book.cover}
+              src={book.cover_url}
               alt={`Couverture de ${book.name}`}
               width="320"
               height="480"
@@ -97,9 +97,9 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
             <div className="bg-gray-200 w-full aspect-2/3 animate-pulse" />
           )}
 
-          {book.categories && book.categories.length > 0 && (
+          {book.categoryName && book.categoryName.length > 0 && (
             <span className="absolute bottom-3 bg-primary right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground">
-              {book.categories[0]}
+              {book.categoryName}
             </span>
           )}
           {renderStatusBadge()}

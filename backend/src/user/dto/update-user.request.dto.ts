@@ -4,7 +4,6 @@ import {
   MinLength,
   MaxLength,
   IsOptional,
-  IsIn,
 } from 'class-validator';
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -31,5 +30,5 @@ export class UpdateUserRequestDto {
   @ApiPropertyOptional({ example: 'avatar1.png' })
   @IsString()
   @IsOptional()
-  image?: string;
+  avatar_url?: string;
 }

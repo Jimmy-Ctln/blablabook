@@ -2,7 +2,7 @@ export type BookStatus = "Lu" | "En cours" | "À lire";
 
 export interface CreateBookDto {
   name: string;
-  coverId: string;
+  coverUrl: string;
   author: string;
   description: string;
   isbn: string;
@@ -18,14 +18,14 @@ export interface CreateBookDto {
 export interface BookRow {
   id: number;
   name: string;
-  coverId: string;
+  cover_url: string;
   author: string;
   description: string;
   isbn: string;
   publishingHouse: string;
   publishedAt: string; // date format from Drizzle
+  categoryName: string;
   status: BookStatus;
-  categories?: string[];
   readStart?: Date | null;
   readEnd?: Date | null;
   addedAt?: Date;
@@ -46,12 +46,13 @@ export interface BookDisplay {
   name: string;
   description?: string;
   author: string;
-  cover: string;
+  cover_url: string;
+  cover?: string;
   isbn: string;
   publisher: string;
   publishDate: string;
-  status?: string; //The status is optionnal because externals books don't have status
-  categories: string[];
+  status?: string; //The status is optionnal because externals books don't have status;
+  categoryName?: string;
   readStart?: Date | null;
   readEnd?: Date | null;
   addedAt?: Date;

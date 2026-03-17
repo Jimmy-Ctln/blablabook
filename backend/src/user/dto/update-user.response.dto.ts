@@ -16,7 +16,7 @@ export class UpdateUserResponseDto {
 
   @ApiProperty()
   @Expose()
-  image: string;
+  avatar_url: string;
 
   @ApiProperty()
   @Expose()
