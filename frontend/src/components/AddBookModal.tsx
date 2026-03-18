@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
 import { getBooks } from "@/api/books";
+import type { BooksByCategory } from "@/@types/books";
 import type { ExternalBook } from "@/@types/externalBooks";
 import { searchExternalBooks } from "@/api/externalBooks";
 import SearchBar from "./SearchBar";
@@ -30,11 +31,13 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   const [query, setQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
 
-  const { data: allBooks = [] } = useQuery({
+  const { data: booksByCategory = {} } = useQuery<BooksByCategory>({
     queryKey: ["Allbooks"],
     queryFn: () => getBooks(),
     enabled: isOpen,
   });
+
+  const allBooks = Object.values(booksByCategory).flat();
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
