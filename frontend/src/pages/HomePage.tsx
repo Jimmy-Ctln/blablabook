@@ -18,7 +18,7 @@ export default function HomePage() {
     "aventure",
     "romance",
     "fantasy",
-    "science-Ffiction",
+    "science-fiction",
     "horreur",
     "mystère",
     "thriller",
