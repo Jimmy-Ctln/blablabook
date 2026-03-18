@@ -11,6 +11,21 @@ export interface CreateBookDto {
   categories: string[];
 }
 
+export const CATEGORY_NAMES = [
+  "horreur",
+  "romance",
+  "aventure",
+  "fantasy",
+  "science-fiction",
+  "mystere",
+  "thriller",
+  "unknown",
+] as const;
+
+export type CategoryName = (typeof CATEGORY_NAMES)[number];
+
+export type BooksByCategory = Record<string, BookRow[]>;
+
 /**
  * Drizzle-generated type matching backend BookSelect.
  * This ensures frontend mocks and data align exactly with backend schema.
@@ -24,7 +39,7 @@ export interface BookRow {
   isbn: string;
   publishingHouse: string;
   publishedAt: string; // date format from Drizzle
-  categoryName: string;
+  categoryName: CategoryName;
   status: BookStatus;
   readStart?: Date | null;
   readEnd?: Date | null;

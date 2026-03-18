@@ -30,8 +30,13 @@ export class BooksController {
   @Get()
   @ApiOperation({ summary: 'Get all books' })
   @ApiResponse({ status: 200, description: 'Books retrieved successfully' })
-  async getAllBooks() {
-    return this.booksService.findAllBooks();
+  async getAllBooks(@Query('category') category?: string | string[]) {
+    const categories = Array.isArray(category)
+      ? category
+      : category
+        ? [category]
+        : undefined;
+    return this.booksService.findAllBooks(categories);
   }
 
   /**

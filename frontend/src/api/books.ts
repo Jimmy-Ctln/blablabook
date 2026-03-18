@@ -1,7 +1,12 @@
 // Frontend client for our internal backend Book APIs.
 // Wraps axios calls and provides typed responses.
 import type { GetExternalBooksParams } from "../@types/externalBooks";
-import type { CreateBookDto, BookRow, BookDisplay } from "../@types/books";
+import type {
+  CreateBookDto,
+  BookRow,
+  BookDisplay,
+  BooksByCategory,
+} from "../@types/books";
 import api from "./axios";
 
 // -----------------------------
@@ -22,8 +27,19 @@ export function getSearchBooks(params: GetExternalBooksParams) {
 }
 
 /** Get all books persisted in the backend `book` table. */
-export const getBooks = async (): Promise<BookRow[]> => {
-  const response = await api.get<BookRow[]>("/books");
+export const getBooks = async (
+  categories?: string | string[],
+): Promise<BooksByCategory> => {
+  const list = Array.isArray(categories)
+    ? categories
+    : categories
+      ? [categories]
+      : [];
+
+  const params = new URLSearchParams();
+  list.forEach((c) => params.append("category", c));
+
+  const response = await api.get<BooksByCategory>("/books", { params });
   return response.data;
 };
 

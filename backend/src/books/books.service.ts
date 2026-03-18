@@ -9,7 +9,7 @@ import { book, list, listBook, category, keyword } from '../db/schema';
 import * as schema from '../db/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CreateBookDto } from './dto/create-book.dto';
-import { eq, and, desc, sql, count } from 'drizzle-orm';
+import { eq, and, desc, sql, count, inArray } from 'drizzle-orm';
 import { BookSelect, ListBookSelect } from './types/books';
 import { CategoryService } from '../category/category.service';
 import { BookDto } from './dto/book.dto';
@@ -40,8 +40,14 @@ export class BooksService {
    * Get all books from the `book` table.
    * @returns Array of persisted book records
    */
-  async findAllBooks(): Promise<BookDto[]> {
-    const books = await this.db
+  async findAllBooks(
+    categories?: string[],
+  ): Promise<Record<string, BookDto[]>> {
+    const normalizedCategories = (categories ?? [])
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+
+    const baseQuery = this.db
       .select({
         id: book.id,
         name: book.name,
@@ -56,7 +62,23 @@ export class BooksService {
       .from(book)
       .innerJoin(category, eq(book.categoryId, category.id));
 
-    return books;
+    const books =
+      normalizedCategories.length === 0
+        ? await baseQuery
+        : await baseQuery.where(inArray(category.name, normalizedCategories));
+
+    return books.reduce<Record<string, BookDto[]>>((acc, currentBook) => {
+      const categoryName = (
+        currentBook.categoryName || 'Unknown'
+      ).toLowerCase();
+
+      if (!acc[categoryName]) {
+        acc[categoryName] = [];
+      }
+
+      acc[categoryName].push(currentBook);
+      return acc;
+    }, {});
   }
 
   /**
