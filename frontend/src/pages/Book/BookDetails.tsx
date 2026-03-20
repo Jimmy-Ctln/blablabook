@@ -1,14 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Badge,
-  Heart,
-  Loader2,
-  Calendar,
-  Tag,
-  Bookmark,
-  Clock,
-} from "lucide-react";
+import { ArrowLeft, Loader2, Clock, Plus, Check } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { addBookToUserList } from "../../api/books";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
@@ -16,15 +7,12 @@ import { useUserBooks } from "../../hooks/useUserBooks";
 import { bookDetailsRoute } from "../../routes/routes";
 import { getFullExternalBook } from "../../api/externalBooks";
 import type { ExternalBookDisplayData } from "../../@types/externalBooks";
+import type { BookStatus } from "../../@types/books";
 import { BookCover } from "../../components/Book/BookCover";
 import { BookHeaderInfo } from "../../components/Book/BookHeaderInfo";
-import { BookDataGrid } from "../../components/Book/BookDataGrid";
-import { BookStatusAction } from "../../components/Book/BookStatusAction";
 import { Button } from "../../components/ui/button";
-import type { BookStatus } from "@/@types/books";
 import { BookSummary } from "@/components/Book/BookSummary";
 import type { AxiosError } from "axios";
-import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 const BookDetails = () => {
@@ -69,7 +57,7 @@ const BookDetails = () => {
       if (!currentUser?.id) throw new Error("User not logged in");
       const payload = {
         name: bookData.title,
-        coverId: bookData.cover,
+        coverUrl: bookData.cover,
         author: bookData.authors[0],
         description: bookData.description || "No description provided",
         isbn: bookData.isbn,
@@ -103,13 +91,18 @@ const BookDetails = () => {
 
   const handleChangeStatus = (newStatus: BookStatus) => {
     const userBook = userBooks.find((b) => b.isbn === book?.isbn);
-    if (userBook?.id)
+    if (userBook?.internalId !== undefined && userBook?.internalId !== null)
       updateStatus({
-        bookId: userBook.id,
+        bookId: userBook.internalId,
         status: newStatus,
         currentBook: userBook,
       });
   };
+
+  // Check if book is already in user's library
+  const isBookInLibrary = userBooks.some((b) => b.isbn === book?.isbn);
+  const userBookData = userBooks.find((b) => b.isbn === book?.isbn);
+  const isConnected = !!currentUser?.id;
 
   if (isLoading) {
     return (
@@ -140,82 +133,141 @@ const BookDetails = () => {
   }
 
   return (
-    <div className="container px-6 py-4 w-full min-h-[80vh] animate-in fade-in zoom-in-95 duration-500">
-      <div className="flex mb-6">
-        <Button
-          onClick={() => router.history.back()}
-          variant={"ghost"}
-          className="inline-flex items-center text-sm font-sans text-foreground hover:text-primary transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-          Retour
-        </Button>
+    <div className="w-full min-h-screen bg-background animate-in fade-in zoom-in-95 duration-500">
+      <div className="sticky top-0 z-40 bg-background border-b border-border">
+        <div className="container px-4 sm:px-6 py-4">
+          <Button
+            onClick={() => router.history.back()}
+            variant="secondary"
+            size="sm"
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4 text-foreground" />
+            <span className="text-foreground">Retour</span>
+          </Button>
+        </div>
       </div>
-
-      <div className="w-full">
-        <div className="flex gap-6 w-full">
-          <div className="flex flex-col gap-4 items-center">
-            <div className="relative group shadow-2xl rounded-lg">
-              <BookCover
-                src={book.cover}
-                alt={book.title}
-                className="w-full md:w-65 aspect-2/3 object-cover rounded-lg transform group-hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <div className="flex gap-4">
-              <Button>
-                <Heart /> Aime
-              </Button>
-              <Button>
-                <Bookmark className="h-4 w-4" /> Enregistrer
-              </Button>
-            </div>
-          </div>
-          <div className="px-8">
-            <BookHeaderInfo title={book.title} author={book.authors[0]} />
-            <Separator />
-            <BookSummary description={book.description} />
-            <div className="mt-6 text-foreground">
-              <h3 className="text-xl">Changer le status</h3>
-              <div className="flex gap-2 mt-4">
-                <Button>
-                  <Clock />A lire
-                </Button>
-                <Button>
-                  <Clock />
-                  En cours de lecture
-                </Button>
-                <Button>
-                  <Clock />
-                  Lu
-                </Button>
+      <div className="container px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <div className="md:col-span-1">
+            <div className="flex flex-col gap-4">
+              <div className="relative group shadow-lg rounded-lg overflow-hidden mx-auto md:mx-0 w-48 sm:w-56 md:w-full">
+                <BookCover
+                  src={book.cover}
+                  alt={book.title}
+                  className="w-full aspect-2/3 object-cover rounded-lg transform group-hover:scale-105 transition-transform duration-500"
+                />
               </div>
             </div>
           </div>
-        </div>
 
-        {/* <div className="mt-6 xl:order-last xl:col-span-1 w-full xl:sticky xl:top-6 flex flex-col">
-              <BookStatusAction
-                status={userBooks.find((b) => b.isbn === book.isbn)?.status}
-                onAddToLibrary={handleAddToLibrary}
-                isAdding={addBookMutation.isPending}
-                onChangeStatus={handleChangeStatus}
-                isUpdatingStatus={isUpdatingStatus}
-                isConnected={!!currentUser?.id}
-              />
-            </div> */}
-        {/* <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full items-start">
-          <div className="xl:col-span-2 w-full">
-            <BookDataGrid
-              publisher={book.publisher}
-              publishedAt={book.publishedAt}
-              pages={book.pages}
-              isbn={book.isbn}
-              language={book.language}
-              categories={book.categories.slice(0, 5)}
-            />
+          <div className="md:col-span-2">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex-1">
+                    <BookHeaderInfo
+                      title={book.title}
+                      author={book.authors[0]}
+                    />
+                  </div>
+                  {isConnected && isBookInLibrary && (
+                    <div className="inline-flex sm:justify-end">
+                      <div className="px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-full">
+                        <span className="text-sm font-semibold text-primary capitalize">
+                          {userBookData?.status}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {isConnected && isBookInLibrary && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      {
+                        status: "À lire" as BookStatus,
+                        icon: Clock,
+                        label: "À lire",
+                      },
+                      {
+                        status: "En cours" as BookStatus,
+                        icon: Clock,
+                        label: "En cours",
+                      },
+                      {
+                        status: "Lu" as BookStatus,
+                        icon: Check,
+                        label: "Lu",
+                      },
+                    ].map(({ status, icon: Icon, label }) => (
+                      <Button
+                        key={status}
+                        variant={
+                          userBookData?.status === status
+                            ? "default"
+                            : "outline"
+                        }
+                        onClick={() => handleChangeStatus(status)}
+                        disabled={isUpdatingStatus}
+                        className="w-full gap-2"
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="hidden sm:inline">{label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                <Separator />
+              </div>
+
+              <div>
+                <BookSummary description={book.description} />
+              </div>
+
+              {!isConnected && (
+                <div className="p-4 bg-muted rounded-lg border border-border">
+                  <p className="text-foreground font-sans text-sm leading-relaxed">
+                    Veuillez{" "}
+                    <button
+                      onClick={() =>
+                        router.navigate({
+                          to: "/login",
+                          search: { redirect: globalThis.location.pathname },
+                        })
+                      }
+                      className="text-primary hover:underline font-semibold"
+                    >
+                      vous connecter
+                    </button>{" "}
+                    pour ajouter ce livre à votre bibliothèque et gérer votre
+                    lecture.
+                  </p>
+                </div>
+              )}
+
+              {isConnected && !isBookInLibrary && (
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Ce livre n'est pas encore dans votre bibliothèque
+                  </p>
+                  <Button
+                    onClick={handleAddToLibrary}
+                    disabled={addBookMutation.isPending}
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    {addBookMutation.isPending
+                      ? "Ajout en cours..."
+                      : "Ajouter à ma bibliothèque"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );
