@@ -8,19 +8,19 @@ const coverFromIsbn = (isbn: string): string =>
 
 // Catégories
 const CATEGORIES = [
-  { name: 'Unknown', isActive: true },
-  { name: 'Horreur', isActive: true },
-  { name: 'Romance', isActive: true },
-  { name: 'Aventure', isActive: true },
-  { name: 'Fantasy', isActive: true },
-  { name: 'Science-Fiction', isActive: true },
-  { name: 'Mystère', isActive: true },
-  { name: 'Thriller', isActive: true },
+  { name: 'unknown', isActive: true },
+  { name: 'horreur', isActive: true },
+  { name: 'romance', isActive: true },
+  { name: 'aventure', isActive: true },
+  { name: 'fantasy', isActive: true },
+  { name: 'science-fiction', isActive: true },
+  { name: 'mystère', isActive: true },
+  { name: 'thriller', isActive: true },
 ];
 
 // Keywords par catégorie (liste complète, tous mots-clés fusionnés)
 const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
-  Horreur: [
+  horreur: [
     'horror',
     'scary',
     'terror',
@@ -344,7 +344,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'apparition',
   ],
 
-  Romance: [
+  romance: [
     'love',
     'romance',
     'passionate',
@@ -594,7 +594,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'transcendent romance',
   ],
 
-  Aventure: [
+  aventure: [
     'adventure',
     'quest',
     'journey',
@@ -856,7 +856,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'crystal island',
   ],
 
-  Fantasy: [
+  fantasy: [
     'fantasy',
     'magic',
     'magical',
@@ -1123,7 +1123,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'gambling with magic',
   ],
 
-  'Science-Fiction': [
+  'science-fiction': [
     'science fiction',
     'sci-fi',
     'futuristic',
@@ -1384,7 +1384,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'dimensional awareness',
   ],
 
-  Mystère: [
+  mystère: [
     'mystery',
     'puzzle',
     'clue',
@@ -1586,7 +1586,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'detailed examination',
   ],
 
-  Thriller: [
+  thriller: [
     'thriller',
     'suspense',
     'suspenseful',
@@ -1835,7 +1835,7 @@ const BOOKS_BY_CATEGORY: Record<
     publishedAt: Date;
   }>
 > = {
-  Horreur: [
+  horreur: [
     {
       name: 'The Shining',
       author: 'Stephen King',
@@ -1909,7 +1909,7 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('2015-06-30'),
     },
   ],
-  Romance: [
+  romance: [
     {
       name: 'Pride and Prejudice',
       author: 'Jane Austen',
@@ -1983,7 +1983,7 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('1847-10-16'),
     },
   ],
-  Aventure: [
+  aventure: [
     {
       name: 'The Adventures of Sherlock Holmes',
       author: 'Arthur Conan Doyle',
@@ -2057,7 +2057,7 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('1719-04-25'),
     },
   ],
-  Fantasy: [
+  fantasy: [
     {
       name: 'The Lord of the Rings: The Fellowship of the Ring',
       author: 'J.R.R. Tolkien',
@@ -2131,7 +2131,7 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('2006-07-17'),
     },
   ],
-  'Science-Fiction': [
+  'science-fiction': [
     {
       name: 'Dune',
       author: 'Frank Herbert',
@@ -2205,7 +2205,7 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('2020-10-06'),
     },
   ],
-  Mystère: [
+  mystère: [
     {
       name: 'The Girl with the Dragon Tattoo',
       author: 'Stieg Larsson',
@@ -2279,7 +2279,7 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('2016-08-02'),
     },
   ],
-  Thriller: [
+  thriller: [
     {
       name: 'The Silence of the Lambs',
       author: 'Thomas Harris',
