@@ -77,19 +77,20 @@ export default function HomePage() {
     content = (
       <>
         <CarouselDisplay
-          title={"Suggestions Aléatoire"}
+          title={"SUGGESTIONS ALEATOIRE"}
           books={(randomBooks || []).map(mapBookRowToDisplay)}
           isLoading={!randomBooks}
         />
 
         {categories.map((categoryTitle) => {
           const categoryKey = categoryTitle.toLowerCase();
+          const title = categoryTitle.toUpperCase();
           const categoryBooks = books[categoryKey] ?? [];
 
           return (
             <CarouselDisplay
               key={categoryTitle}
-              title={categoryTitle}
+              title={title}
               books={categoryBooks.map(mapBookRowToDisplay)}
               isLoading={isFetching}
             />
