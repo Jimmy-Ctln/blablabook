@@ -59,7 +59,7 @@ export default function CarouselDisplay({
             ))
           : books.map((book) => (
               <CarouselItem
-                key={book.key}
+                key={book.id}
                 className="basis-full md:basis-1/3 lg:basis-1/6"
               >
                 <BookCardCarousel book={book} />
