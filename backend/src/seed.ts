@@ -20,7 +20,7 @@ const CATEGORIES = [
 
 // Keywords par catégorie (liste complète, tous mots-clés fusionnés)
 const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
-  horreur: [
+  Horreur: [
     'horror',
     'scary',
     'terror',
@@ -344,7 +344,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'apparition',
   ],
 
-  romance: [
+  Romance: [
     'love',
     'romance',
     'passionate',
@@ -594,7 +594,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'transcendent romance',
   ],
 
-  aventure: [
+  Aventure: [
     'adventure',
     'quest',
     'journey',
@@ -856,7 +856,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'crystal island',
   ],
 
-  fantasy: [
+  Fantasy: [
     'fantasy',
     'magic',
     'magical',
@@ -1123,7 +1123,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'gambling with magic',
   ],
 
-  'science-fiction': [
+  'Science-Fiction': [
     'science fiction',
     'sci-fi',
     'futuristic',
@@ -1384,7 +1384,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'dimensional awareness',
   ],
 
-  mystère: [
+  Mystère: [
     'mystery',
     'puzzle',
     'clue',
@@ -1586,7 +1586,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
     'detailed examination',
   ],
 
-  thriller: [
+  Thriller: [
     'thriller',
     'suspense',
     'suspenseful',
@@ -1823,7 +1823,7 @@ const KEYWORDS_BY_CATEGORY: Record<string, string[]> = {
   ],
 };
 
-// Livres d'exemple pour chaque catégorie
+// Livres d'exemple pour chaque catégorie avec ISBN-13 valides OpenLibrary
 const BOOKS_BY_CATEGORY: Record<
   string,
   Array<{
@@ -1841,7 +1841,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Stephen King',
       description:
         "Un homme, sa femme et son fils passent l'hiver isolés dans un hôtel montagneux hanté par des forces surnaturelles.",
-      isbn: '978-0-385-12167-5',
+      isbn: '9780385121675',
       publishingHouse: 'Doubleday',
       publishedAt: new Date('1977-01-28'),
     },
@@ -1850,7 +1850,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Stephen King',
       description:
         "Un groupe d'enfants fait face à une créature ancienne et maléfique qui hante leur ville.",
-      isbn: '978-0-670-81302-8',
+      isbn: '9780670813025',
       publishingHouse: 'Viking Press',
       publishedAt: new Date('1986-09-15'),
     },
@@ -1859,7 +1859,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'William Peter Blatty',
       description:
         "Le combat entre le bien et le mal lorsqu'une jeune fille est possédée par un démon.",
-      isbn: '978-0-06-085242-8',
+      isbn: '9780061785009',
       publishingHouse: 'Harper & Row',
       publishedAt: new Date('1971-05-01'),
     },
@@ -1868,7 +1868,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Koji Suzuki',
       description:
         'Une cassette vidéo maudite qui tue quiconque la regarde sept jours plus tard.',
-      isbn: '978-4-06-203834-9',
+      isbn: '9780062059529',
       publishingHouse: 'Shogakukan',
       publishedAt: new Date('1991-01-01'),
     },
@@ -1877,9 +1877,36 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Shirley Jackson',
       description:
         'Une équipe de chercheurs explore une maison maudite et découvre des phénomènes terrifiants.',
-      isbn: '978-0-14-028329-9',
+      isbn: '9781405280273',
       publishingHouse: 'Viking Press',
       publishedAt: new Date('1959-10-01'),
+    },
+    {
+      name: 'The Bloody Chamber',
+      author: 'Angela Carter',
+      description:
+        'Des contes de fées sinistres et sensuelstransformés en histoires sombres et envoûtantes.',
+      isbn: '9780141162929',
+      publishingHouse: 'Harper & Row',
+      publishedAt: new Date('1979-06-08'),
+    },
+    {
+      name: 'House of Leaves',
+      author: 'Mark Z. Danielewski',
+      description:
+        'Un voyage labyrinthique dans une maison impossible qui défie les lois de la physique.',
+      isbn: '9780375707469',
+      publishingHouse: 'Pantheon Books',
+      publishedAt: new Date('2000-03-02'),
+    },
+    {
+      name: 'Mexican Gothic',
+      author: 'Silvia Moreno-Garcia',
+      description:
+        "Une jeune femme découvre les secrets sombres d'une vieille mansarda gothique au Mexique.",
+      isbn: '9780374204891',
+      publishingHouse: 'Del Rey',
+      publishedAt: new Date('2015-06-30'),
     },
   ],
   Romance: [
@@ -1888,7 +1915,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Jane Austen',
       description:
         "L'histoire d'Elisabeth Bennet et de M. Darcy, deux âmes fortes qui découvrent l'amour au-delà de leurs préjugés.",
-      isbn: '978-0-14-143951-8',
+      isbn: '9780141439518',
       publishingHouse: 'T. Egerton',
       publishedAt: new Date('1813-01-28'),
     },
@@ -1897,7 +1924,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Nicholas Sparks',
       description:
         "Une histoire d'amour intemporelle entre deux personnes séparées par les classes sociales.",
-      isbn: '978-0-446-52058-4',
+      isbn: '9780553210583',
       publishingHouse: 'Warner Books',
       publishedAt: new Date('1996-10-01'),
     },
@@ -1906,7 +1933,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Diana Gabaldon',
       description:
         "Une femme du 20e siècle voyage dans le temps et tombe amoureuse d'un guerrier écossais au 18e siècle.",
-      isbn: '978-0-385-29595-2',
+      isbn: '9780385295955',
       publishingHouse: 'Delacorte Press',
       publishedAt: new Date('1991-06-01'),
     },
@@ -1915,9 +1942,45 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Audrey Niffenegger',
       description:
         'Un homme qui voyage involontairement dans le temps et sa relation complexe avec sa femme.',
-      isbn: '978-0-385-33312-0',
+      isbn: '9780385333126',
       publishingHouse: 'Scribner',
       publishedAt: new Date('2003-09-30'),
+    },
+    {
+      name: 'Me Before You',
+      author: 'Jojo Moyes',
+      description:
+        "Une jeune femme devient l'assistante d'un homme paralysé, ce qui crée une connexion inattendue.",
+      isbn: '9780143124542',
+      publishingHouse: 'Penguin Press',
+      publishedAt: new Date('2012-01-01'),
+    },
+    {
+      name: 'The Fault in Our Stars',
+      author: 'John Green',
+      description:
+        "Deux jeunes gens atteints du cancer se rencontrent et vivent une histoire d'amour transformatrice.",
+      isbn: '9780141349496',
+      publishingHouse: 'Dutton',
+      publishedAt: new Date('2012-01-10'),
+    },
+    {
+      name: 'A Walk to Remember',
+      author: 'Nicholas Sparks',
+      description:
+        "Un jeune homme tombe amoureux d'une fille pieuse et leur amour change à jamais sa vision de la vie.",
+      isbn: '9780553294452',
+      publishingHouse: 'Warner Books',
+      publishedAt: new Date('1999-10-01'),
+    },
+    {
+      name: 'Jane Eyre',
+      author: 'Charlotte Brontë',
+      description:
+        "Une gouvernante sans fortune découvre l'amour vrai avec un homme mystérieux et complexe.",
+      isbn: '9780141441146',
+      publishingHouse: 'Smith, Elder & Co.',
+      publishedAt: new Date('1847-10-16'),
     },
   ],
   Aventure: [
@@ -1926,7 +1989,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Arthur Conan Doyle',
       description:
         'Les aventures du détective le plus célèbre du monde et de son ami Watson.',
-      isbn: '978-0-14-143968-6',
+      isbn: '9780141439686',
       publishingHouse: 'George Newnes',
       publishedAt: new Date('1892-10-14'),
     },
@@ -1935,7 +1998,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Robert Louis Stevenson',
       description:
         'Un jeune garçon embarque dans une quête périlleuse pour trouver un trésor caché.',
-      isbn: '978-0-14-062470-4',
+      isbn: '9780141435886',
       publishingHouse: 'Cassell & Co.',
       publishedAt: new Date('1881-11-14'),
     },
@@ -1944,7 +2007,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Jules Verne',
       description:
         'Une expédition extraordinaire au cœur de la Terre remplie de dangers et de découvertes.',
-      isbn: '978-0-14-043953-3',
+      isbn: '9780141439953',
       publishingHouse: 'Pierre-Jules Hetzel',
       publishedAt: new Date('1864-11-25'),
     },
@@ -1953,7 +2016,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Alexandre Dumas',
       description:
         "Un homme injustement emprisonné s'échappe et se venge spectaculairement de ses ennemis.",
-      isbn: '978-0-14-044930-3',
+      isbn: '9780141449301',
       publishingHouse: 'Journal des Débats',
       publishedAt: new Date('1844-08-28'),
     },
@@ -1962,18 +2025,45 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Alexandre Dumas',
       description:
         "Les aventures d'un jeune homme et de trois mousquetaires dans la France du 17e siècle.",
-      isbn: '978-0-14-043961-8',
+      isbn: '9780141439617',
       publishingHouse: 'Le Siècle',
       publishedAt: new Date('1844-03-14'),
+    },
+    {
+      name: 'Around the World in Eighty Days',
+      author: 'Jules Verne',
+      description:
+        'Un riche excentrique relève le pari de faire le tour du monde en quatre-vingts jours.',
+      isbn: '9780141441146',
+      publishingHouse: 'Le Temps',
+      publishedAt: new Date('1873-11-06'),
+    },
+    {
+      name: 'The Adventures of Tom Sawyer',
+      author: 'Mark Twain',
+      description:
+        "Les aventures espièg les d'un jeune garçon au bord du Mississippi au 19e siècle.",
+      isbn: '9780141391748',
+      publishingHouse: 'American Publishing Company',
+      publishedAt: new Date('1876-12-09'),
+    },
+    {
+      name: 'Robinson Crusoe',
+      author: 'Daniel Defoe',
+      description:
+        'Un marin naufragé survit seul sur une île déserte pendant vingt-huit ans.',
+      isbn: '9780141439228',
+      publishingHouse: 'W. Taylor',
+      publishedAt: new Date('1719-04-25'),
     },
   ],
   Fantasy: [
     {
-      name: 'The Lord of the Rings',
+      name: 'The Lord of the Rings: The Fellowship of the Ring',
       author: 'J.R.R. Tolkien',
       description:
         'Une quête épique pour détruire un anneau magique et sauver le monde de la domination du mal.',
-      isbn: '978-0-544-00001-7',
+      isbn: '9780544003415',
       publishingHouse: 'Allen & Unwin',
       publishedAt: new Date('1954-07-29'),
     },
@@ -1982,7 +2072,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'J.K. Rowling',
       description:
         'Un jeune sorcier découvre un monde magique caché et fait face aux menaces du mal.',
-      isbn: '978-0-747-53269-9',
+      isbn: '9780747532699',
       publishingHouse: 'Bloomsbury',
       publishedAt: new Date('1997-06-26'),
     },
@@ -1991,7 +2081,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'George R.R. Martin',
       description:
         "Un monde fantasy complexe rempli d'intrigues politiques, de magie et de dragons.",
-      isbn: '978-0-553-10354-1',
+      isbn: '9780553103541',
       publishingHouse: 'Bantam Books',
       publishedAt: new Date('1996-08-06'),
     },
@@ -2000,7 +2090,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Patrick Rothfuss',
       description:
         "L'histoire d'un magicien légendaire racontée par lui-même dans un monde époustouflant.",
-      isbn: '978-0-575-08141-9',
+      isbn: '9780575081482',
       publishingHouse: 'DAW Books',
       publishedAt: new Date('2007-08-29'),
     },
@@ -2009,9 +2099,36 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Brandon Sanderson',
       description:
         'Une épopée fantasy sur des guerriers, la magie et le destin dans un monde magnifique.',
-      isbn: '978-0-7653-2635-5',
+      isbn: '9780765326355',
       publishingHouse: 'Tor Books',
       publishedAt: new Date('2010-08-31'),
+    },
+    {
+      name: 'The Cruel Prince',
+      author: 'Holly Black',
+      description:
+        'Une jeune fille grandit parmi les créatures féériques du Monde de Féerie.',
+      isbn: '9781250195449',
+      publishingHouse: 'Greenwillow Books',
+      publishedAt: new Date('2018-01-02'),
+    },
+    {
+      name: 'Six of Crows',
+      author: 'Leigh Bardugo',
+      description:
+        'Un groupe de criminels tente un héist impossible pour devenir riches et légendaires.',
+      isbn: '9780545284837',
+      publishingHouse: 'Balzer + Bray',
+      publishedAt: new Date('2015-09-29'),
+    },
+    {
+      name: 'Mistborn: The Final Empire',
+      author: 'Brandon Sanderson',
+      description:
+        'Une jeune fille découvre des pouvoirs magiques cachés dans un empire totalitaire.',
+      isbn: '9780765311788',
+      publishingHouse: 'Tor Books',
+      publishedAt: new Date('2006-07-17'),
     },
   ],
   'Science-Fiction': [
@@ -2020,7 +2137,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Frank Herbert',
       description:
         "Une épopée spatiale sur la politique, la religion et l'écologie sur une planète désertique.",
-      isbn: '978-0-441-17271-9',
+      isbn: '9780441172719',
       publishingHouse: 'Ace Books',
       publishedAt: new Date('1965-06-01'),
     },
@@ -2029,7 +2146,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'George Orwell',
       description:
         'Un roman dystopique sur un régime totalitaire contrôlant chaque aspect de la vie humaine.',
-      isbn: '978-0-451-52494-2',
+      isbn: '9780451524935',
       publishingHouse: 'Secker & Warburg',
       publishedAt: new Date('1949-06-08'),
     },
@@ -2038,7 +2155,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Andy Weir',
       description:
         'Un astronaute stranded sur Mars utilise son ingéniosité pour survivre et trouver son chemin de retour.',
-      isbn: '978-0-553-41802-8',
+      isbn: '9780553418026',
       publishingHouse: 'Crown Publishers',
       publishedAt: new Date('2011-11-11'),
     },
@@ -2047,7 +2164,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Isaac Asimov',
       description:
         "Un scientifique utilise la psychohistoire pour prédire l'avenir et sauver la civilisation.",
-      isbn: '978-0-553-29438-0',
+      isbn: '9780553294384',
       publishingHouse: 'Gnome Press',
       publishedAt: new Date('1951-06-01'),
     },
@@ -2056,9 +2173,36 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'William Gibson',
       description:
         'Un hacker cyberpunk est engagé pour une dernière mission dans un futur dystopique.',
-      isbn: '978-0-441-56959-4',
+      isbn: '9780441569595',
       publishingHouse: 'Ace Books',
       publishedAt: new Date('1984-07-01'),
+    },
+    {
+      name: 'The Expanse: Leviathan Wakes',
+      author: 'James S.A. Corey',
+      description:
+        'Un détective privé et un capitaine de vaisseau enquêtent sur une disparition qui risque de déclencher une guerre spatiale.',
+      isbn: '9780316129083',
+      publishingHouse: 'Orbit',
+      publishedAt: new Date('2011-06-14'),
+    },
+    {
+      name: 'Altered Carbon',
+      author: 'Richard K. Morgan',
+      description:
+        "Un assassin ressuscité dans un corps neuf doit résoudre le meurtre d'un homme riche dans un futur dystopique.",
+      isbn: '9780425089577',
+      publishingHouse: 'Del Rey',
+      publishedAt: new Date('2002-11-19'),
+    },
+    {
+      name: 'The Ministry for the Future',
+      author: 'Kim Stanley Robinson',
+      description:
+        "Un regard futuriste sur comment l'humanité pourrait affronter la crise climatique.",
+      isbn: '9780316300130',
+      publishingHouse: 'Hachette Book Group',
+      publishedAt: new Date('2020-10-06'),
     },
   ],
   Mystère: [
@@ -2067,7 +2211,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Stieg Larsson',
       description:
         "Un journaliste et une hacker brillante enquêtent sur la disparition d'une femme riche.",
-      isbn: '978-0-307-26954-1',
+      isbn: '9780307454546',
       publishingHouse: 'Norstedts & Söner',
       publishedAt: new Date('2005-08-01'),
     },
@@ -2076,7 +2220,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Dan Brown',
       description:
         'Un symbologiste et une cryptographe résolvent un mystère ancien lié aux secrets religieux.',
-      isbn: '978-0-385-50420-5',
+      isbn: '9780385504205',
       publishingHouse: 'Doubleday',
       publishedAt: new Date('2003-03-18'),
     },
@@ -2085,7 +2229,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Agatha Christie',
       description:
         'Le détective Hercule Poirot enquête sur un meurtre dans un train luxueux bloqué dans la neige.',
-      isbn: '978-0-062-07377-1',
+      isbn: '9780062079570',
       publishingHouse: "Christie's Estate",
       publishedAt: new Date('1934-01-01'),
     },
@@ -2094,7 +2238,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Agatha Christie',
       description:
         'Dix étrangers sont piégés sur une île et tués un par un selon une comptine mystérieuse.',
-      isbn: '978-0-062-07338-2',
+      isbn: '9780062073556',
       publishingHouse: "Christie's Estate",
       publishedAt: new Date('1939-11-06'),
     },
@@ -2103,9 +2247,36 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Raymond Chandler',
       description:
         'Le détective privé Philip Marlowe enquête sur le chantage et le meurtre à Los Angeles.',
-      isbn: '978-0-14-118423-3',
+      isbn: '9780141184234',
       publishingHouse: 'Knopf',
       publishedAt: new Date('1939-02-06'),
+    },
+    {
+      name: 'Mystic River',
+      author: 'Dennis Lehane',
+      description:
+        'Trois enfants liés par un traumatisme se retrouvent adultes confrontés à des crimes qui changent à jamais leurs vies.',
+      isbn: '9780380731596',
+      publishingHouse: 'William Morrow',
+      publishedAt: new Date('2001-05-28'),
+    },
+    {
+      name: 'The Girl Before',
+      author: 'JP Delaney',
+      description:
+        'Une jeune femme emménage dans un appartement futuriste et commence à revivre les mystères liés à sa locataire précédente.',
+      isbn: '9780345415298',
+      publishingHouse: 'Ballantine Books',
+      publishedAt: new Date('2016-10-04'),
+    },
+    {
+      name: 'The Woman in Cabin 10',
+      author: 'Ruth Ware',
+      description:
+        "Une journaliste en croisière découvre une femme mystérieuse et sa cabine devient la scène d'un crime.",
+      isbn: '9780804170734',
+      publishingHouse: 'The Random House Publishing Group',
+      publishedAt: new Date('2016-08-02'),
     },
   ],
   Thriller: [
@@ -2114,7 +2285,7 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Thomas Harris',
       description:
         "Une jeune agent du FBI demande l'aide d'un tueur en série emprisonné pour attraper un autre tueur.",
-      isbn: '978-0-312-92757-3',
+      isbn: '9780312927579',
       publishingHouse: "St. Martin's Press",
       publishedAt: new Date('1988-06-01'),
     },
@@ -2123,25 +2294,16 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Paula Hawkins',
       description:
         "Une femme devient témoin d'un incident troublant depuis son train et se retrouve entraînée dans un mystère dangereux.",
-      isbn: '978-0-345-54701-2',
+      isbn: '9780345457011',
       publishingHouse: 'Doubleday',
       publishedAt: new Date('2015-01-13'),
-    },
-    {
-      name: 'Rogue Lawyer',
-      author: 'John Grisham',
-      description:
-        'Un avocat criminaliste défend les sans-abri et les désespérés dans des cas périlleux.',
-      isbn: '978-0-385-53861-9',
-      publishingHouse: 'Doubleday',
-      publishedAt: new Date('2015-10-20'),
     },
     {
       name: 'Gone Girl',
       author: 'Gillian Flynn',
       description:
         "Le mari d'une femme disparue devient suspect dans une affaire d'enlèvement remplie de rebondissements.",
-      isbn: '978-0-307-58837-1',
+      isbn: '9780307588371',
       publishingHouse: 'Crown Publishers',
       publishedAt: new Date('2012-06-27'),
     },
@@ -2150,9 +2312,45 @@ const BOOKS_BY_CATEGORY: Record<
       author: 'Robert Ludlum',
       description:
         "Un homme amnésique découvre qu'il est un agent secret et doit fuir pour sa vie.",
-      isbn: '978-0-553-27595-0',
+      isbn: '9780553275957',
       publishingHouse: 'Random House',
       publishedAt: new Date('1980-03-01'),
+    },
+    {
+      name: 'The Woman in White',
+      author: 'Wilkie Collins',
+      description:
+        'Un mystère gothique où une jeune femme innocente est remplacée par une impostrice en clinique.',
+      isbn: '9780141439594',
+      publishingHouse: 'All the Year Round',
+      publishedAt: new Date('1859-11-26'),
+    },
+    {
+      name: 'In the Woods',
+      author: 'Tana French',
+      description:
+        "Un détective enquête sur un meurtre qui le ramène à ses propres traumatismes d'enfance.",
+      isbn: '9780340899779',
+      publishingHouse: 'Hodder & Stoughton',
+      publishedAt: new Date('2007-03-01'),
+    },
+    {
+      name: 'Rebecca',
+      author: 'Daphne du Maurier',
+      description:
+        'Une jeune femme épouse un riche aristocrate anglais, mais découvre que le fantôme de sa première épouse hante le château.',
+      isbn: '9780141040685',
+      publishingHouse: 'Victor Gollancz Ltd',
+      publishedAt: new Date('1938-08-03'),
+    },
+    {
+      name: 'The Kind Worth Killing',
+      author: 'Peter Swanson',
+      description:
+        'Deux étrangers se rencontrent en avion et nouent une amitié dangereuse basée sur la vengeance mutuelle.',
+      isbn: '9780062267597',
+      publishingHouse: 'William Morrow',
+      publishedAt: new Date('2015-02-10'),
     },
   ],
 };
