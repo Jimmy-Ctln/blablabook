@@ -101,9 +101,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex-col w-full mx-auto">
+    <div className="w-full">
       <Hero />
-      <div className="absolute w-full bg-card">{content}</div>
+      <div className="relative z-20 -mt-20 md:-mt-16 lg:-mt-20 container mx-auto px-4 sm:px-6 md:px-8">
+        {content}
+      </div>
     </div>
   );
 }
