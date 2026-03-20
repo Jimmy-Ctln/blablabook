@@ -16,13 +16,17 @@ export function NavMain({
     url: string;
     icon: LucideIcon;
     isActive?: boolean;
+    visible?: boolean;
   }[];
   onItemClick?: () => void;
 }) {
   return (
     <SidebarMenu>
       {items.map((item) => (
-        <SidebarMenuItem key={item.title} className="text-foreground">
+        <SidebarMenuItem
+          key={item.title}
+          className={`text-foreground ${item.visible === false ? "hidden" : ""}`}
+        >
           <SidebarMenuButton
             className={`hover:bg-primary ${item.isActive ?? "hover:bg-primary"}`}
             asChild
