@@ -10,8 +10,8 @@ import { DrizzleModule } from './db/drizzle.module';
 @Module({
   imports: [
     DrizzleModule.forRoot({
-    // Inject the connection string from environment variables.
-    // The DrizzleModule will handle validation during the application bootstrap.
+      // Inject the connection string from environment variables.
+      // The DrizzleModule will handle validation during the application bootstrap.
       connectionString: process.env.DATABASE_URL as string,
     }),
     AuthModule,
