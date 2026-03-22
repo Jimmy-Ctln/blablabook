@@ -39,8 +39,8 @@ export default function Header() {
                 >
                   <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-transparent hover:border-primary transition-all">
                     <AvatarImage
-                      key={user.avatar}
-                      src={user.avatar ? `${user.avatar}` : undefined}
+                      key={user.avatar_url}
+                      src={user.avatar_url ? `${user.avatar_url}` : undefined}
                       alt={`Avatar de ${user.username || "X"}`}
                     />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm font-semibold">

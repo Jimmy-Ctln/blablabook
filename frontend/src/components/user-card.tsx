@@ -28,9 +28,9 @@ export default function UserCardButton(
         >
           <div className="flex items-center gap-3 w-full">
             <Avatar className="w-10 h-10 border-2 border-primary/20 hover:border-primary transition-all">
-              {user.avatar ? (
+              {user.avatar_url ? (
                 <AvatarImage
-                  src={`${user.avatar}`}
+                  src={`${user.avatar_url}`}
                   alt={`Avatar de ${user.username ?? "X"}`}
                 />
               ) : (
