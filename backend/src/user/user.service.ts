@@ -129,4 +129,45 @@ export class UserService {
       excludeExtraneousValues: true,
     });
   }
+
+  async changePassword(
+    id: number,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const [userRow] = await db
+      .select()
+      .from(user)
+      .where(and(eq(user.id, id), isNull(user.deletedAt)))
+      .limit(1);
+
+    if (!userRow) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    // Verify current password
+    const isPasswordValid = await argon2.verify(
+      userRow.password,
+      currentPassword,
+    );
+    if (!isPasswordValid) {
+      throw new UnprocessableEntityException('Current password is incorrect');
+    }
+
+    // Hash new password and update
+    const hashedNewPassword = await argon2.hash(newPassword);
+    const [updatedUser] = await db
+      .update(user)
+      .set({ password: hashedNewPassword })
+      .where(eq(user.id, id))
+      .returning();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    return {
+      message: 'Password changed successfully',
+    };
+  }
 }
