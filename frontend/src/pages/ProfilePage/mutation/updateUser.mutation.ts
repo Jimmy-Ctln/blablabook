@@ -4,13 +4,16 @@ import { useAuthStore } from "@/stores/authStore";
 
 export const useUpdateUser = (
   userId: number,
-  options?: { onSuccess?: (data: UserProps) => void },
+  options?: {
+    onSuccess?: (data: UserProps) => void;
+    onError?: (error: any) => void;
+  },
 ) => {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
 
   return useMutation({
-    mutationFn: (updatedData: UserProps) =>
+    mutationFn: (updatedData: Partial<UserProps>) =>
       api.patch(`/user/${userId}`, updatedData),
     onSuccess: (response) => {
       const backendData = response.data;
@@ -20,6 +23,7 @@ export const useUpdateUser = (
     },
     onError: (error) => {
       console.error(error);
+      options?.onError?.(error);
     },
   });
 };
