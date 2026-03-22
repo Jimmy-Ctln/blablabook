@@ -170,7 +170,7 @@ export class BooksService {
       let existingBook = found[0];
 
       if (!existingBook) {
-        const normalizedCategories = (createBookDto.categories ?? [])
+        const normalizedSubjects = (createBookDto.categories ?? [])
           .map((c) => c.trim())
           .filter((c) => c.length > 0);
 
@@ -179,7 +179,7 @@ export class BooksService {
           .from(keyword)
           .innerJoin(category, eq(category.id, keyword.categoryId))
           .where(
-            sql`${keyword.name} ILIKE ANY(string_to_array(${normalizedCategories.join(' ')}, ' '))`,
+            sql`'%' || ${keyword.name} || '%' ILIKE ${normalizedSubjects.join(' ')}`,
           )
           .groupBy(category.id)
           .orderBy(desc(count(keyword.id)))
