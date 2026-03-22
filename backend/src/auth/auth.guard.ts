@@ -110,7 +110,7 @@ export class AuthGuard implements CanActivate {
         if (!tokens.refreshTokenCookie)
           console.error('refresh cookie is missing on the request');
       }
-      throw new UnauthorizedException('no tokens found');
+      throw new UnauthorizedException('No token found');
     }
     return true;
   }
