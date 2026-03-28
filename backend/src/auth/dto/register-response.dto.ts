@@ -32,7 +32,7 @@ export class RegisterResponseDto {
     example: 'https://image_url.com/image_89.jepg',
   })
   @Expose()
-  image: string | null;
+  avatar_url: string | null;
 
   @Exclude()
   password: string;
