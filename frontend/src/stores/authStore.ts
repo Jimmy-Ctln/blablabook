@@ -9,6 +9,7 @@ interface AuthStoreProps {
   login: (user: UserProps) => void;
   logout: () => void;
   updateUser: (user: UserProps) => void;
+  clearAuth: () => void;
 }
 
 export const useAuthStore = create<AuthStoreProps>()(
@@ -39,6 +40,10 @@ export const useAuthStore = create<AuthStoreProps>()(
       },
       updateUser: (updatedData: Partial<UserProps>) => {
         set({ user: updatedData as UserProps });
+      },
+      clearAuth: () => {
+        set({ user: null, isAuthenticated: false });
+        localStorage.removeItem("auth_storage");
       },
     }),
     {
