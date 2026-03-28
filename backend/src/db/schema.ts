@@ -119,9 +119,9 @@ export const review = pgTable('review', {
 
 export const refreshToken = pgTable('refresh_token', {
   id: serial().primaryKey(),
-  token: varchar().notNull().unique(),
+  refresh_token: varchar().notNull().unique(),
   createdAt: timestamp().defaultNow().notNull(),
-  // expiresAt: timestamp('expires_at').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
   userId: integer('user_id')
     .references(() => user.id, { onDelete: 'cascade' })
     .notNull(),
