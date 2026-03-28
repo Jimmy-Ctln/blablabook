@@ -86,4 +86,19 @@ export class AuthService {
       console.warn('refresh token not found in the db');
     }
   }
+
+  async refreshUserSession(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('No refresh token found');
+    }
+
+    try {
+      // Rotate tokens (generate new JWT and refresh token)
+      const rotatedTokens = await this.tokenService.rotateTokens(refreshToken);
+      return rotatedTokens;
+    } catch (error) {
+      console.error('Refresh token rotation failed:', error);
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
 }
