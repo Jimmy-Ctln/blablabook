@@ -9,6 +9,7 @@ import {
   Req,
   BadRequestException,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -49,20 +50,42 @@ export class UserController {
     );
   }
 
+  @UseGuards(AuthGuard)
   @Get(':id')
   @ApiResponse({ status: 200, type: UpdateUserResponseDto })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findById(@Param('id', ParseIntPipe) id: number) {
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async findById(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: Request,
+  ) {
+    const userId = request['user']?.sub;
+    if (!userId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (userId !== id) {
+      throw new ForbiddenException('You can only access your own profile');
+    }
     return this.userService.findById(id);
   }
 
+  @UseGuards(AuthGuard)
   @Patch(':id')
   @ApiResponse({ status: 200, type: UpdateUserResponseDto })
   @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateUserRequestDto,
+    @Req() request: Request,
   ) {
+    const userId = request['user']?.sub;
+    if (!userId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (userId !== id) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
     const updatedUser = await this.userService.update(id, body);
     return {
       message: 'User updated successfully',
@@ -70,6 +93,7 @@ export class UserController {
     };
   }
 
+  @UseGuards(AuthGuard)
   @Delete()
   @ApiResponse({
     status: 200,
