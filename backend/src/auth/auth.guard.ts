@@ -4,31 +4,24 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService, TokenExpiredError } from '@nestjs/jwt';
-import { Request, Response } from 'express';
-import { TokenService } from '../security/token/token.service';
+import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 import { TokenExtractorData } from './types';
-import { JwtPayload, RotateTokensData } from 'src/security/token/types';
-import { CookieService } from '../security/cookie/cookie.service';
+import { JwtPayload } from 'src/security/token/types';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    private jwtService: JwtService,
-    private tokenService: TokenService,
-    private cookieService: CookieService,
-  ) {}
+  constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>(); // alow get objet request
-    const response = context.switchToHttp().getResponse<Response>(); // allow add cookie if refresh need on response
+    const request = context.switchToHttp().getRequest<Request>();
 
-    const tokens: TokenExtractorData = this.extractTokenFromCookie(request); // get cookie from request
+    const tokens: TokenExtractorData = this.extractTokenFromCookie(request);
 
-    this.checkCookie(tokens);
+    this.checkJwtCookie(tokens);
 
     try {
-      // check jwt token success
+      // Verify JWT token (signature and expiration)
       const payload: JwtPayload = await this.jwtService.verifyAsync(
         tokens.jwtCookie || '',
         {
@@ -40,50 +33,7 @@ export class AuthGuard implements CanActivate {
       request['refresh_token'] = tokens.refreshTokenCookie;
       return true;
     } catch (error) {
-      // if expiration jwtToken and refreshToken is valid
-      if (error instanceof TokenExpiredError && tokens.refreshTokenCookie) {
-        // generate cookie config
-        const cookieConfig = this.cookieService.generateCookiesConfig();
-        // refresh tokens (jwt and refresh)
-        try {
-          console.log('JWT expired. Attempting auto refresh ...');
-          // we refresh tokens
-          const rotateToken: RotateTokensData =
-            await this.tokenService.rotateTokens(tokens.refreshTokenCookie);
-
-          // update cookie on the response
-          response.cookie(
-            'jwt_cookie',
-            rotateToken.newJwtToken,
-            cookieConfig.jwtCookieConfig,
-          );
-          response.cookie(
-            'refresh_cookie',
-            rotateToken.newRefreshToken,
-            cookieConfig.refreshCookieConfig,
-          );
-
-          // update request with new cookies
-          request['user'] = rotateToken.user;
-          request['refresh_token'] = rotateToken.newRefreshToken;
-
-          console.log('auto-refresh successful.');
-          return true;
-        } catch (refreshError) {
-          // if refresh failed
-          console.error('Auto-refresh failed: ', refreshError);
-          // clean cookie
-          response.clearCookie('jwt_cookie', cookieConfig.jwtCookieConfig);
-          response.clearCookie(
-            'refresh_token',
-            cookieConfig.refreshCookieConfig,
-          );
-          throw new UnauthorizedException(
-            'Session expired, please login again',
-          );
-        }
-      }
-
+      // JWT validation failed (invalid signature or expired)
       throw new UnauthorizedException();
     }
   }
@@ -102,13 +52,10 @@ export class AuthGuard implements CanActivate {
     };
   }
 
-  private checkCookie(tokens: TokenExtractorData): boolean {
-    if (!tokens.jwtCookie || !tokens.refreshTokenCookie) {
+  private checkJwtCookie(tokens: TokenExtractorData): boolean {
+    if (!tokens.jwtCookie) {
       if (process.env.NODE_ENV === 'dev') {
-        if (!tokens.jwtCookie)
-          console.error('jwt cookie is missing on the request');
-        if (!tokens.refreshTokenCookie)
-          console.error('refresh cookie is missing on the request');
+        console.error('JWT cookie is missing on the request');
       }
       throw new UnauthorizedException('No token found');
     }
