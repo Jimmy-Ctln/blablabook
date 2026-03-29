@@ -1,0 +1,266 @@
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
+
+interface CookieConsent {
+  essential: boolean;
+  marketing: boolean;
+  analytics: boolean;
+  timestamp: number;
+}
+
+export default function CookieConsent() {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 13 months in milliseconds (CNIL 2020-062 directive)
+  const CONSENT_EXPIRATION_MS = 13 * 30 * 24 * 60 * 60 * 1000;
+
+  useEffect(() => {
+    // Check if user has already given consent
+    const storedConsent = localStorage.getItem("cookieConsent");
+
+    if (!storedConsent) {
+      // No consent found - show banner
+      setIsVisible(true);
+    } else {
+      // Consent found - check if expired
+      try {
+        const consent: CookieConsent = JSON.parse(storedConsent);
+        const consentAge = Date.now() - consent.timestamp;
+
+        if (consentAge > CONSENT_EXPIRATION_MS) {
+          // Consent expired (13 months passed) - remove and show banner again
+          console.log(
+            "🍪 Cookie consent expired (13 months) - requesting new consent",
+          );
+          localStorage.removeItem("cookieConsent");
+          setIsVisible(true);
+        }
+        // Consent still valid - do nothing (banner stays hidden)
+      } catch (error) {
+        // Invalid JSON - remove and show banner
+        console.error("❌ Invalid cookie consent data:", error);
+        localStorage.removeItem("cookieConsent");
+        setIsVisible(true);
+      }
+    }
+  }, []);
+
+  const handleAcceptAll = () => {
+    const consent: CookieConsent = {
+      essential: true,
+      marketing: true,
+      analytics: true,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("cookieConsent", JSON.stringify(consent));
+    setIsVisible(false);
+  };
+
+  const handleRejectAll = () => {
+    const consent: CookieConsent = {
+      essential: true, // Essential cookies are always needed
+      marketing: false,
+      analytics: false,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("cookieConsent", JSON.stringify(consent));
+    setIsVisible(false);
+  };
+
+  const handleSavePreferences = () => {
+    const acceptMarketing = (
+      document.getElementById("marketing-checkbox") as HTMLInputElement
+    )?.checked;
+    const acceptAnalytics = (
+      document.getElementById("analytics-checkbox") as HTMLInputElement
+    )?.checked;
+
+    const consent: CookieConsent = {
+      essential: true,
+      marketing: acceptMarketing,
+      analytics: acceptAnalytics,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("cookieConsent", JSON.stringify(consent));
+    setIsVisible(false);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-4">
+        {/* Collapsed View */}
+        {!isExpanded && (
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="font-bold mb-2">Préférences de Cookies</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Nous utilisons des cookies pour améliorer votre expérience. Vous
+                pouvez accepter tous les cookies ou{" "}
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="text-primary hover:underline font-bold"
+                >
+                  personnaliser
+                </button>{" "}
+                vos préférences.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsVisible(false)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Fermer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Expanded View */}
+        {isExpanded && (
+          <div>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h3 className="font-bold text-lg">
+                Gérer vos préférences de cookies
+              </h3>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              {/* Essential Cookies */}
+              <div className="border rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="essential-checkbox"
+                    checked={true}
+                    disabled
+                    className="w-4 h-4"
+                  />
+                  <div>
+                    <label
+                      htmlFor="essential-checkbox"
+                      className="font-bold block"
+                    >
+                      Cookies Essentiels
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Nécessaires pour le fonctionnement du site
+                      (authentification, sessions)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Marketing Cookies */}
+              <div className="border rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="marketing-checkbox"
+                    defaultChecked={false}
+                    className="w-4 h-4"
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="marketing-checkbox"
+                      className="font-bold block"
+                    >
+                      Cookies Marketing
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Nous aident à vous montrer des contenus pertinents
+                      (optionnel)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Analytics Cookies */}
+              <div className="border rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="analytics-checkbox"
+                    defaultChecked={false}
+                    className="w-4 h-4"
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="analytics-checkbox"
+                      className="font-bold block"
+                    >
+                      Cookies Analytics
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Nous permettent de comprendre comment vous utilisez
+                      Blablabook (optionnel)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mb-4">
+              Pour plus d'informations, consultez notre{" "}
+              <Link to="/privacy" className="text-primary hover:underline">
+                Politique de Confidentialité
+              </Link>
+              .
+            </p>
+          </div>
+        )}
+
+        {/* Buttons */}
+        <div className="flex gap-2 flex-wrap mt-4">
+          {!isExpanded ? (
+            <>
+              <Button
+                onClick={handleAcceptAll}
+                size="sm"
+                className="flex-1 sm:flex-none"
+              >
+                Accepter tout
+              </Button>
+              <Button
+                onClick={handleRejectAll}
+                variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none"
+              >
+                Refuser
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleSavePreferences}
+                size="sm"
+                className="flex-1 sm:flex-none"
+              >
+                Enregistrer les préférences
+              </Button>
+              <Button
+                onClick={handleAcceptAll}
+                variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none"
+              >
+                Accepter tout
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
