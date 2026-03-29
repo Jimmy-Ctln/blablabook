@@ -5,15 +5,25 @@ import {
 } from '@nestjs/common';
 import { JwtPayload, RotateTokensData, TokenInsert } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { TokenRepository } from './token.respository';
 
 @Injectable()
 export class TokenService {
+  private readonly jwtSecret: string;
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly tokenRespository: TokenRepository,
-  ) {}
+  ) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new InternalServerErrorException(
+        'JWT_SECRET is not defined in environment variables',
+      );
+    }
+    this.jwtSecret = secret;
+  }
 
   async generateJWTToken(userId: number, userRole: string) {
     const payload: JwtPayload = {
@@ -41,12 +51,17 @@ export class TokenService {
     const tokenValue = randomBytes(32).toString('hex');
 
     // hash token for store in db
-    const hashedRefreshToken = createHash('sha256')
+    const hashedRefreshToken = createHmac('sha256', this.jwtSecret)
       .update(tokenValue)
       .digest('hex');
 
+    // Calculate expiration date (30 days from now)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
     const tokenData: TokenInsert = {
-      token: hashedRefreshToken,
+      refresh_token: hashedRefreshToken,
+      expiresAt,
       userId,
     };
 
@@ -71,7 +86,13 @@ export class TokenService {
       await this.tokenRespository.getUserByRefreshToken(hashedToken);
     //check if token is find in DB
     if (!userFromDb || !userFromDb.user) {
-      throw new UnauthorizedException('invalide refresh token');
+      throw new UnauthorizedException('invalid refresh token');
+    }
+
+    // Check if refresh token has expired
+    const now = new Date();
+    if (userFromDb.refresh_token.expiresAt < now) {
+      throw new UnauthorizedException('Refresh token has expired');
     }
 
     const user: JwtPayload = {
@@ -103,13 +124,13 @@ export class TokenService {
       user,
     };
   }
-
+  hashRefreshToken(refreshToken: string): string {
+    return createHmac('sha256', this.jwtSecret)
+      .update(refreshToken)
+      .digest('hex');
+  }
   async destroyToken(refreshToken: string): Promise<boolean> {
     const hashedToken = this.hashRefreshToken(refreshToken);
     return await this.tokenRespository.destroyRefreshToken(hashedToken);
-  }
-
-  hashRefreshToken(refreshToken: string): string {
-    return createHash('sha256').update(refreshToken).digest('hex');
   }
 }

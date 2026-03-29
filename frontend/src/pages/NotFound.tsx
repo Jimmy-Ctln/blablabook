@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center mt-6 md:mt-10 min-h-[60vh] text-center px-4">
+    <div className="flex flex-col items-center mt-6 md:mt-32 min-h-[60vh] text-center px-4 text-foreground">
       <Book className="w-14 h-14 md:w-16 md:h-16 mb-4" aria-hidden="true" />
       <h1 className="text-2xl md:text-4xl font-bold mb-2">
         Oups, page introuvable!

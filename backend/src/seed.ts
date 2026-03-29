@@ -1,175 +1,682 @@
 import { db } from './db';
-import { book, bookCategory, category } from './db/schema';
+import { category, keyword, book } from './db/schema';
+import { eq } from 'drizzle-orm';
+import KEYWORDS_BY_CATEGORY from './keywords.json';
+
+// Compute OpenLibrary cover URL from ISBN (guaranteed to match the correct book)
+const coverFromIsbn = (isbn: string): string =>
+  `https://covers.openlibrary.org/b/isbn/${isbn.replace(/-/g, '')}-L.jpg`;
+
+// Catégories
+const CATEGORIES = [
+  { name: 'unknown', isActive: true },
+  { name: 'horreur', isActive: true },
+  { name: 'romance', isActive: true },
+  { name: 'aventure', isActive: true },
+  { name: 'fantasy', isActive: true },
+  { name: 'science-fiction', isActive: true },
+  { name: 'mystère', isActive: true },
+  { name: 'thriller', isActive: true },
+];
+
+// Livres d'exemple pour chaque catégorie avec ISBN-13 valides OpenLibrary
+const BOOKS_BY_CATEGORY: Record<
+  string,
+  Array<{
+    name: string;
+    author: string;
+    description: string;
+    isbn: string;
+    publishingHouse: string;
+    publishedAt: Date;
+  }>
+> = {
+  horreur: [
+    {
+      name: 'The Shining',
+      author: 'Stephen King',
+      description:
+        "Un homme, sa femme et son fils passent l'hiver isolés dans un hôtel montagneux hanté par des forces surnaturelles.",
+      isbn: '9780385121675',
+      publishingHouse: 'Doubleday',
+      publishedAt: new Date('1977-01-28'),
+    },
+    {
+      name: 'It',
+      author: 'Stephen King',
+      description:
+        "Un groupe d'enfants fait face à une créature ancienne et maléfique qui hante leur ville.",
+      isbn: '9780670813025',
+      publishingHouse: 'Viking Press',
+      publishedAt: new Date('1986-09-15'),
+    },
+    {
+      name: 'The Exorcist',
+      author: 'William Peter Blatty',
+      description:
+        "Le combat entre le bien et le mal lorsqu'une jeune fille est possédée par un démon.",
+      isbn: '9780061785009',
+      publishingHouse: 'Harper & Row',
+      publishedAt: new Date('1971-05-01'),
+    },
+    {
+      name: 'The Ring',
+      author: 'Koji Suzuki',
+      description:
+        'Une cassette vidéo maudite qui tue quiconque la regarde sept jours plus tard.',
+      isbn: '9780062059529',
+      publishingHouse: 'Shogakukan',
+      publishedAt: new Date('1991-01-01'),
+    },
+    {
+      name: 'The Haunting of Hill House',
+      author: 'Shirley Jackson',
+      description:
+        'Une équipe de chercheurs explore une maison maudite et découvre des phénomènes terrifiants.',
+      isbn: '9781405280273',
+      publishingHouse: 'Viking Press',
+      publishedAt: new Date('1959-10-01'),
+    },
+    {
+      name: 'The Bloody Chamber',
+      author: 'Angela Carter',
+      description:
+        'Des contes de fées sinistres et sensuelstransformés en histoires sombres et envoûtantes.',
+      isbn: '9780141162929',
+      publishingHouse: 'Harper & Row',
+      publishedAt: new Date('1979-06-08'),
+    },
+    {
+      name: 'House of Leaves',
+      author: 'Mark Z. Danielewski',
+      description:
+        'Un voyage labyrinthique dans une maison impossible qui défie les lois de la physique.',
+      isbn: '9780375707469',
+      publishingHouse: 'Pantheon Books',
+      publishedAt: new Date('2000-03-02'),
+    },
+    {
+      name: 'Mexican Gothic',
+      author: 'Silvia Moreno-Garcia',
+      description:
+        "Une jeune femme découvre les secrets sombres d'une vieille mansarda gothique au Mexique.",
+      isbn: '9780374204891',
+      publishingHouse: 'Del Rey',
+      publishedAt: new Date('2015-06-30'),
+    },
+  ],
+  romance: [
+    {
+      name: 'Pride and Prejudice',
+      author: 'Jane Austen',
+      description:
+        "L'histoire d'Elisabeth Bennet et de M. Darcy, deux âmes fortes qui découvrent l'amour au-delà de leurs préjugés.",
+      isbn: '9780141439518',
+      publishingHouse: 'T. Egerton',
+      publishedAt: new Date('1813-01-28'),
+    },
+    {
+      name: 'The Notebook',
+      author: 'Nicholas Sparks',
+      description:
+        "Une histoire d'amour intemporelle entre deux personnes séparées par les classes sociales.",
+      isbn: '9780553210583',
+      publishingHouse: 'Warner Books',
+      publishedAt: new Date('1996-10-01'),
+    },
+    {
+      name: 'Outlander',
+      author: 'Diana Gabaldon',
+      description:
+        "Une femme du 20e siècle voyage dans le temps et tombe amoureuse d'un guerrier écossais au 18e siècle.",
+      isbn: '9780385295955',
+      publishingHouse: 'Delacorte Press',
+      publishedAt: new Date('1991-06-01'),
+    },
+    {
+      name: "The Time Traveler's Wife",
+      author: 'Audrey Niffenegger',
+      description:
+        'Un homme qui voyage involontairement dans le temps et sa relation complexe avec sa femme.',
+      isbn: '9780385333126',
+      publishingHouse: 'Scribner',
+      publishedAt: new Date('2003-09-30'),
+    },
+    {
+      name: 'Me Before You',
+      author: 'Jojo Moyes',
+      description:
+        "Une jeune femme devient l'assistante d'un homme paralysé, ce qui crée une connexion inattendue.",
+      isbn: '9780143124542',
+      publishingHouse: 'Penguin Press',
+      publishedAt: new Date('2012-01-01'),
+    },
+    {
+      name: 'The Fault in Our Stars',
+      author: 'John Green',
+      description:
+        "Deux jeunes gens atteints du cancer se rencontrent et vivent une histoire d'amour transformatrice.",
+      isbn: '9780141349496',
+      publishingHouse: 'Dutton',
+      publishedAt: new Date('2012-01-10'),
+    },
+    {
+      name: 'A Walk to Remember',
+      author: 'Nicholas Sparks',
+      description:
+        "Un jeune homme tombe amoureux d'une fille pieuse et leur amour change à jamais sa vision de la vie.",
+      isbn: '9780553294452',
+      publishingHouse: 'Warner Books',
+      publishedAt: new Date('1999-10-01'),
+    },
+    {
+      name: 'Jane Eyre',
+      author: 'Charlotte Brontë',
+      description:
+        "Une gouvernante sans fortune découvre l'amour vrai avec un homme mystérieux et complexe.",
+      isbn: '9780141441146',
+      publishingHouse: 'Smith, Elder & Co.',
+      publishedAt: new Date('1847-10-16'),
+    },
+  ],
+  aventure: [
+    {
+      name: 'The Adventures of Sherlock Holmes',
+      author: 'Arthur Conan Doyle',
+      description:
+        'Les aventures du détective le plus célèbre du monde et de son ami Watson.',
+      isbn: '9780141439686',
+      publishingHouse: 'George Newnes',
+      publishedAt: new Date('1892-10-14'),
+    },
+    {
+      name: 'Treasure Island',
+      author: 'Robert Louis Stevenson',
+      description:
+        'Un jeune garçon embarque dans une quête périlleuse pour trouver un trésor caché.',
+      isbn: '9780141435886',
+      publishingHouse: 'Cassell & Co.',
+      publishedAt: new Date('1881-11-14'),
+    },
+    {
+      name: 'Journey to the Center of the Earth',
+      author: 'Jules Verne',
+      description:
+        'Une expédition extraordinaire au cœur de la Terre remplie de dangers et de découvertes.',
+      isbn: '9780141439953',
+      publishingHouse: 'Pierre-Jules Hetzel',
+      publishedAt: new Date('1864-11-25'),
+    },
+    {
+      name: 'The Count of Monte Cristo',
+      author: 'Alexandre Dumas',
+      description:
+        "Un homme injustement emprisonné s'échappe et se venge spectaculairement de ses ennemis.",
+      isbn: '9780141449301',
+      publishingHouse: 'Journal des Débats',
+      publishedAt: new Date('1844-08-28'),
+    },
+    {
+      name: 'The Three Musketeers',
+      author: 'Alexandre Dumas',
+      description:
+        "Les aventures d'un jeune homme et de trois mousquetaires dans la France du 17e siècle.",
+      isbn: '9780141439617',
+      publishingHouse: 'Le Siècle',
+      publishedAt: new Date('1844-03-14'),
+    },
+    {
+      name: 'Around the World in Eighty Days',
+      author: 'Jules Verne',
+      description:
+        'Un riche excentrique relève le pari de faire le tour du monde en quatre-vingts jours.',
+      isbn: '9780141441146',
+      publishingHouse: 'Le Temps',
+      publishedAt: new Date('1873-11-06'),
+    },
+    {
+      name: 'The Adventures of Tom Sawyer',
+      author: 'Mark Twain',
+      description:
+        "Les aventures espièg les d'un jeune garçon au bord du Mississippi au 19e siècle.",
+      isbn: '9780141391748',
+      publishingHouse: 'American Publishing Company',
+      publishedAt: new Date('1876-12-09'),
+    },
+    {
+      name: 'Robinson Crusoe',
+      author: 'Daniel Defoe',
+      description:
+        'Un marin naufragé survit seul sur une île déserte pendant vingt-huit ans.',
+      isbn: '9780141439228',
+      publishingHouse: 'W. Taylor',
+      publishedAt: new Date('1719-04-25'),
+    },
+  ],
+  fantasy: [
+    {
+      name: 'The Lord of the Rings: The Fellowship of the Ring',
+      author: 'J.R.R. Tolkien',
+      description:
+        'Une quête épique pour détruire un anneau magique et sauver le monde de la domination du mal.',
+      isbn: '9780544003415',
+      publishingHouse: 'Allen & Unwin',
+      publishedAt: new Date('1954-07-29'),
+    },
+    {
+      name: "Harry Potter and the Philosopher's Stone",
+      author: 'J.K. Rowling',
+      description:
+        'Un jeune sorcier découvre un monde magique caché et fait face aux menaces du mal.',
+      isbn: '9780747532699',
+      publishingHouse: 'Bloomsbury',
+      publishedAt: new Date('1997-06-26'),
+    },
+    {
+      name: 'A Game of Thrones',
+      author: 'George R.R. Martin',
+      description:
+        "Un monde fantasy complexe rempli d'intrigues politiques, de magie et de dragons.",
+      isbn: '9780553103541',
+      publishingHouse: 'Bantam Books',
+      publishedAt: new Date('1996-08-06'),
+    },
+    {
+      name: 'The Name of the Wind',
+      author: 'Patrick Rothfuss',
+      description:
+        "L'histoire d'un magicien légendaire racontée par lui-même dans un monde époustouflant.",
+      isbn: '9780575081482',
+      publishingHouse: 'DAW Books',
+      publishedAt: new Date('2007-08-29'),
+    },
+    {
+      name: 'The Way of Kings',
+      author: 'Brandon Sanderson',
+      description:
+        'Une épopée fantasy sur des guerriers, la magie et le destin dans un monde magnifique.',
+      isbn: '9780765326355',
+      publishingHouse: 'Tor Books',
+      publishedAt: new Date('2010-08-31'),
+    },
+    {
+      name: 'The Cruel Prince',
+      author: 'Holly Black',
+      description:
+        'Une jeune fille grandit parmi les créatures féériques du Monde de Féerie.',
+      isbn: '9781250195449',
+      publishingHouse: 'Greenwillow Books',
+      publishedAt: new Date('2018-01-02'),
+    },
+    {
+      name: 'Six of Crows',
+      author: 'Leigh Bardugo',
+      description:
+        'Un groupe de criminels tente un héist impossible pour devenir riches et légendaires.',
+      isbn: '9780545284837',
+      publishingHouse: 'Balzer + Bray',
+      publishedAt: new Date('2015-09-29'),
+    },
+    {
+      name: 'Mistborn: The Final Empire',
+      author: 'Brandon Sanderson',
+      description:
+        'Une jeune fille découvre des pouvoirs magiques cachés dans un empire totalitaire.',
+      isbn: '9780765311788',
+      publishingHouse: 'Tor Books',
+      publishedAt: new Date('2006-07-17'),
+    },
+  ],
+  'science-fiction': [
+    {
+      name: 'Dune',
+      author: 'Frank Herbert',
+      description:
+        "Une épopée spatiale sur la politique, la religion et l'écologie sur une planète désertique.",
+      isbn: '9780441172719',
+      publishingHouse: 'Ace Books',
+      publishedAt: new Date('1965-06-01'),
+    },
+    {
+      name: '1984',
+      author: 'George Orwell',
+      description:
+        'Un roman dystopique sur un régime totalitaire contrôlant chaque aspect de la vie humaine.',
+      isbn: '9780451524935',
+      publishingHouse: 'Secker & Warburg',
+      publishedAt: new Date('1949-06-08'),
+    },
+    {
+      name: 'The Martian',
+      author: 'Andy Weir',
+      description:
+        'Un astronaute stranded sur Mars utilise son ingéniosité pour survivre et trouver son chemin de retour.',
+      isbn: '9780553418026',
+      publishingHouse: 'Crown Publishers',
+      publishedAt: new Date('2011-11-11'),
+    },
+    {
+      name: 'Foundation',
+      author: 'Isaac Asimov',
+      description:
+        "Un scientifique utilise la psychohistoire pour prédire l'avenir et sauver la civilisation.",
+      isbn: '9780553294384',
+      publishingHouse: 'Gnome Press',
+      publishedAt: new Date('1951-06-01'),
+    },
+    {
+      name: 'Neuromancer',
+      author: 'William Gibson',
+      description:
+        'Un hacker cyberpunk est engagé pour une dernière mission dans un futur dystopique.',
+      isbn: '9780441569595',
+      publishingHouse: 'Ace Books',
+      publishedAt: new Date('1984-07-01'),
+    },
+    {
+      name: 'The Expanse: Leviathan Wakes',
+      author: 'James S.A. Corey',
+      description:
+        'Un détective privé et un capitaine de vaisseau enquêtent sur une disparition qui risque de déclencher une guerre spatiale.',
+      isbn: '9780316129083',
+      publishingHouse: 'Orbit',
+      publishedAt: new Date('2011-06-14'),
+    },
+    {
+      name: 'Altered Carbon',
+      author: 'Richard K. Morgan',
+      description:
+        "Un assassin ressuscité dans un corps neuf doit résoudre le meurtre d'un homme riche dans un futur dystopique.",
+      isbn: '9780425089577',
+      publishingHouse: 'Del Rey',
+      publishedAt: new Date('2002-11-19'),
+    },
+    {
+      name: 'The Ministry for the Future',
+      author: 'Kim Stanley Robinson',
+      description:
+        "Un regard futuriste sur comment l'humanité pourrait affronter la crise climatique.",
+      isbn: '9780316300130',
+      publishingHouse: 'Hachette Book Group',
+      publishedAt: new Date('2020-10-06'),
+    },
+  ],
+  mystère: [
+    {
+      name: 'The Girl with the Dragon Tattoo',
+      author: 'Stieg Larsson',
+      description:
+        "Un journaliste et une hacker brillante enquêtent sur la disparition d'une femme riche.",
+      isbn: '9780307454546',
+      publishingHouse: 'Norstedts & Söner',
+      publishedAt: new Date('2005-08-01'),
+    },
+    {
+      name: 'The Da Vinci Code',
+      author: 'Dan Brown',
+      description:
+        'Un symbologiste et une cryptographe résolvent un mystère ancien lié aux secrets religieux.',
+      isbn: '9780385504205',
+      publishingHouse: 'Doubleday',
+      publishedAt: new Date('2003-03-18'),
+    },
+    {
+      name: 'Murder on the Orient Express',
+      author: 'Agatha Christie',
+      description:
+        'Le détective Hercule Poirot enquête sur un meurtre dans un train luxueux bloqué dans la neige.',
+      isbn: '9780062079570',
+      publishingHouse: "Christie's Estate",
+      publishedAt: new Date('1934-01-01'),
+    },
+    {
+      name: 'And Then There Were None',
+      author: 'Agatha Christie',
+      description:
+        'Dix étrangers sont piégés sur une île et tués un par un selon une comptine mystérieuse.',
+      isbn: '9780062073556',
+      publishingHouse: "Christie's Estate",
+      publishedAt: new Date('1939-11-06'),
+    },
+    {
+      name: 'The Big Sleep',
+      author: 'Raymond Chandler',
+      description:
+        'Le détective privé Philip Marlowe enquête sur le chantage et le meurtre à Los Angeles.',
+      isbn: '9780141184234',
+      publishingHouse: 'Knopf',
+      publishedAt: new Date('1939-02-06'),
+    },
+    {
+      name: 'Mystic River',
+      author: 'Dennis Lehane',
+      description:
+        'Trois enfants liés par un traumatisme se retrouvent adultes confrontés à des crimes qui changent à jamais leurs vies.',
+      isbn: '9780380731596',
+      publishingHouse: 'William Morrow',
+      publishedAt: new Date('2001-05-28'),
+    },
+    {
+      name: 'The Girl Before',
+      author: 'JP Delaney',
+      description:
+        'Une jeune femme emménage dans un appartement futuriste et commence à revivre les mystères liés à sa locataire précédente.',
+      isbn: '9780345415298',
+      publishingHouse: 'Ballantine Books',
+      publishedAt: new Date('2016-10-04'),
+    },
+    {
+      name: 'The Woman in Cabin 10',
+      author: 'Ruth Ware',
+      description:
+        "Une journaliste en croisière découvre une femme mystérieuse et sa cabine devient la scène d'un crime.",
+      isbn: '9780804170734',
+      publishingHouse: 'The Random House Publishing Group',
+      publishedAt: new Date('2016-08-02'),
+    },
+  ],
+  thriller: [
+    {
+      name: 'The Silence of the Lambs',
+      author: 'Thomas Harris',
+      description:
+        "Une jeune agent du FBI demande l'aide d'un tueur en série emprisonné pour attraper un autre tueur.",
+      isbn: '9780312927579',
+      publishingHouse: "St. Martin's Press",
+      publishedAt: new Date('1988-06-01'),
+    },
+    {
+      name: 'The Girl on the Train',
+      author: 'Paula Hawkins',
+      description:
+        "Une femme devient témoin d'un incident troublant depuis son train et se retrouve entraînée dans un mystère dangereux.",
+      isbn: '9780345457011',
+      publishingHouse: 'Doubleday',
+      publishedAt: new Date('2015-01-13'),
+    },
+    {
+      name: 'Gone Girl',
+      author: 'Gillian Flynn',
+      description:
+        "Le mari d'une femme disparue devient suspect dans une affaire d'enlèvement remplie de rebondissements.",
+      isbn: '9780307588371',
+      publishingHouse: 'Crown Publishers',
+      publishedAt: new Date('2012-06-27'),
+    },
+    {
+      name: 'The Bourne Identity',
+      author: 'Robert Ludlum',
+      description:
+        "Un homme amnésique découvre qu'il est un agent secret et doit fuir pour sa vie.",
+      isbn: '9780553275957',
+      publishingHouse: 'Random House',
+      publishedAt: new Date('1980-03-01'),
+    },
+    {
+      name: 'The Woman in White',
+      author: 'Wilkie Collins',
+      description:
+        'Un mystère gothique où une jeune femme innocente est remplacée par une impostrice en clinique.',
+      isbn: '9780141439594',
+      publishingHouse: 'All the Year Round',
+      publishedAt: new Date('1859-11-26'),
+    },
+    {
+      name: 'In the Woods',
+      author: 'Tana French',
+      description:
+        "Un détective enquête sur un meurtre qui le ramène à ses propres traumatismes d'enfance.",
+      isbn: '9780340899779',
+      publishingHouse: 'Hodder & Stoughton',
+      publishedAt: new Date('2007-03-01'),
+    },
+    {
+      name: 'Rebecca',
+      author: 'Daphne du Maurier',
+      description:
+        'Une jeune femme épouse un riche aristocrate anglais, mais découvre que le fantôme de sa première épouse hante le château.',
+      isbn: '9780141040685',
+      publishingHouse: 'Victor Gollancz Ltd',
+      publishedAt: new Date('1938-08-03'),
+    },
+    {
+      name: 'The Kind Worth Killing',
+      author: 'Peter Swanson',
+      description:
+        'Deux étrangers se rencontrent en avion et nouent une amitié dangereuse basée sur la vengeance mutuelle.',
+      isbn: '9780062267597',
+      publishingHouse: 'William Morrow',
+      publishedAt: new Date('2015-02-10'),
+    },
+  ],
+};
 
 async function seed() {
-  console.log('Seeding : 105 livres français avec couvertures et maisons d\'édition...');
+  console.log('🌱 Début du seeding...\n');
 
-  const categoriesToInsert = [
-    { name: 'random' },
-    { name: 'horror' },
-    { name: 'love' },
-  ];
+  try {
+    // Verify and create categories one by one (idempotent)
+    console.log('📚 Création des catégories...');
+    let createdCategories = 0;
+    for (const cat of CATEGORIES) {
+      const [existingCategory] = await db
+        .select({ id: category.id })
+        .from(category)
+        .where(eq(category.name, cat.name));
 
-  const booksData = [
-    // ================= RANDOM (Classiques & Littérature) (35) =================
-    { name: 'Les Misérables', coverId: 'https://covers.openlibrary.org/b/isbn/9782253096337-L.jpg', author: 'Victor Hugo', description: 'Le chef-d\'œuvre sur la justice et la misère humaine.', isbn: '9782253096337', publishingHouse: 'Hachette Livre', publishedAt: '1862-01-01' },
-    { name: 'Le Petit Prince', coverId: 'https://covers.openlibrary.org/b/isbn/9782070612758-L.jpg', author: 'Antoine de Saint-Exupéry', description: 'Un conte philosophique universel.', isbn: '9782070612758', publishingHouse: 'Éditions Gallimard', publishedAt: '1943-04-06' },
-    { name: 'L\'Étranger', coverId: 'https://covers.openlibrary.org/b/isbn/9782070360024-L.jpg', author: 'Albert Camus', description: 'Le récit de l\'absurdité humaine.', isbn: '9782070360024', publishingHouse: 'Éditions Gallimard', publishedAt: '1942-01-01' },
-    { name: 'Madame Bovary', coverId: 'https://covers.openlibrary.org/b/isbn/9782253004318-L.jpg', author: 'Gustave Flaubert', description: 'L\'ennui et les rêves d\'une femme de province.', isbn: '9782253004318', publishingHouse: 'Éditions Flammarion', publishedAt: '1857-01-01' },
-    { name: 'Bel-Ami', coverId: 'https://covers.openlibrary.org/b/isbn/9782253002864-L.jpg', author: 'Guy de Maupassant', description: 'L\'ascension sociale d\'un opportuniste.', isbn: '9782253002864', publishingHouse: 'Hachette Livre', publishedAt: '1885-01-01' },
-    { name: 'Germinal', coverId: 'https://covers.openlibrary.org/b/isbn/9782253004226-L.jpg', author: 'Émile Zola', description: 'La lutte des mineurs pour leur dignité.', isbn: '9782253004226', publishingHouse: 'Éditions Grasset', publishedAt: '1885-01-01' },
-    { name: 'Le Rouge et le Noir', coverId: 'https://covers.openlibrary.org/b/isbn/9782253006206-L.jpg', author: 'Stendhal', description: 'L\'ascension et la chute de Julien Sorel.', isbn: '9782253006206', publishingHouse: 'Hachette Livre', publishedAt: '1830-01-01' },
-    { name: 'Vingt mille lieues sous les mers', coverId: 'https://covers.openlibrary.org/b/isbn/9782253006329-L.jpg', author: 'Jules Verne', description: 'Voyage à bord du Nautilus.', isbn: '9782253006329', publishingHouse: 'Éditions Hetzel', publishedAt: '1870-01-01' },
-    { name: 'Notre-Dame de Paris', coverId: 'https://covers.openlibrary.org/b/isbn/9782253009687-L.jpg', author: 'Victor Hugo', description: 'Esméralda et Quasimodo.', isbn: '9782253009687', publishingHouse: 'Éditions Flammarion', publishedAt: '1831-01-01' },
-    { name: 'L\'Île au trésor', coverId: 'https://covers.openlibrary.org/b/isbn/9782253003298-L.jpg', author: 'R.L. Stevenson', description: 'Pirates et cartes mystérieuses.', isbn: '9782253003298', publishingHouse: 'Hachette Livre', publishedAt: '1883-01-01' },
-    { name: 'Le Tour du monde en 80 jours', coverId: 'https://covers.openlibrary.org/b/isbn/9782253003250-L.jpg', author: 'Jules Verne', description: 'Le pari fou de Phileas Fogg.', isbn: '9782253003250', publishingHouse: 'Hachette Livre', publishedAt: '1872-01-01' },
-    { name: 'Cyrano de Bergerac', coverId: 'https://covers.openlibrary.org/b/isbn/9782253005674-L.jpg', author: 'Edmond Rostand', description: 'Panache et poésie.', isbn: '9782253005674', publishingHouse: 'Fasquelle', publishedAt: '1897-01-01' },
-    { name: 'La gloire de mon père', coverId: 'https://covers.openlibrary.org/b/isbn/9782877065078-L.jpg', author: 'Marcel Pagnol', description: 'Souvenirs d\'enfance en Provence.', isbn: '9782877065078', publishingHouse: 'Éditions de Fallois', publishedAt: '1957-01-01' },
-    { name: 'Le château de ma mère', coverId: 'https://covers.openlibrary.org/b/isbn/9782877065085-L.jpg', author: 'Marcel Pagnol', description: 'La suite des souvenirs d\'enfance.', isbn: '9782877065085', publishingHouse: 'Éditions de Fallois', publishedAt: '1957-01-01' },
-    { name: 'L\'écume des jours', coverId: 'https://covers.openlibrary.org/b/isbn/9782253006619-L.jpg', author: 'Boris Vian', description: 'Un roman d\'amour surréaliste.', isbn: '9782253006619', publishingHouse: 'Éditions Fayard', publishedAt: '1947-01-01' },
-    { name: 'Le Horla', coverId: 'https://covers.openlibrary.org/b/isbn/9782253005933-L.jpg', author: 'Guy de Maupassant', description: 'Descente dans la folie.', isbn: '9782253005933', publishingHouse: 'Éditions Ollendorff', publishedAt: '1887-01-01' },
-    { name: 'Les Fleurs du Mal', coverId: 'https://covers.openlibrary.org/b/isbn/9782253006855-L.jpg', author: 'Charles Baudelaire', description: 'Poèmes sur le spleen et l\'idéal.', isbn: '9782253006855', publishingHouse: 'Poulet-Malassis', publishedAt: '1857-01-01' },
-    { name: 'La Peste', coverId: 'https://covers.openlibrary.org/b/isbn/9782070360420-L.jpg', author: 'Albert Camus', description: 'Une ville face à l\'épidémie.', isbn: '9782070360420', publishingHouse: 'Éditions Gallimard', publishedAt: '1947-01-01' },
-    { name: 'Le Comte de Monte-Cristo', coverId: 'https://covers.openlibrary.org/b/isbn/9782253042198-L.jpg', author: 'Alexandre Dumas', description: 'Vengeance et rédemption.', isbn: '9782253042198', publishingHouse: 'Éditions Baudry', publishedAt: '1844-01-01' },
-    { name: 'Les Trois Mousquetaires', coverId: 'https://covers.openlibrary.org/b/isbn/9782253004233-L.jpg', author: 'Alexandre Dumas', description: 'Un pour tous, tous pour un.', isbn: '9782253004233', publishingHouse: 'Hachette Livre', publishedAt: '1844-01-01' },
-    { name: 'Antigone', coverId: 'https://covers.openlibrary.org/b/isbn/9782710300250-L.jpg', author: 'Jean Anouilh', description: 'La tragédie du non.', isbn: '9782710300250', publishingHouse: 'Éditions de la Table Ronde', publishedAt: '1944-01-01' },
-    { name: 'En attendant Godot', coverId: 'https://covers.openlibrary.org/b/isbn/9782707301482-L.jpg', author: 'Samuel Beckett', description: 'Théâtre de l\'absurde.', isbn: '9782707301482', publishingHouse: 'Éditions de Minuit', publishedAt: '1952-01-01' },
-    { name: 'La Cantatrice chauve', coverId: 'https://covers.openlibrary.org/b/isbn/9782070364305-L.jpg', author: 'Eugène Ionesco', description: 'L\'absurdité du langage.', isbn: '9782070364305', publishingHouse: 'Éditions Gallimard', publishedAt: '1950-01-01' },
-    { name: 'Rhinocéros', coverId: 'https://covers.openlibrary.org/b/isbn/9782070368167-L.jpg', author: 'Eugène Ionesco', description: 'La montée du totalitarisme.', isbn: '9782070368167', publishingHouse: 'Éditions Gallimard', publishedAt: '1959-01-01' },
-    { name: 'Huis Clos', coverId: 'https://covers.openlibrary.org/b/isbn/9782070368075-L.jpg', author: 'Jean-Paul Sartre', description: 'L\'enfer, c\'est les autres.', isbn: '9782070368075', publishingHouse: 'Éditions Gallimard', publishedAt: '1944-01-01' },
-    { name: 'La Nausée', coverId: 'https://covers.openlibrary.org/b/isbn/9782070360048-L.jpg', author: 'Jean-Paul Sartre', description: 'Le manifeste de l\'existentialisme.', isbn: '9782070360048', publishingHouse: 'Éditions Gallimard', publishedAt: '1938-01-01' },
-    { name: 'Les Mains sales', coverId: 'https://covers.openlibrary.org/b/isbn/9782070368051-L.jpg', author: 'Jean-Paul Sartre', description: 'Politique et engagement.', isbn: '9782070368051', publishingHouse: 'Éditions Gallimard', publishedAt: '1948-01-01' },
-    { name: 'Mémoires d\'une jeune fille rangée', coverId: 'https://covers.openlibrary.org/b/isbn/9782070360062-L.jpg', author: 'Simone de Beauvoir', description: 'Émancipation.', isbn: '9782070360062', publishingHouse: 'Éditions Gallimard', publishedAt: '1958-01-01' },
-    { name: 'Le Deuxième Sexe', coverId: 'https://covers.openlibrary.org/b/isbn/9782070323517-L.jpg', author: 'Simone de Beauvoir', description: 'Essai fondateur.', isbn: '9782070323517', publishingHouse: 'Éditions Gallimard', publishedAt: '1949-01-01' },
-    { name: 'Paroles', coverId: 'https://covers.openlibrary.org/b/isbn/9782070360093-L.jpg', author: 'Jacques Prévert', description: 'Poèmes du quotidien.', isbn: '9782070360093', publishingHouse: 'Éditions Gallimard', publishedAt: '1946-01-01' },
-    { name: 'Capitale de la douleur', coverId: 'https://covers.openlibrary.org/b/isbn/9782070301133-L.jpg', author: 'Paul Éluard', description: 'Surréalisme.', isbn: '9782070301133', publishingHouse: 'Éditions Gallimard', publishedAt: '1926-01-01' },
-    { name: 'Le Parti pris des choses', coverId: 'https://covers.openlibrary.org/b/isbn/9782070301386-L.jpg', author: 'Francis Ponge', description: 'Poésie de l\'objet.', isbn: '9782070301386', publishingHouse: 'Éditions Gallimard', publishedAt: '1942-01-01' },
-    { name: 'Alcools', coverId: 'https://covers.openlibrary.org/b/isbn/9782070300075-L.jpg', author: 'Guillaume Apollinaire', description: 'Modernité.', isbn: '9782070300075', publishingHouse: 'Éditions Gallimard', publishedAt: '1913-01-01' },
-    { name: 'Calligrammes', coverId: 'https://covers.openlibrary.org/b/isbn/9782070300082-L.jpg', author: 'Guillaume Apollinaire', description: 'Guerre et paix.', isbn: '9782070300082', publishingHouse: 'Éditions Gallimard', publishedAt: '1918-01-01' },
-    { name: 'Un barrage contre le Pacifique', coverId: 'https://covers.openlibrary.org/b/isbn/9782070361007-L.jpg', author: 'Marguerite Duras', description: 'Indochine.', isbn: '9782070361007', publishingHouse: 'Éditions Gallimard', publishedAt: '1950-01-01' },
+      if (existingCategory) {
+        continue;
+      }
 
-    // ================= BESTSELLERS (35) =================
-    { name: 'L\'Anomalie', coverId: 'https://covers.openlibrary.org/b/isbn/9782072895043-L.jpg', author: 'Hervé Le Tellier', description: 'Un vol qui change tout.', isbn: '9782072895043', publishingHouse: 'Éditions Gallimard', publishedAt: '2020-08-20' },
-    { name: 'Petit Pays', coverId: 'https://covers.openlibrary.org/b/isbn/9782246857334-L.jpg', author: 'Gaël Faye', description: 'Burundi.', isbn: '9782246857334', publishingHouse: 'Éditions Grasset', publishedAt: '2016-08-24' },
-    { name: 'Changer l\'eau des fleurs', coverId: 'https://covers.openlibrary.org/b/isbn/9782226402431-L.jpg', author: 'Valérie Perrin', description: 'Garde-cimetière.', isbn: '9782226402431', publishingHouse: 'Éditions Albin Michel', publishedAt: '2018-02-28' },
-    { name: 'La Vérité sur l\'affaire Harry Quebert', coverId: 'https://covers.openlibrary.org/b/isbn/9782877068161-L.jpg', author: 'Joël Dicker', description: 'Thriller.', isbn: '9782877068161', publishingHouse: 'Éditions de Fallois', publishedAt: '2012-09-19' },
-    { name: 'L\'Amant', coverId: 'https://covers.openlibrary.org/b/isbn/9782707306951-L.jpg', author: 'Marguerite Duras', description: 'Passion.', isbn: '9782707306951', publishingHouse: 'Éditions de Minuit', publishedAt: '1984-09-01' },
-    { name: 'Vernon Subutex 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782246857365-L.jpg', author: 'Virginie Despentes', description: 'Paris.', isbn: '9782246857365', publishingHouse: 'Éditions Grasset', publishedAt: '2015-01-07' },
-    { name: 'L\'élégance du hérisson', coverId: 'https://covers.openlibrary.org/b/isbn/9782070780938-L.jpg', author: 'Muriel Barbery', description: 'Beauté.', isbn: '9782070780938', publishingHouse: 'Éditions Gallimard', publishedAt: '2006-08-31' },
-    { name: 'La Tresse', coverId: 'https://covers.openlibrary.org/b/isbn/9782246813880-L.jpg', author: 'Laetitia Colombani', description: 'Trois femmes.', isbn: '9782246813880', publishingHouse: 'Éditions Grasset', publishedAt: '2017-05-10' },
-    { name: 'Tout le bleu du ciel', coverId: 'https://covers.openlibrary.org/b/isbn/9782253241584-L.jpg', author: 'Mélissa Da Costa', description: 'Voyage.', isbn: '9782253241584', publishingHouse: 'Carnets Nord', publishedAt: '2019-02-01' },
-    { name: 'Sapiens', coverId: 'https://covers.openlibrary.org/b/isbn/9782226257017-L.jpg', author: 'Yuval Noah Harari', description: 'Humanité.', isbn: '9782226257017', publishingHouse: 'Éditions Albin Michel', publishedAt: '2015-01-01' },
-    { name: 'Harry Potter 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782070541270-L.jpg', author: 'J.K. Rowling', description: 'Magie.', isbn: '9782070541270', publishingHouse: 'Gallimard Jeunesse', publishedAt: '1998-10-09' },
-    { name: 'Harry Potter 2', coverId: 'https://covers.openlibrary.org/b/isbn/9782070541294-L.jpg', author: 'J.K. Rowling', description: 'Chambre des secrets.', isbn: '9782070541294', publishingHouse: 'Gallimard Jeunesse', publishedAt: '1999-01-01' },
-    { name: 'Harry Potter 3', coverId: 'https://covers.openlibrary.org/b/isbn/9782070528189-L.jpg', author: 'J.K. Rowling', description: 'Azkaban.', isbn: '9782070528189', publishingHouse: 'Gallimard Jeunesse', publishedAt: '1999-01-01' },
-    { name: 'Harry Potter 4', coverId: 'https://covers.openlibrary.org/b/isbn/9782070543519-L.jpg', author: 'J.K. Rowling', description: 'Coupe de feu.', isbn: '9782070543519', publishingHouse: 'Gallimard Jeunesse', publishedAt: '2000-01-01' },
-    { name: 'Nymphéas noirs', coverId: 'https://covers.openlibrary.org/b/isbn/9782253161677-L.jpg', author: 'Michel Bussi', description: 'Giverny.', isbn: '9782253161677', publishingHouse: 'Presses de la Cité', publishedAt: '2011-01-01' },
-    { name: 'Un avion sans elle', coverId: 'https://covers.openlibrary.org/b/isbn/9782253173731-L.jpg', author: 'Michel Bussi', description: 'Crash.', isbn: '9782253173731', publishingHouse: 'Presses de la Cité', publishedAt: '2012-01-01' },
-    { name: 'Maman a tort', coverId: 'https://covers.openlibrary.org/b/isbn/9782253086581-L.jpg', author: 'Michel Bussi', description: 'Identité.', isbn: '9782253086581', publishingHouse: 'Presses de la Cité', publishedAt: '2015-01-01' },
-    { name: 'Pars vite et reviens tard', coverId: 'https://covers.openlibrary.org/b/isbn/9782290325414-L.jpg', author: 'Fred Vargas', description: 'Adamsberg.', isbn: '9782290325414', publishingHouse: 'Éditions Viviane Hamy', publishedAt: '2001-01-01' },
-    { name: 'La vie secrète des arbres', coverId: 'https://covers.openlibrary.org/b/isbn/9782809712315-L.jpg', author: 'Peter Wohlleben', description: 'Nature.', isbn: '9782809712315', publishingHouse: 'Éditions Guy Trédaniel', publishedAt: '2017-01-01' },
-    { name: 'Ta deuxième vie...', coverId: 'https://covers.openlibrary.org/b/isbn/9782212561166-L.jpg', author: 'Raphaëlle Giordano', description: 'Bien-être.', isbn: '9782212561166', publishingHouse: 'Éditions Eyrolles', publishedAt: '2015-09-17' },
-    { name: 'Le Parfum', coverId: 'https://covers.openlibrary.org/b/isbn/9782253044901-L.jpg', author: 'Patrick Süskind', description: 'Odeurs.', isbn: '9782253044901', publishingHouse: 'Éditions Fayard', publishedAt: '1985-01-01' },
-    { name: 'Millénium 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782 Actes Sud-L.jpg', author: 'Stieg Larsson', description: 'Lisbeth Salander.', isbn: '9782742761579', publishingHouse: 'Actes Sud', publishedAt: '2006-05-10' },
-    { name: 'Juste avant le bonheur', coverId: 'https://covers.openlibrary.org/b/isbn/9782226246813-L.jpg', author: 'Agnès Ledig', description: 'Rencontre.', isbn: '9782226246813', publishingHouse: 'Éditions Albin Michel', publishedAt: '2013-04-01' },
-    { name: 'Kilomètre zéro', coverId: 'https://covers.openlibrary.org/b/isbn/9782212567229-L.jpg', author: 'Maud Ankaoua', description: 'Voyage.', isbn: '9782212567229', publishingHouse: 'Éditions Eyrolles', publishedAt: '2017-09-14' },
-    { name: 'La Délicatesse', coverId: 'https://covers.openlibrary.org/b/isbn/9782070124626-L.jpg', author: 'David Foenkinos', description: 'Amour.', isbn: '9782070124626', publishingHouse: 'Éditions Gallimard', publishedAt: '2009-03-05' },
-    { name: 'No et moi', coverId: 'https://covers.openlibrary.org/b/isbn/9782253124801-L.jpg', author: 'Delphine de Vigan', description: 'Amitié.', isbn: '9782253124801', publishingHouse: 'Éditions Jean-Claude Lattès', publishedAt: '2007-01-01' },
-    { name: 'D\'après une histoire vraie', coverId: 'https://covers.openlibrary.org/b/isbn/9782253068594-L.jpg', author: 'Delphine de Vigan', description: 'Manipulation.', isbn: '9782253068594', publishingHouse: 'Éditions Jean-Claude Lattès', publishedAt: '2015-08-26' },
-    { name: 'L\'art de perdre', coverId: 'https://covers.openlibrary.org/b/isbn/9782081395534-L.jpg', author: 'Alice Zeniter', description: 'Algérie.', isbn: '9782081395534', publishingHouse: 'Éditions Flammarion', publishedAt: '2017-08-16' },
-    { name: 'Leurs enfants après eux', coverId: 'https://covers.openlibrary.org/b/isbn/9782330108670-L.jpg', author: 'Nicolas Mathieu', description: 'Années 90.', isbn: '9782330108670', publishingHouse: 'Actes Sud', publishedAt: '2018-08-22' },
-    { name: 'Hunger Games 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782266182690-L.jpg', author: 'Suzanne Collins', description: 'Panem.', isbn: '9782266182690', publishingHouse: 'Pocket Jeunesse', publishedAt: '2008-01-01' },
-    { name: 'Divergente 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782092532300-L.jpg', author: 'Veronica Roth', description: 'Factions.', isbn: '9782092532300', publishingHouse: 'Éditions Nathan', publishedAt: '2011-01-01' },
-    { name: 'Twilight 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782012010673-L.jpg', author: 'Stephenie Meyer', description: 'Vampire.', isbn: '9782012010673', publishingHouse: 'Hachette Jeunesse', publishedAt: '2005-01-01' },
-    { name: 'Le Labyrinthe', coverId: 'https://covers.openlibrary.org/b/isbn/9782266223256-L.jpg', author: 'James Dashner', description: 'Dédale.', isbn: '9782266223256', publishingHouse: 'Pocket Jeunesse', publishedAt: '2009-01-01' },
-    { name: 'La nuit des temps', coverId: 'https://covers.openlibrary.org/b/isbn/9782266000017-L.jpg', author: 'René Barjavel', description: 'Antarctique.', isbn: '9782266000017', publishingHouse: 'Presses de la Cité', publishedAt: '1968-01-01' },
-    { name: 'Le meilleur des mondes', coverId: 'https://covers.openlibrary.org/b/isbn/9782266128568-L.jpg', author: 'Aldous Huxley', description: 'Dystopie.', isbn: '9782266128568', publishingHouse: 'Éditions Plon', publishedAt: '1932-01-01' },
+      await db.insert(category).values(cat);
+      createdCategories++;
+      console.log(`  ✅ Catégorie créée: ${cat.name}`);
+    }
+    if (createdCategories === 0) {
+      console.log('  ⏭️  Toutes les catégories existent déjà');
+    }
 
-    // ================= HORROR / THRILLER NOIR (35) =================
-    { name: 'Maléfices', coverId: 'https://covers.openlibrary.org/b/isbn/9782226154941-L.jpg', author: 'Maxime Chattam', description: 'Araignées.', isbn: '9782226154941', publishingHouse: 'Éditions Albin Michel', publishedAt: '2004-01-01' },
-    { name: 'Ça - Tome 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134114-L.jpg', author: 'Stephen King', description: 'Grippe-Sou.', isbn: '9782253134114', publishingHouse: 'Éditions Albin Michel', publishedAt: '1986-09-15' },
-    { name: 'Shining', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134138-L.jpg', author: 'Stephen King', description: 'Folie.', isbn: '9782253134138', publishingHouse: 'Éditions Albin Michel', publishedAt: '1977-01-28' },
-    { name: 'Simetierre', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134152-L.jpg', author: 'Stephen King', description: 'Le retour.', isbn: '9782253134152', publishingHouse: 'Éditions Albin Michel', publishedAt: '1983-11-14' },
-    { name: 'Le Syndrome E', coverId: 'https://covers.openlibrary.org/b/isbn/9782265089334-L.jpg', author: 'Franck Thilliez', description: 'Cerveau.', isbn: '9782265089334', publishingHouse: 'Fleuve Éditions', publishedAt: '2010-10-14' },
-    { name: 'Gataca', coverId: 'https://covers.openlibrary.org/b/isbn/9782265091580-L.jpg', author: 'Franck Thilliez', description: 'Évolution.', isbn: '9782265091580', publishingHouse: 'Fleuve Éditions', publishedAt: '2011-01-01' },
-    { name: 'Glacé', coverId: 'https://covers.openlibrary.org/b/isbn/9782352041351-L.jpg', author: 'Bernard Minier', description: 'Pyrénées.', isbn: '9782352041351', publishingHouse: 'XO Éditions', publishedAt: '2011-02-24' },
-    { name: 'Le Chuchoteur', coverId: 'https://covers.openlibrary.org/b/isbn/9782253133377-L.jpg', author: 'Donato Carrisi', description: 'Chuchotements.', isbn: '9782253133377', publishingHouse: 'Éditions Calmann-Lévy', publishedAt: '2009-01-01' },
-    { name: 'Dracula', coverId: 'https://covers.openlibrary.org/b/isbn/9782253005889-L.jpg', author: 'Bram Stoker', description: 'Vampire.', isbn: '9782253005889', publishingHouse: 'Constable & Robinson', publishedAt: '1897-01-01' },
-    { name: 'Frankenstein', coverId: 'https://covers.openlibrary.org/b/isbn/9782253005896-L.jpg', author: 'Mary Shelley', description: 'Monstre.', isbn: '9782253005896', publishingHouse: 'Lackington', publishedAt: '1818-01-01' },
-    { name: 'Misery', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134169-L.jpg', author: 'Stephen King', description: 'Fan.', isbn: '9782253134169', publishingHouse: 'Éditions Albin Michel', publishedAt: '1987-01-01' },
-    { name: 'Carrie', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134121-L.jpg', author: 'Stephen King', description: 'Vengeance.', isbn: '9782253134121', publishingHouse: 'Éditions Albin Michel', publishedAt: '1974-01-01' },
-    { name: 'Cujo', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134145-L.jpg', author: 'Stephen King', description: 'Chien.', isbn: '9782253134145', publishingHouse: 'Éditions Albin Michel', publishedAt: '1981-01-01' },
-    { name: 'Sharko', coverId: 'https://covers.openlibrary.org/b/isbn/9782266282337-L.jpg', author: 'Franck Thilliez', description: 'Enquête.', isbn: '9782266282337', publishingHouse: 'Fleuve Éditions', publishedAt: '2017-01-01' },
-    { name: 'Pandemia', coverId: 'https://covers.openlibrary.org/b/isbn/9782266267747-L.jpg', author: 'Franck Thilliez', description: 'Virus.', isbn: '9782266267747', publishingHouse: 'Fleuve Éditions', publishedAt: '2015-01-01' },
-    { name: 'Angor', coverId: 'https://covers.openlibrary.org/b/isbn/9782265098251-L.jpg', author: 'Franck Thilliez', description: 'Cœur.', isbn: '9782265098251', publishingHouse: 'Fleuve Éditions', publishedAt: '2014-01-01' },
-    { name: 'Luca', coverId: 'https://covers.openlibrary.org/b/isbn/9782266307376-L.jpg', author: 'Franck Thilliez', description: 'Génétique.', isbn: '9782266307376', publishingHouse: 'Fleuve Éditions', publishedAt: '2019-01-01' },
-    { name: 'Atomka', coverId: 'https://covers.openlibrary.org/b/isbn/9782265094543-L.jpg', author: 'Franck Thilliez', description: 'Froid.', isbn: '9782265094543', publishingHouse: 'Fleuve Éditions', publishedAt: '2012-01-01' },
-    { name: 'Puzzle', coverId: 'https://covers.openlibrary.org/b/isbn/9782265096189-L.jpg', author: 'Franck Thilliez', description: 'Jeu.', isbn: '9782265096189', publishingHouse: 'Fleuve Éditions', publishedAt: '2013-01-01' },
-    { name: 'L\'empire des loups', coverId: 'https://covers.openlibrary.org/b/isbn/9782253112310-L.jpg', author: 'Jean-Christophe Grangé', description: 'Loups.', isbn: '9782253112310', publishingHouse: 'Éditions Albin Michel', publishedAt: '2003-01-01' },
-    { name: 'Les Rivières pourpres', coverId: 'https://covers.openlibrary.org/b/isbn/9782253147367-L.jpg', author: 'Jean-Christophe Grangé', description: 'Macabre.', isbn: '9782253147367', publishingHouse: 'Éditions Albin Michel', publishedAt: '1998-01-01' },
-    { name: 'L\'outsider', coverId: 'https://covers.openlibrary.org/b/isbn/9782253241584-L.jpg', author: 'Stephen King', description: 'Crime.', isbn: '9782253241584', publishingHouse: 'Éditions Albin Michel', publishedAt: '2018-01-01' },
-    { name: 'Le Silence des Agneaux', coverId: 'https://covers.openlibrary.org/b/isbn/9782266208949-L.jpg', author: 'Thomas Harris', description: 'Lecter.', isbn: '9782266208949', publishingHouse: 'St. Martin\'s Press', publishedAt: '1988-01-01' },
-    { name: 'Dragon Rouge', coverId: 'https://covers.openlibrary.org/b/isbn/9782266208932-L.jpg', author: 'Thomas Harris', description: 'Origines.', isbn: '9782266208932', publishingHouse: 'G. P. Putnam\'s Sons', publishedAt: '1981-01-01' },
-    { name: '22/11/63', coverId: 'https://covers.openlibrary.org/b/isbn/9782253177691-L.jpg', author: 'Stephen King', description: 'Kennedy.', isbn: '9782253177691', publishingHouse: 'Éditions Albin Michel', publishedAt: '2011-01-01' },
-    { name: 'Le Fléau', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134190-L.jpg', author: 'Stephen King', description: 'Virus.', isbn: '9782253134190', publishingHouse: 'Éditions Albin Michel', publishedAt: '1978-01-01' },
-    { name: 'L\'Appel de Cthulhu', coverId: 'https://covers.openlibrary.org/b/isbn/9782290033142-L.jpg', author: 'H.P. Lovecraft', description: 'Cosmique.', isbn: '9782290033142', publishingHouse: 'Weird Tales', publishedAt: '1928-01-01' },
-    { name: 'Ring', coverId: 'https://covers.openlibrary.org/b/isbn/9782266130455-L.jpg', author: 'Koji Suzuki', description: 'Cassette.', isbn: '9782266130455', publishingHouse: 'Kadokawa Shoten', publishedAt: '1991-01-01' },
-    { name: 'Psycho', coverId: 'https://covers.openlibrary.org/b/isbn/9782266150170-L.jpg', author: 'Robert Bloch', description: 'Bates.', isbn: '9782266150170', publishingHouse: 'Simon & Schuster', publishedAt: '1959-01-01' },
-    { name: 'Le Signal', coverId: 'https://covers.openlibrary.org/b/isbn/9782226438096-L.jpg', author: 'Maxime Chattam', description: 'Signal.', isbn: '9782226438096', publishingHouse: 'Éditions Albin Michel', publishedAt: '2018-01-01' },
-    { name: 'L\'Exorciste', coverId: 'https://covers.openlibrary.org/b/isbn/9782221141366-L.jpg', author: 'William Peter Blatty', description: 'Démon.', isbn: '9782221141366', publishingHouse: 'Harper & Row', publishedAt: '1971-01-01' },
-    { name: 'Dôme - Tome 1', coverId: 'https://covers.openlibrary.org/b/isbn/9782253162315-L.jpg', author: 'Stephen King', description: 'Sous le dôme.', isbn: '9782253162315', publishingHouse: 'Éditions Albin Michel', publishedAt: '2009-01-01' },
-    { name: 'Marche ou crève', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134145-L.jpg', author: 'Stephen King', description: 'Course.', isbn: '9782253134145', publishingHouse: 'Signet Books', publishedAt: '1979-01-01' },
-    { name: 'L\'Institut', coverId: 'https://covers.openlibrary.org/b/isbn/9782226443151-L.jpg', author: 'Stephen King', description: 'Enfants.', isbn: '9782226443151', publishingHouse: 'Éditions Albin Michel', publishedAt: '2019-01-01' },
-    { name: 'Docteur Sleep', coverId: 'https://covers.openlibrary.org/b/isbn/9782253134183-L.jpg', author: 'Stephen King', description: 'Danny Torrance.', isbn: '9782253134183', publishingHouse: 'Éditions Albin Michel', publishedAt: '2013-01-01' },
-  ];
+    // Récupérer les catégories avec leurs IDs
+    const allCategories = await db.select().from(category);
+    const categoryMap = new Map(allCategories.map((c) => [c.name, c.id]));
 
-  // Standardisation stricte
-  const standardizedBooks = booksData.map(b => ({
-    name: b.name,
-    author: b.author,
-    description: b.description,
-    isbn: b.isbn,
-    publishedAt: b.publishedAt,
-    coverId: b.coverId,
-    publishingHouse: b.publishingHouse,
-  }));
+    // Create keywords per category (idempotent)
+    console.log('\n🔑 Création des keywords...');
+    let createdKeywordCount = 0;
+    for (const [catName, baseKeywords] of Object.entries(
+      KEYWORDS_BY_CATEGORY,
+    )) {
+      const catId = categoryMap.get(catName);
+      if (!catId) {
+        console.log(`  ❌ Catégorie ${catName} non trouvée`);
+        continue;
+      }
 
-  // Insertion Livres
-  const insertedBooks = await db
-    .insert(book)
-    .values(standardizedBooks)
-    .onConflictDoNothing({ target: book.isbn })
-    .returning();
+      const candidateKeywords = baseKeywords.map((kw) => kw.trim());
+      const normalizedCandidates = Array.from(
+        new Set(candidateKeywords.map((kw) => kw.toLowerCase())),
+      );
 
-  // Insertion Catégories
-  await db
-    .insert(category)
-    .values(categoriesToInsert)
-    .onConflictDoNothing({ target: category.name });
+      const existingForCategory = await db
+        .select({ name: keyword.name })
+        .from(keyword)
+        .where(eq(keyword.categoryId, catId));
+      const existingSet = new Set(
+        existingForCategory.map((k) => k.name.toLowerCase()),
+      );
 
-  const allCategories = await db.select().from(category);
+      let createdForCategory = 0;
+      for (const kw of normalizedCandidates) {
+        if (existingSet.has(kw)) continue;
 
-  // Liaisons
-  if (insertedBooks.length > 0) {
-    const links = insertedBooks.map((b, i) => {
-      let catName = 'random';
-      if (i >= 35 && i < 70) catName = 'bestsellers';
-      if (i >= 70) catName = 'horror';
+        await db.insert(keyword).values({
+          name: kw,
+          categoryId: catId,
+        });
+        createdKeywordCount++;
+        createdForCategory++;
+      }
 
-      return {
-        bookId: b.id,
-        categoryId: allCategories.find(c => c.name === catName)!.id
-      };
-    });
+      if (createdForCategory > 0) {
+        console.log(
+          `  ✅ ${createdForCategory} keywords ajoutés pour ${catName}`,
+        );
+      } else {
+        console.log(`  ⏭️  Aucun nouveau keyword pour ${catName}`);
+      }
+    }
+    console.log(`  📊 Total nouveaux keywords: ${createdKeywordCount}`);
 
-    await db.insert(bookCategory).values(links).onConflictDoNothing();
-    console.log(`${links.length} liaisons créées avec succès ! 🔗`);
+    // Create books per category based on ISBN uniqueness (idempotent)
+    console.log('\n📖 Création des livres...');
+    let createdBookCount = 0;
+    for (const [catName, books] of Object.entries(BOOKS_BY_CATEGORY)) {
+      const catId = categoryMap.get(catName);
+      if (!catId) {
+        console.log(`  ❌ Catégorie ${catName} non trouvée`);
+        continue;
+      }
+
+      let createdForCategory = 0;
+      for (const b of books) {
+        const [existingBook] = await db
+          .select({ id: book.id })
+          .from(book)
+          .where(eq(book.isbn, b.isbn));
+
+        if (existingBook) {
+          continue;
+        }
+
+        await db.insert(book).values({
+          name: b.name,
+          cover_url: coverFromIsbn(b.isbn),
+          author: b.author,
+          description: b.description,
+          isbn: b.isbn,
+          publishingHouse: b.publishingHouse,
+          publishedAt: b.publishedAt.toISOString().slice(0, 10),
+          categoryId: catId,
+        });
+        createdBookCount++;
+        createdForCategory++;
+      }
+
+      if (createdForCategory > 0) {
+        console.log(
+          `  ✅ ${createdForCategory} livres ajoutés pour ${catName}`,
+        );
+      } else {
+        console.log(`  ⏭️  Aucun nouveau livre pour ${catName}`);
+      }
+    }
+    console.log(`  📊 Total nouveaux livres: ${createdBookCount}`);
+
+    console.log('\n✨ Seeding terminé avec succès!');
+  } catch (error) {
+    console.error('❌ Erreur lors du seeding:', error);
+    process.exit(1);
   }
-
-  console.log('Seeding terminé ! 🚀');
 }
 
-seed().catch((error) => {
-  console.error('Erreur :', error);
-  process.exit(1);
-});
+seed();

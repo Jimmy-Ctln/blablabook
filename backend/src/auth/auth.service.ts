@@ -22,10 +22,10 @@ export class AuthService {
   ) {}
 
   async login(payload: LoginRequestDto) {
-    const user = await this.userService.getUserByUsername(payload.username);
+    const user = await this.userService.getUserByEmail(payload.email);
     if (!user) {
       console.error('Login attempt failed');
-      throw new UnauthorizedException('username or password is invalid');
+      throw new UnauthorizedException('email or password is invalid');
     }
 
     const isPasswordValid = await this.passwordService.checkPassword(
@@ -35,7 +35,7 @@ export class AuthService {
 
     if (!isPasswordValid) {
       console.error('Login attempt failed');
-      throw new UnauthorizedException('username or password is invalid');
+      throw new UnauthorizedException('email or password is invalid');
     }
 
     return user;
@@ -84,6 +84,21 @@ export class AuthService {
 
     if (!isDestroyToken) {
       console.warn('refresh token not found in the db');
+    }
+  }
+
+  async refreshUserSession(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('No refresh token found');
+    }
+
+    try {
+      // Rotate tokens (generate new JWT and refresh token)
+      const rotatedTokens = await this.tokenService.rotateTokens(refreshToken);
+      return rotatedTokens;
+    } catch (error) {
+      console.error('Refresh token rotation failed:', error);
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 }

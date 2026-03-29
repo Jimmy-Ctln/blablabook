@@ -22,12 +22,10 @@ export const BookStatusAction: React.FC<BookStatusActionProps> = ({
   isUpdatingStatus = false,
   isConnected,
 }) => {
-  // 1. not connected case (Display login CTA)
   if (!isConnected) {
     return <BookLoginCTA onClick={onAddToLibrary} />;
   }
 
-  // 2. Connected case (book already in library)
   if (status) {
     return (
       <BookStatusDropdown

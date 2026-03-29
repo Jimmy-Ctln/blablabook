@@ -1,47 +1,37 @@
 import CarouselDisplay from "@/components/CarouselDisplay";
 import Hero from "@/components/Hero";
-import SearchBar from "@/components/SearchBar";
 import { useEffect, useState } from "react";
 import { useExternalBooks } from "@/hooks/useExternalBooks";
 import { getBooks, getRandomBooks } from "@/api/books";
-import type { BookRow } from "@/@types/books";
+import type { BookRow, BooksByCategory } from "@/@types/books";
 import {
   mapBookRowToDisplay,
   mapExternalBookToDisplay,
 } from "@/lib/bookDisplayMapper";
-import { horrorKeywords, loveKeywords, fantasyKeywords } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 export default function HomePage() {
-  const [search, setSearch] = useState("");
-
+  const [search] = useState("");
   const [randomBooks, setRandomBooks] = useState<BookRow[]>();
-  const [internalBooks, setInternalBooks] = useState<BookRow[]>();
 
-  const horrorBooks: BookRow[] = (internalBooks || []).filter((book) =>
-    book.categories?.some((cat) =>
-      horrorKeywords.some((keyword) => cat.toLowerCase().includes(keyword)),
-    ),
-  );
+  const categories = [
+    "aventure",
+    "romance",
+    "fantasy",
+    "science-fiction",
+    "horreur",
+    "mystère",
+    "thriller",
+  ];
 
-  const loveBooks: BookRow[] = (internalBooks || []).filter((book) =>
-    book.categories?.some((cat) =>
-      loveKeywords.some((keyword) => cat.toLowerCase().includes(keyword)),
-    ),
-  );
-
-  const fantasyBooks: BookRow[] = (internalBooks || []).filter((book) =>
-    book.categories?.some((cat) =>
-      fantasyKeywords.some((keyword) => cat.toLowerCase().includes(keyword)),
-    ),
-  );
+  const { data: books = {}, isFetching } = useQuery<BooksByCategory>({
+    queryKey: ["books-carousel"],
+    queryFn: () => getBooks(categories),
+  });
 
   useEffect(() => {
-    getRandomBooks(20).then((books) => {
-      setRandomBooks(books);
-    });
-
-    getBooks().then((books) => {
-      setInternalBooks(books);
+    getRandomBooks(20).then((fetchedBooks) => {
+      setRandomBooks(fetchedBooks);
     });
   }, []);
 
@@ -56,7 +46,7 @@ export default function HomePage() {
     if (isSearchLoading) {
       content = (
         <CarouselDisplay
-          title={`Recherche en cours...`}
+          title={"Recherche en cours..."}
           books={[]}
           isLoading={true}
           seeAllButton={false}
@@ -87,40 +77,35 @@ export default function HomePage() {
     content = (
       <>
         <CarouselDisplay
-          title={"Suggestions Aléatoire"}
-          books={(randomBooks || [])?.map(mapBookRowToDisplay)}
+          title={"SUGGESTIONS ALEATOIRE"}
+          books={(randomBooks || []).map(mapBookRowToDisplay)}
           isLoading={!randomBooks}
-          seeAllButton={true}
         />
-        <CarouselDisplay
-          title={"Fantasy et Magie"}
-          books={fantasyBooks?.map(mapBookRowToDisplay)}
-          isLoading={!internalBooks}
-          seeAllButton={true}
-        />
-        <CarouselDisplay
-          title={"Romance"}
-          books={loveBooks?.map(mapBookRowToDisplay)}
-          isLoading={!internalBooks}
-          seeAllButton={true}
-        />
-        <CarouselDisplay
-          title={"Frissons et Horreur"}
-          books={horrorBooks?.map(mapBookRowToDisplay)}
-          isLoading={!internalBooks}
-          seeAllButton={true}
-        />
+
+        {categories.map((categoryTitle) => {
+          const categoryKey = categoryTitle.toLowerCase();
+          const title = categoryTitle.toUpperCase();
+          const categoryBooks = books[categoryKey] ?? [];
+
+          return (
+            <CarouselDisplay
+              key={categoryTitle}
+              title={title}
+              books={categoryBooks.map(mapBookRowToDisplay)}
+              isLoading={isFetching}
+            />
+          );
+        })}
       </>
     );
   }
 
   return (
-    <div className="flex-col w-full">
-      <div className="sticky top-0 z-20 bg-background pb-2">
-        <Hero />
-        <SearchBar onSearch={setSearch} />
+    <div className="w-full">
+      <Hero />
+      <div className="relative z-20 -mt-20 md:-mt-16 lg:-mt-20 container mx-auto px-4 sm:px-6 md:px-8">
+        {content}
       </div>
-      <div className="min-h-125">{content}</div>
     </div>
   );
 }

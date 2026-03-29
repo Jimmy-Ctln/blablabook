@@ -1,33 +1,84 @@
-### Open Library API Requests
 @baseUrl = https://openlibrary.org
+@coversBaseUrl = https://covers.openlibrary.org
+
+### Example data (editable)
+@searchText = Harry potter
+@categoryName = fantasy
+@randomLikeQuery = science
 @isbn = 9780140328721
 @workId = OL45804W
 @authorId = OL34184A
+@editionKey = OL7723154M
 @coverId = 15152634
 
-### 1. GET Book ISBN Data
-### Used in getOpenLibIsbnData(isbn)
-### Returns the specific edition data including 'works' and 'authors' keys.
+### ------------------------------------------------------------------
+### 1) SEARCH - searchText mode (uses /search.json?q=...)
+### ------------------------------------------------------------------
+GET {{baseUrl}}/search.json?q={{searchText}}&limit=1&lang=fr&fields=key,title,author_name,edition_key,subject
+Accept: application/json
+
+###
+
+### ------------------------------------------------------------------
+### 2) SEARCH - category mode (uses /search.json?q=categoryName)
+### ------------------------------------------------------------------
+GET {{baseUrl}}/search.json?q={{categoryName}}&limit=20&fields=key,title,author_name,edition_key,subject
+Accept: application/json
+
+###
+
+### ------------------------------------------------------------------
+### 3) SEARCH - random mode (simulates a random query)
+### ------------------------------------------------------------------
+GET {{baseUrl}}/search.json?q={{randomLikeQuery}}&limit=20&fields=key,title,author_name,edition_key,subject
+Accept: application/json
+
+###
+
+### ------------------------------------------------------------------
+### 4) BOOK EDITION - edition details via edition_key
+### Used in searchExternalBooks: /books/{editionKey}.json
+### ------------------------------------------------------------------
+GET {{baseUrl}}/books/{{editionKey}}.json
+Accept: application/json
+
+###
+
+### ------------------------------------------------------------------
+### 5) ISBN - edition by ISBN
+### Used in getOpenLibIsbnData
+### ------------------------------------------------------------------
 GET {{baseUrl}}/isbn/{{isbn}}.json
-Content-Type: application/json
+Accept: application/json
 
 ###
 
-### 2. GET Book Work Data
-### Used in getOpenLibWorkData(workKey)
-### Returns the abstract "Work" details, including the description and subjects.
+### ------------------------------------------------------------------
+### 6) WORK - work details
+### Used in getOpenLibWorkData
+### ------------------------------------------------------------------
 GET {{baseUrl}}/works/{{workId}}.json
-Content-Type: application/json
+Accept: application/json
 
 ###
 
-### 3. GET Book Author Data
-### Used in getOpenLibAuthorData(authorKey)
-### Returns detailed information about the author (bio, name, etc.).
+### ------------------------------------------------------------------
+### 7) AUTHOR - author details
+### Used in getOpenLibAuthorData
+### ------------------------------------------------------------------
 GET {{baseUrl}}/authors/{{authorId}}.json
-Content-Type: application/json
+Accept: application/json
 
 ###
 
-### 4. GET Cover Image (Large)
-GET https://covers.openlibrary.org/b/id/{{coverId}}-L.jpg
+### ------------------------------------------------------------------
+### 8) COVER - cover image (used for book covers)
+### ------------------------------------------------------------------
+GET {{coversBaseUrl}}/b/id/{{coverId}}-L.jpg
+
+###
+
+### ------------------------------------------------------------------
+### 9) COVER - medium format (used in searchExternalBooks)
+### ------------------------------------------------------------------
+GET {{coversBaseUrl}}/b/id/{{coverId}}-M.jpg

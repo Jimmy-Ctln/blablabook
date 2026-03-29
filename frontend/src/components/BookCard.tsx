@@ -8,11 +8,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Trash2, ChevronDown } from "lucide-react";
-import type { BookRow } from "../@types/books";
+import type { BookDisplay } from "../@types/books";
 import { useRouter } from "@tanstack/react-router";
+import { Button } from "./ui/button";
 
 type Props = {
-  readonly book: BookRow;
+  readonly book: BookDisplay;
   readonly onRemove: () => void;
   readonly onStatusChange?: (newStatus: "Lu" | "En cours" | "À lire") => void;
 };
@@ -33,24 +34,22 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
     });
   }
 
-  // Render status badge based on whether it's interactive or not
   const renderStatusBadge = () => {
     if (!book.status) return null;
 
     if (onStatusChange) {
-      // Interactive dropdown menu
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
               type="button"
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow bg-chart-2 bg-primary transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2"
               aria-label={`Statut de lecture: ${book.status}. Cliquer pour changer`}
             >
               {book.status}
               <ChevronDown size={12} aria-hidden="true" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             {statuses.map((status) => (
@@ -80,37 +79,31 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
 
   return (
     <div
-      className="w-full max-w-sm min-h-[460px] transform hover:scale-101 transition-transform duration-500 cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 rounded-xl"
+      className="w-full transform hover:scale-101 transition-transform duration-500 cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 rounded-xl"
       onClick={() => goToBookDetails()}
       role="article"
     >
       <Card className="w-full shadow-lg relative rounded-xl overflow-hidden p-0 gap-2 flex flex-col h-full bg-chart-2">
-        {/* Book cover (fallback placeholder when no cover) */}
-        <div className="relative flex-shrink-0">
-          {book.coverId ? (
+        <div className="relative shrink-0">
+          {book.cover_url ? (
             <img
-              //src={`https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`}
-              src={book.coverId} // dev
+              src={book.cover_url}
               alt={`Couverture de ${book.name}`}
               width="320"
-              height="192"
-              className="w-full h-78 object-cover"
+              height="480"
+              className="w-full aspect-2/3 object-cover"
             />
           ) : (
-            <div className="bg-gray-200 w-full h-56 animate-pulse" />
+            <div className="bg-gray-200 w-full aspect-2/3 animate-pulse" />
           )}
 
-          {book.categories && book.categories.length > 0 && (
-            <span className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground">
-              {book.categories[0]}
+          {book.categoryName && book.categoryName.length > 0 && (
+            <span className="absolute bottom-3 bg-primary right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground">
+              {book.categoryName}
             </span>
           )}
-
-          {/* Status badge: displays reading status if available with dropdown to change it */}
           {renderStatusBadge()}
-
-          {/* Delete button: removes the book from the user's list */}
-          <button
+          <Button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -124,16 +117,20 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
               className="text-red-600 transition-colors group-hover:text-white"
               aria-hidden="true"
             />
-          </button>
+          </Button>
         </div>
 
-        <CardContent className="px-4 pt-0 pb-4 flex flex-col items-start">
-          <div className="text-left w-full">
-            <h3 className="font-semibold text-lg">{book.name}</h3>
-            <p className="text-sm text-gray-600">{book.author}</p>
+        <CardContent className="px-3 pt-0 pb-3 flex flex-col items-start">
+          <div className="text-left w-full flex flex-col gap-1">
+            <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2">
+              {book.name}
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-600 truncate">
+              {book.author}
+            </p>
             {book.description && (
-              <div className="mt-2 max-h-20 overflow-y-auto overflow-x-hidden pr-2">
-                <p className="text-sm text-gray-700 text-justify">
+              <div className="hidden sm:block mt-2 max-h-16 overflow-y-auto overflow-x-hidden pr-1">
+                <p className="text-xs text-muted-foreground text-justify line-clamp-3">
                   {book.description}
                 </p>
               </div>

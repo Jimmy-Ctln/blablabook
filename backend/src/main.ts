@@ -8,9 +8,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
 
+  const frontendUrl = process.env.FRONTEND_URL_CORS;
+
   // enabled CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL_CORS,
+    origin: frontendUrl,
     credentials: true,
   });
 

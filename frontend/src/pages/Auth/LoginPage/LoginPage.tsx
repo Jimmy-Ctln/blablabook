@@ -13,12 +13,12 @@ import { useState } from "react";
 import { z } from "zod";
 
 const schema = z.object({
-  username: z.string().min(1, "Le nom d'utilisateur doit être définis"),
+  email: z.string().email("Veuillez entrer un email valide"),
   password: z.string().min(1, "Le mot de passe est attendu"),
 });
 
 type LoginFormData = {
-  username: string;
+  email: string;
   password: string;
 };
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
   });
 
   const defaultValues = {
-    username: "",
+    email: "",
     password: "",
   };
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
 
   return (
     <form
-      className="w-70 md:w-150 flex flex-col items-center mx-auto"
+      className="w-70 md:w-150 flex flex-col items-center mx-auto text-foreground"
       onSubmit={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -93,13 +93,13 @@ export default function LoginPage() {
         </div>
       )}
 
-      <form.Field name="username">
+      <form.Field name="email">
         {(field) => {
           return (
             <FormField
               field={field}
               type={"string"}
-              label={"Nom d'utilisateur"}
+              label={"Email"}
               placeholder={""}
             />
           );

@@ -1,27 +1,21 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { CustomInput } from "./customInput";
 
 type SearchBarProps = {
-  readonly onSearch: (query: string) => void;
-  readonly spacingClassName?: string;
+  readonly onSearch?: (query: string) => void;
   readonly placeholder?: string;
 };
 
 export default function SearchBar({
   onSearch,
-  spacingClassName,
-  placeholder,
+  placeholder = "Rechercher...",
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebounce(query, 400);
 
   useEffect(() => {
-    if (debouncedQuery.length === 0) {
-      onSearch("");
-    } else if (debouncedQuery.length >= 2) {
+    if (onSearch) {
       onSearch(debouncedQuery);
     }
   }, [debouncedQuery, onSearch]);
@@ -31,33 +25,16 @@ export default function SearchBar({
   }
 
   return (
-    <form
-      className={`w-full max-w-md mx-auto flex items-center gap-2 bg-chart-2 rounded-lg shadow px-3 py-2 sm:max-w-lg md:max-w-2xl ${
-        spacingClassName ?? "mt-10 mb-10"
-      }`}
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSearch(query);
-      }}
-      role="search"
-    >
-      <Input
+    <div className="w-full max-w-md">
+      <CustomInput
         type="text"
-        placeholder={placeholder ?? "Rechercher un livre, un auteur..."}
+        placeholder={placeholder}
         value={query}
         onChange={handleChange}
         aria-label="Rechercher un livre ou un auteur"
-        className="flex-1 border-none bg-white focus:ring-0 focus-visible:ring-2 focus-visible:ring-offset-2"
+        className="bg-transparent"
+        role="search"
       />
-      <Button
-        type="submit"
-        variant="ghost"
-        size="icon"
-        aria-label="Lancer la recherche"
-        className="focus-visible:ring-2 focus-visible:ring-offset-2 hover:bg-primary/20 transition-colors"
-      >
-        <Search className="h-5 w-5 text-primary" aria-hidden="true" />
-      </Button>
-    </form>
+    </div>
   );
 }

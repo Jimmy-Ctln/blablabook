@@ -8,11 +8,17 @@ import {
   Body,
   ParseIntPipe,
   Query,
+  UseGuards,
+  Req,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookStatusDto } from './dto/update-book-status.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/auth.guard';
 
 /**
  * REST controller for book-related routes.
@@ -30,8 +36,13 @@ export class BooksController {
   @Get()
   @ApiOperation({ summary: 'Get all books' })
   @ApiResponse({ status: 200, description: 'Books retrieved successfully' })
-  async getAllBooks() {
-    return this.booksService.findAllBooks();
+  async getAllBooks(@Query('category') category?: string | string[]) {
+    const categories = Array.isArray(category)
+      ? category
+      : category
+        ? [category]
+        : undefined;
+    return this.booksService.findAllBooks(categories);
   }
 
   /**
@@ -46,28 +57,55 @@ export class BooksController {
   /**
    * GET /books/library/:userId
    * Returns all books linked to the user's list, with a computed `status`.
+   * Supports pagination with offset and limit query parameters.
    */
+  @UseGuards(AuthGuard)
   @Get('library/:userId')
   @ApiOperation({ summary: 'Get all books for a user' })
   @ApiResponse({
     status: 200,
     description: 'User books retrieved successfully',
   })
-  async getUserBooks(@Param('userId', ParseIntPipe) userId: number) {
-    return this.booksService.findUserBooks(userId);
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async getUserBooks(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Req() request: Request,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    const authenticatedUserId = request['user']?.sub;
+    if (!authenticatedUserId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (authenticatedUserId !== userId) {
+      throw new ForbiddenException('You can only access your own library');
+    }
+    return this.booksService.findUserBooks(userId, offset, limit);
   }
 
   /**
    * POST /books/library/:userId
    * Adds a book to the user's list, creating the book and/or list if needed.
    */
+  @UseGuards(AuthGuard)
   @Post('library/:userId')
   @ApiOperation({ summary: 'Add a book to a user library' })
   @ApiResponse({ status: 201, description: 'Book added to user library' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   async addBookToUserList(
     @Param('userId', ParseIntPipe) userId: number,
     @Body() createBookDto: CreateBookDto,
+    @Req() request: Request,
   ) {
+    const authenticatedUserId = request['user']?.sub;
+    if (!authenticatedUserId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (authenticatedUserId !== userId) {
+      throw new ForbiddenException(
+        'You can only add books to your own library',
+      );
+    }
     return this.booksService.addToUserList(userId, createBookDto);
   }
 
@@ -75,13 +113,25 @@ export class BooksController {
    * DELETE /books/library/:userId/book/:bookId
    * Removes the link between a book and the user's list.
    */
+  @UseGuards(AuthGuard)
   @Delete('library/:userId/book/:bookId')
   @ApiOperation({ summary: 'Remove a book from a user library' })
   @ApiResponse({ status: 200, description: 'Book removed from user library' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   async removeBookFromUserList(
     @Param('userId', ParseIntPipe) userId: number,
     @Param('bookId', ParseIntPipe) bookId: number,
+    @Req() request: Request,
   ) {
+    const authenticatedUserId = request['user']?.sub;
+    if (!authenticatedUserId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (authenticatedUserId !== userId) {
+      throw new ForbiddenException(
+        'You can only remove books from your own library',
+      );
+    }
     return this.booksService.removeFromUserList(userId, bookId);
   }
 
@@ -90,14 +140,26 @@ export class BooksController {
    * Updates the reading dates (readStart, readEnd) for a book in the user's list.
    * This allows changing the computed status based on dates.
    */
+  @UseGuards(AuthGuard)
   @Patch('library/:userId/book/:bookId/status')
   @ApiOperation({ summary: 'Update reading status for a book in user library' })
   @ApiResponse({ status: 200, description: 'Book status updated successfully' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   async updateBookStatusDates(
     @Param('userId', ParseIntPipe) userId: number,
     @Param('bookId', ParseIntPipe) bookId: number,
     @Body() updateDatesDto: UpdateBookStatusDto,
+    @Req() request: Request,
   ) {
+    const authenticatedUserId = request['user']?.sub;
+    if (!authenticatedUserId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (authenticatedUserId !== userId) {
+      throw new ForbiddenException(
+        'You can only update your own reading status',
+      );
+    }
     const readStart = updateDatesDto.readStart
       ? new Date(updateDatesDto.readStart)
       : null;
@@ -111,21 +173,5 @@ export class BooksController {
       readStart,
       readEnd,
     );
-  }
-
-  /**
-   * GET /books/:bookId/categories
-   * Get all categories for a specific book
-   */
-  @Get(':bookId/categories')
-  @ApiOperation({ summary: 'Get all categories for a book' })
-  @ApiResponse({
-    status: 200,
-    description: 'Categories retrieved successfully',
-  })
-  async getCategoriesForBook(
-    @Param('bookId', ParseIntPipe) bookId: number,
-  ): Promise<{ id: number; name: string }[]> {
-    return this.booksService.getCategoriesForBook(bookId);
   }
 }

@@ -1,120 +1,227 @@
-// LibraryPage displays the user's personal book collection with basic
-// filtering, counters by reading status, and a modal to add new books.
-// Data is fetched via TanStack Query and updates automatically after mutations.
 import { useEffect, useState } from "react";
 import { BookCard } from "@/components/BookCard";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  LayoutGrid,
+  Library,
+} from "lucide-react";
 import { Button } from "../components/ui/button";
-import type { BookRow } from "../@types/books";
-import { AddBookModal } from "@/components/AddBookModal";
 import { useAuthStore } from "@/stores/authStore";
 import { useUserBooks } from "@/hooks/useUserBooks";
 import SearchBar from "@/components/SearchBar";
+import type { BookDisplay } from "../@types/books";
+import { AddBookModal } from "@/components/AddBookModal";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
+type FilterStatus = "all" | "En cours" | "À lire" | "Lu";
 
 export default function LibraryPage() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  // Use custom hook for all book operations
-  const { books, refetch, removeBook, updateStatus } = useUserBooks(userId);
+  const { books, refetch, removeBook, updateStatus, total, hasMore, loadMore } =
+    useUserBooks(userId);
 
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterStatus>("all");
 
-  // Load books when a userId is set (or changes)
   useEffect(() => {
-    if (userId) refetch();
-  }, [userId, refetch]);
+    if (userId) {
+      refetch();
+    }
+  }, [userId]);
 
-  // Client-side filtering by title or author
-  const filteredBooks: BookRow[] =
-    books?.filter((b: BookRow) => {
+  const filteredBooks: BookDisplay[] =
+    books?.filter((b: BookDisplay) => {
       const searchLower = search.toLowerCase();
-      return (
+      const matchesSearch =
         b.name.toLowerCase().includes(searchLower) ||
-        (b.author ?? "").toLowerCase().includes(searchLower)
-      );
+        (b.author ?? "").toLowerCase().includes(searchLower);
+      const matchesFilter = activeFilter === "all" || b.status === activeFilter;
+      return matchesSearch && matchesFilter;
     }) || [];
 
-  // Reading status counters for quick stats
   const readCount =
-    books?.filter((b: BookRow) => b.status === "Lu").length || 0;
+    books?.filter((b: BookDisplay) => b.status === "Lu").length || 0;
   const readingCount =
-    books?.filter((b: BookRow) => b.status === "En cours").length || 0;
+    books?.filter((b: BookDisplay) => b.status === "En cours").length || 0;
   const toReadCount =
-    books?.filter((b: BookRow) => b.status === "À lire").length || 0;
+    books?.filter((b: BookDisplay) => b.status === "À lire").length || 0;
+  const totalCount = books?.length || 0;
+
+  const stats = [
+    {
+      label: "Total",
+      count: totalCount,
+      icon: LayoutGrid,
+      status: "all" as FilterStatus,
+    },
+    {
+      label: "En cours",
+      count: readingCount,
+      icon: BookOpen,
+      status: "En cours" as FilterStatus,
+    },
+    {
+      label: "À lire",
+      count: toReadCount,
+      icon: Clock,
+      status: "À lire" as FilterStatus,
+    },
+    {
+      label: "Lus",
+      count: readCount,
+      icon: CheckCircle2,
+      status: "Lu" as FilterStatus,
+    },
+  ];
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 pb-10 md:px-6">
-      {/* Banner: page title + open AddBook modal */}
-      <div className="w-full py-8 rounded-xl shadow-xl bg-card flex flex-col items-center bg-chart-2">
-        <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4 sm:mb-6 text-foreground">
-          Ma Bibliothèque
-        </h1>
-        <Button
-          onClick={() => setOpen(true)}
-          size="lg"
-          className="w-[80%] sm:w-auto whitespace-normal text-center mt-2"
-        >
-          <Plus size={16} />
-          Ajouter un livre
-        </Button>
-        {/* AddBook modal controlled by `open` state */}
-        <AddBookModal
-          isOpen={open}
-          onClose={() => setOpen(false)}
-          userId={userId}
-        />
-      </div>
+    <div className="w-full min-h-screen bg-background">
+      <AddBookModal isOpen={open} setOpen={setOpen} />
 
-      {/* Status: counters by reading status */}
-      <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
-        <span className="px-3 py-1.5 bg-muted/60 border border-border rounded-md shadow-sm text-foreground bg-primary text-primary-foreground">
-          Lus : <strong>{readCount}</strong>
-        </span>
-
-        <span className="px-3 py-1.5 bg-muted/60 border border-border rounded-md shadow-sm text-foreground bg-primary text-primary-foreground">
-          En cours : <strong>{readingCount}</strong>
-        </span>
-
-        <span className="px-3 py-1.5 bg-muted/60 border border-border rounded-md shadow-sm text-foreground bg-primary text-primary-foreground">
-          À lire : <strong>{toReadCount}</strong>
-        </span>
-      </div>
-
-      {/* SearchBar (client-side filtering only) */}
-      <SearchBar
-        onSearch={setSearch}
-        spacingClassName="mt-2 mb-2"
-        placeholder="Rechercher dans ma bibliothèque..."
-      />
-
-      {/* Books list: show empty state when no results */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredBooks.length === 0 ? (
-          <p
-            className="text-muted-foreground text-center col-span-full"
-            role="status"
-            aria-live="polite"
-          >
-            Aucun livre trouvé.
+      <div className="container px-6 sm:px-8 md:px-12 py-6 sm:py-8 md:py-10">
+        {/* En-tête principal */}
+        <div className="mb-8 sm:mb-10">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex glass-accent h-12 w-12 shrink-0 items-center justify-center rounded-xl">
+                <Library className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+                  Ma bibliothèque
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  {books.length} sur {total} livre{total !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setOpen(true)}
+              className="shrink-0 gap-2 rounded-lg h-10 sm:h-11"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Ajouter</span>
+            </Button>
+          </div>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Gérez votre collection et suivez vos lectures
           </p>
-        ) : (
-          filteredBooks.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              onRemove={() => removeBook(book.id)}
-              onStatusChange={(newStatus) =>
-                updateStatus({
-                  bookId: book.id,
-                  status: newStatus,
-                  currentBook: book,
-                })
-              }
-            />
-          ))
-        )}
+        </div>
+
+        {/* Statistiques - Stats cards */}
+        <div className="flex gap-2 sm:gap-3 mb-8 flex-wrap">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            const isActive = activeFilter === stat.status;
+            return (
+              <button
+                key={stat.status}
+                onClick={() => setActiveFilter(stat.status)}
+                className={`flex flex-col items-center justify-center rounded-lg transition-all duration-200 h-20 w-20 sm:h-24 sm:w-24 ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-secondary/50 text-foreground border border-border/50 hover:bg-secondary hover:border-primary/30"
+                }`}
+              >
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6 mb-1" />
+                <span className="text-lg sm:text-xl font-bold">
+                  {stat.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Recherche */}
+        <div className="mb-8">
+          <SearchBar
+            onSearch={setSearch}
+            placeholder="Rechercher par titre ou auteur..."
+          />
+        </div>
+
+        <Separator className="mb-8" />
+
+        {/* Grille de livres */}
+        <div className="w-full">
+          {filteredBooks.length === 0 ? (
+            <Card className="col-span-full p-8 sm:p-12 text-center rounded-2xl border-dashed">
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <BookOpen className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
+                    {totalCount === 0
+                      ? "Votre bibliothèque est vide"
+                      : "Aucun livre ne correspond"}
+                  </h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4">
+                    {totalCount === 0
+                      ? "Ajoutez des livres pour commencer votre aventure de lecture."
+                      : "Essayez une autre recherche ou modifiez les filtres."}
+                  </p>
+                  {totalCount === 0 && (
+                    <Button
+                      onClick={() => setOpen(true)}
+                      className="gap-2 rounded-lg"
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Ajouter un livre
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                {filteredBooks.map((book) => (
+                  <BookCard
+                    key={book.id}
+                    book={book}
+                    onRemove={() => {
+                      if (book.internalId !== undefined) {
+                        removeBook(book.internalId);
+                      }
+                    }}
+                    onStatusChange={(newStatus) => {
+                      if (book.internalId !== undefined) {
+                        updateStatus({
+                          bookId: book.internalId,
+                          status: newStatus,
+                          currentBook: book,
+                        });
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+
+              {hasMore && !search && activeFilter === "all" && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    onClick={loadMore}
+                    variant="outline"
+                    size="lg"
+                    className="rounded-lg text-foreground"
+                  >
+                    Charger plus de livres
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

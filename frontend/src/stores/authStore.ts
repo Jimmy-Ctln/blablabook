@@ -2,21 +2,14 @@ import api from "@/api/axios";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-interface UserProps {
-  id: number;
-  image: string | null;
-  email: string;
-  username: string;
-  roles: string;
-}
-
 interface AuthStoreProps {
   user: UserProps | null;
   isAuthenticated: boolean;
 
   login: (user: UserProps) => void;
   logout: () => void;
-  updateUser: (user: Partial<UserProps>) => void;
+  updateUser: (user: UserProps) => void;
+  clearAuth: () => void;
 }
 
 export const useAuthStore = create<AuthStoreProps>()(
@@ -45,15 +38,17 @@ export const useAuthStore = create<AuthStoreProps>()(
           window.location.href = "/";
         }
       },
-      updateUser: (updatedFields) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, ...updatedFields } : null,
-        }));
+      updateUser: (updatedData: Partial<UserProps>) => {
+        set({ user: updatedData as UserProps });
+      },
+      clearAuth: () => {
+        set({ user: null, isAuthenticated: false });
+        localStorage.removeItem("auth_storage");
       },
     }),
     {
       name: "auth_storage",
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );

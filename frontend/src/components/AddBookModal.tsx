@@ -1,57 +1,56 @@
-// AddBookModal lets the user search books from the external API,
-// preview results, navigate to details, or add a book directly
-// to their library. Uses TanStack Query for fetching and mutation.
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Check, Search } from "lucide-react";
-import { Loader } from "@/components/Loader";
+import { Plus } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
-import { getUserBooks } from "@/api/books";
+import { getBooks } from "@/api/books";
+import type { BooksByCategory } from "@/@types/books";
 import type { ExternalBook } from "@/@types/externalBooks";
 import { searchExternalBooks } from "@/api/externalBooks";
-import { useAddBook } from "@/hooks/useAddBook";
+import SearchBar from "./SearchBar";
+import { Button } from "./ui/button";
+import { Separator } from "@/components/ui/separator";
+import BookCardModal from "./bookCardModal";
+import {
+  mapBookRowToDisplay,
+  mapExternalBookToDisplay,
+} from "@/lib/bookDisplayMapper";
 
 type AddBookModalProps = {
   readonly isOpen: boolean;
-  readonly onClose: () => void;
-  readonly userId?: number;
+  setOpen: Dispatch<SetStateAction<boolean>>;
 };
 
-export function AddBookModal({ isOpen, onClose, userId }: AddBookModalProps) {
+export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   const [query, setQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  // User's current library, used to mark items already added
-  const { data: userBooks = [] } = useQuery({
-    queryKey: ["userBooks", userId],
-    queryFn: () => getUserBooks(userId!),
-    enabled: !!userId,
+
+  const { data: booksByCategory = {} } = useQuery<BooksByCategory>({
+    queryKey: ["Allbooks"],
+    queryFn: () => getBooks(),
+    enabled: isOpen,
   });
 
-  // Mutation hook to add a book to the user's list
-  const addBookMutation = useAddBook(userId);
+  const allBooks = Object.values(booksByCategory).flat();
 
-  // Reset query and results when modal closes
-  const handleClose = () => {
-    setQuery("");
-    setHasSearched(false);
-    onClose();
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setQuery("");
+      setHasSearched(false);
+    }
+    setOpen(nextOpen);
   };
-
-  // TanStack Query to look for books
+  // TanStack Query to look external books
   const {
-    data: results = [],
+    data: externalBookResult = [],
     isFetching,
-    refetch,
+    refetch: refetchExternalBooks,
   } = useQuery<ExternalBook[]>({
     enabled: false, // don't fetch on mount
     queryKey: ["externalBooks", query],
@@ -59,148 +58,91 @@ export function AddBookModal({ isOpen, onClose, userId }: AddBookModalProps) {
       searchExternalBooks({ type: "searchText", searchText: query }),
   });
 
-  // Trigger a search only when input is non-empty
-  const handleSearch = () => {
-    if (!query.trim()) return;
-    setHasSearched(true);
-    refetch();
-  };
+  useEffect(() => {
+    if (query.trim().length >= 2) {
+      refetchExternalBooks();
+      setHasSearched(true);
+    } else if (query.trim().length === 0) {
+      setHasSearched(false);
+    }
+  }, [query, refetchExternalBooks]);
 
-  const navigate = useNavigate();
-
-  // Navigate to internal book details page using the ISBN
-  const handleCardClick = (book: ExternalBook) => {
-    if (!book.isbn) return;
-    navigate({ to: `/books/${book.isbn}` });
-  };
-
-  // Check if a book result is already in the library
-  const isInLibrary = (externalBook: ExternalBook) => {
-    if (!externalBook.isbn?.length) return false;
-
-    return userBooks.some((b) => externalBook.isbn.includes(b.isbn));
-  };
+  const tenBooks = allBooks.slice(0, 10).map(mapBookRowToDisplay);
+  const normalizedQuery = query.trim();
+  const showExternalResults = hasSearched && normalizedQuery.length > 0;
+  const displayedBooks = showExternalResults
+    ? externalBookResult.map(mapExternalBookToDisplay)
+    : tenBooks;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl lg:max-w-3xl h-full sm:h-auto p-6 overflow-y-auto w-full py-8 rounded-xl bg-chart-2">
-        <DialogDescription className="sr-only">
-          Rechercher un livre.
-        </DialogDescription>
-
-        <DialogHeader>
-          <DialogTitle className="text-2xl md:text-3xl font-semibold">
-            Rechercher un livre
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex gap-2 mb-4 mt-2">
-          <Input
-            placeholder="Nom du livre, auteur..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              if (hasSearched) setHasSearched(false);
-            }}
-            className="flex-1 bg-white shadow-sm focus:ring-2 rounded-xl "
-          />
-
-          <Button onClick={handleSearch} className="shadow">
-            <Search size={18} />
-            Rechercher
-          </Button>
-        </div>
-
-        {isFetching && <Loader className="text-sm" />}
-
-        {/* Empty state: show message only after an explicit search */}
-        {!isFetching && hasSearched && results.length === 0 && (
-          <p className="mt-4 text-sm text-gray-600">Aucun livre trouvé.</p>
-        )}
-
-        <div className="max-h-[500px] overflow-y-auto mt-4 pr-4">
-          {results.map((book) => {
-            const alreadyInLibrary = isInLibrary(book);
-
-            // Keyboard support for the whole clickable row (Enter/Space)
-            const handleKeyDown = (e: React.KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                handleCardClick(book);
-              }
-            };
-
-            return (
-              // Use a div with role=button to avoid nesting a button inside a button
-              <div
-                key={book.key}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleCardClick(book)}
-                onKeyDown={handleKeyDown}
-                className={`
-          relative w-full bg-white flex items-center gap-4
-          mb-4 p-3 border rounded-xl shadow-sm text-left
-          focus-visible:ring-2 focus-visible:ring-offset-2
-          transition-transform hover:scale-101 cursor-pointer
-          ${alreadyInLibrary ? "opacity-60" : ""}
-        `}
-              >
-                {/* ✔️ Already in library */}
-                {alreadyInLibrary && (
-                  <Check
-                    data-testid="check-icon"
-                    className="absolute top-2 right-2 text-green-600"
-                    size={22}
-                  />
-                )}
-
-                {/* ➕ Add to library */}
-                {!alreadyInLibrary && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addBookMutation.mutate(book);
-                    }}
-                    className="
-              absolute top-2 right-2 border
-              flex items-center justify-center
-              rounded-full
-              sm:flex w-8 h-8 hover:bg-primary hover:text-secondary
-            "
-                    aria-label="Ajouter à la librairie"
-                  >
-                    +
-                  </button>
-                )}
-
-                {book.cover ? (
-                  <img
-                    src={book.cover}
-                    alt={`Couverture de ${book.title}`}
-                    className="w-20 h-32 object-cover rounded flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-20 h-32 bg-gray-200 rounded flex-shrink-0" />
-                )}
-
-                <div>
-                  <p className="font-semibold text-lg">{book.title}</p>
-                  <p className="text-sm text-gray-600">
-                    {book.author || "Unknown"}
-                  </p>
-                  {book.publishDate && (
-                    <p className="text-xs text-gray-500">{book.publishDate}</p>
-                  )}
-                  {book.categories && book.categories.length > 0 && (
-                    <span className="inline-block mt-2 px-3 py-1.5 text-xs font-semibold rounded-full border">
-                      {book.categories[0]}
-                    </span>
-                  )}
-                </div>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-none overflow-hidden rounded-3xl border p-0 text-foreground sm:w-[calc(100vw-3rem)] sm:max-w-2xl lg:max-w-3xl">
+        <div className="flex max-h-[84dvh] min-h-[65dvh] flex-col bg-background sm:min-h-144">
+          <DialogHeader className="space-y-3 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
+            <DialogTitle className="flex items-start gap-3 text-foreground font-semibold">
+              <div className="glass-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                <Plus className="h-5 w-5 text-primary" />
               </div>
-            );
-          })}
+              <div className="space-y-1">
+                <h3 className="text-lg leading-tight sm:text-xl">
+                  Ajouter un livre
+                </h3>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Recherchez et ajoutez des livres a votre bibliotheque.
+                </p>
+              </div>
+            </DialogTitle>
+            <SearchBar
+              onSearch={setQuery}
+              placeholder="Titre, auteur, ISBN..."
+            />
+          </DialogHeader>
+
+          <Separator />
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            <span className="text-xs text-muted-foreground sm:text-sm">
+              {showExternalResults
+                ? `Resultats pour "${normalizedQuery}"`
+                : `${tenBooks.length} suggestions de livres`}
+            </span>
+
+            <div className="mt-4 min-h-72 space-y-3 sm:min-h-80">
+              {isFetching ? (
+                Array.from({ length: 6 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="h-24 animate-pulse rounded-xl border bg-muted/30"
+                  />
+                ))
+              ) : !isFetching &&
+                showExternalResults &&
+                displayedBooks.length === 0 ? (
+                <div className="flex h-full min-h-72 items-center justify-center rounded-xl border border-dashed px-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Aucun livre trouve. Essayez un autre mot-cle.
+                  </p>
+                </div>
+              ) : (
+                displayedBooks.map((book) => (
+                  <BookCardModal
+                    key={`${book.isbn ?? "book"}-${book.name}`}
+                    book={book}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          <Separator />
+          <DialogFooter className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
+            <span className="w-full text-xs text-muted-foreground sm:text-sm">
+              Parcourez le catalogue pour enrichir votre collection.
+            </span>
+            <Button className="w-full sm:w-auto" onClick={() => setOpen(false)}>
+              Terminer
+            </Button>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>
