@@ -23,15 +23,18 @@ export default function LibraryPage() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  const { books, refetch, removeBook, updateStatus } = useUserBooks(userId);
+  const { books, refetch, removeBook, updateStatus, total, hasMore, loadMore } =
+    useUserBooks(userId);
 
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterStatus>("all");
 
   useEffect(() => {
-    if (userId) refetch();
-  }, [userId, refetch]);
+    if (userId) {
+      refetch();
+    }
+  }, [userId]);
 
   const filteredBooks: BookDisplay[] =
     books?.filter((b: BookDisplay) => {
@@ -95,7 +98,7 @@ export default function LibraryPage() {
                   Ma bibliothèque
                 </h1>
                 <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                  {totalCount} livre{totalCount !== 1 ? "s" : ""}
+                  {books.length} sur {total} livre{total !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
@@ -180,28 +183,43 @@ export default function LibraryPage() {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {filteredBooks.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  onRemove={() => {
-                    if (book.internalId !== undefined) {
-                      removeBook(book.internalId);
-                    }
-                  }}
-                  onStatusChange={(newStatus) => {
-                    if (book.internalId !== undefined) {
-                      updateStatus({
-                        bookId: book.internalId,
-                        status: newStatus,
-                        currentBook: book,
-                      });
-                    }
-                  }}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                {filteredBooks.map((book) => (
+                  <BookCard
+                    key={book.id}
+                    book={book}
+                    onRemove={() => {
+                      if (book.internalId !== undefined) {
+                        removeBook(book.internalId);
+                      }
+                    }}
+                    onStatusChange={(newStatus) => {
+                      if (book.internalId !== undefined) {
+                        updateStatus({
+                          bookId: book.internalId,
+                          status: newStatus,
+                          currentBook: book,
+                        });
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+
+              {hasMore && !search && activeFilter === "all" && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    onClick={loadMore}
+                    variant="outline"
+                    size="lg"
+                    className="rounded-lg text-foreground"
+                  >
+                    Charger plus de livres
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
