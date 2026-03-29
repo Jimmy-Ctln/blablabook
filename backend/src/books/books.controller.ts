@@ -57,6 +57,7 @@ export class BooksController {
   /**
    * GET /books/library/:userId
    * Returns all books linked to the user's list, with a computed `status`.
+   * Supports pagination with offset and limit query parameters.
    */
   @UseGuards(AuthGuard)
   @Get('library/:userId')
@@ -69,6 +70,8 @@ export class BooksController {
   async getUserBooks(
     @Param('userId', ParseIntPipe) userId: number,
     @Req() request: Request,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
     const authenticatedUserId = request['user']?.sub;
     if (!authenticatedUserId) {
@@ -77,7 +80,7 @@ export class BooksController {
     if (authenticatedUserId !== userId) {
       throw new ForbiddenException('You can only access your own library');
     }
-    return this.booksService.findUserBooks(userId);
+    return this.booksService.findUserBooks(userId, offset, limit);
   }
 
   /**

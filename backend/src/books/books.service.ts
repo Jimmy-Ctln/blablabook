@@ -96,10 +96,27 @@ export class BooksService {
   /**
    * Get all books belonging to a specific user's list, enriched with a computed
    * `status` field based on `readStart`/`readEnd` dates and ordered by `addedAt`.
+   * Supports pagination with offset and limit.
    * @param userId Target user id
-   * @returns Array of user's books with transient status
+   * @param offset Number of books to skip (default: 0)
+   * @param limit Number of books to return (default: 10)
+   * @returns Object with books array and total count
    */
-  async findUserBooks(userId: number): Promise<BookDto[]> {
+  async findUserBooks(
+    userId: number,
+    offset: number = 0,
+    limit: number = 10,
+  ): Promise<{ books: BookDto[]; total: number }> {
+    // Get total count of user's books
+    const countResult = await this.db
+      .select({ count: count() })
+      .from(listBook)
+      .innerJoin(list, eq(list.id, listBook.listId))
+      .where(eq(list.userId, userId));
+
+    const total = countResult[0]?.count || 0;
+
+    // Get paginated books
     const rows = await this.db
       .select({
         id: book.id,
@@ -122,7 +139,9 @@ export class BooksService {
       .innerJoin(list, eq(list.id, listBook.listId))
       .innerJoin(category, eq(book.categoryId, category.id))
       .where(eq(list.userId, userId))
-      .orderBy(desc(listBook.addedAt));
+      .orderBy(desc(listBook.addedAt))
+      .offset(offset)
+      .limit(limit);
 
     // Compute status and attach categories for each book
     const booksWithStatus = await Promise.all(
@@ -138,11 +157,16 @@ export class BooksService {
           publishedAt: b.publishedAt,
           categoryName: b.categoryName,
           status: this.computeStatus(b.readStart, b.readEnd),
+          readStart: b.readStart,
+          readEnd: b.readEnd,
         };
       }),
     );
 
-    return booksWithStatus as BookDto[];
+    return {
+      books: booksWithStatus as BookDto[],
+      total,
+    };
   }
 
   /**
