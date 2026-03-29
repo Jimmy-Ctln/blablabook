@@ -14,7 +14,6 @@ import { UserInsert, UserSelect } from './types/user';
 
 @Injectable()
 export class UserService {
-  //  TODO Filtrer les champs sensibles (password)
   async createUser(userInputData: UserInsert): Promise<UserSelect | null> {
     const normalizedEmail = userInputData.email.toLowerCase();
 
@@ -33,6 +32,16 @@ export class UserService {
       .select()
       .from(user)
       .where(and(ilike(user.username, username), isNull(user.deletedAt)));
+
+    return result[0] ?? null;
+  }
+
+  async getUserByEmail(email: string): Promise<UserSelect | null> {
+    const normalizedEmail = email.toLowerCase();
+    const result = await db
+      .select()
+      .from(user)
+      .where(and(eq(user.email, normalizedEmail), isNull(user.deletedAt)));
 
     return result[0] ?? null;
   }

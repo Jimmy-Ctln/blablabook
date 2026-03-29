@@ -22,10 +22,10 @@ export class AuthService {
   ) {}
 
   async login(payload: LoginRequestDto) {
-    const user = await this.userService.getUserByUsername(payload.username);
+    const user = await this.userService.getUserByEmail(payload.email);
     if (!user) {
       console.error('Login attempt failed');
-      throw new UnauthorizedException('username or password is invalid');
+      throw new UnauthorizedException('email or password is invalid');
     }
 
     const isPasswordValid = await this.passwordService.checkPassword(
@@ -35,7 +35,7 @@ export class AuthService {
 
     if (!isPasswordValid) {
       console.error('Login attempt failed');
-      throw new UnauthorizedException('username or password is invalid');
+      throw new UnauthorizedException('email or password is invalid');
     }
 
     return user;
