@@ -183,7 +183,7 @@ const BookDetails = () => {
                 </div>
 
                 {isConnected && isBookInLibrary && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-foreground">
                     {[
                       {
                         status: "À lire" as BookStatus,
