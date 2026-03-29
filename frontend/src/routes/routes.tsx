@@ -14,6 +14,9 @@ import LibraryPage from "@/pages/LibraryPage";
 import BookDetails from "@/pages/Book/BookDetails";
 import HomePage from "@/pages/HomePage";
 import ProfilePage from "@/pages/ProfilePage/ProfilePage";
+import PrivacyPolicy from "@/pages/Legal/PrivacyPolicy";
+import LegalNotice from "@/pages/Legal/LegalNotice";
+import TermsOfUse from "@/pages/Legal/TermsOfUse";
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,
@@ -76,12 +79,33 @@ export const bookDetailsRoute = createRoute({
   component: () => <BookDetails />,
 });
 
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacy",
+  component: () => <PrivacyPolicy />,
+});
+
+const legalRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/legal",
+  component: () => <LegalNotice />,
+});
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terms",
+  component: () => <TermsOfUse />,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   registerPage,
   loginPage,
   seeAllRoute,
   bookDetailsRoute,
+  privacyRoute,
+  legalRoute,
+  termsRoute,
   protectedRoute.addChildren([libraryRoute, profilePage]),
 ]);
 
