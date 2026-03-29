@@ -49,10 +49,10 @@ describe("Login Page", async () => {
       expect(await screen.findByText('Connexion')).toBeInTheDocument();
     });
 
-    it("should display username label and input", async () => {
+    it("should display email label and input", async () => {
       await renderWithProviders("/login");
       // Vérifie que le label est bien affiché
-      expect(screen.getByText(/Nom d'utilisateur ?:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Email ?:/i)).toBeInTheDocument();
 
       // récupère tous les champs de type text
       const inputs = screen.getAllByRole('textbox');
@@ -88,11 +88,11 @@ describe("Login Page", async () => {
   describe("behavior", () => {
     it("should check data when form is submit", async () => {
       const { container } = await renderWithProviders('/login');
-      const usernameInput = screen.getAllByRole('textbox')[0];
+      const emailInput = screen.getAllByRole('textbox')[0];
       const passwordInput = container.querySelector('input[type="password"]');
-      await userEvent.type(usernameInput, 'testuser');
+      await userEvent.type(emailInput, 'test@example.com');
       await userEvent.type(passwordInput!, 'testpass');
-      expect(usernameInput).toHaveValue('testuser');
+      expect(emailInput).toHaveValue('test@example.com');
       expect(passwordInput).toHaveValue('testpass');
     });
 
@@ -105,23 +105,23 @@ describe("Login Page", async () => {
     });
 
     it("should be submit request", async () => {
-      const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { id: 1, username: 'testuser' } });
+      const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { id: 1, email: 'test@example.com' } });
       const { container } = await renderWithProviders('/login');
-      const usernameInput = screen.getAllByRole('textbox')[0];
+      const emailInput = screen.getAllByRole('textbox')[0];
       const passwordInput = container.querySelector('input[type="password"]');
-      await userEvent.type(usernameInput, 'testuser');
+      await userEvent.type(emailInput, 'test@example.com');
       await userEvent.type(passwordInput!, 'testpass');
       await userEvent.click(screen.getByText('Soumettre'));
-      expect(postSpy).toHaveBeenCalledWith('/auth/login', { username: 'testuser', password: 'testpass' });
+      expect(postSpy).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'testpass' });
       postSpy.mockRestore();
     });
 
     it("should display error and reset password if request failed", async () => {
       const postSpy = vi.spyOn(api, 'post').mockRejectedValue({ response: { data: { message: 'Erreur serveur' } } });
       const { container } = await renderWithProviders('/login');
-      const usernameInput = screen.getAllByRole('textbox')[0];
+      const emailInput = screen.getAllByRole('textbox')[0];
       const passwordInput = container.querySelector('input[type="password"]');
-      await userEvent.type(usernameInput, 'testuser');
+      await userEvent.type(emailInput, 'test@example.com');
       await userEvent.type(passwordInput!, 'testpass');
       await userEvent.click(screen.getByText('Soumettre'));
       expect(await screen.findByText(/Erreur serveur/)).toBeInTheDocument();
@@ -130,11 +130,11 @@ describe("Login Page", async () => {
     });
 
     it("should redirect to / when request is success", async () => {
-      const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { id: 1, username: 'testuser' } });
+      const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { id: 1, email: 'test@example.com' } });
       const { container } = await renderWithProviders('/login');
-      const usernameInput = screen.getAllByRole('textbox')[0];
+      const emailInput = screen.getAllByRole('textbox')[0];
       const passwordInput = container.querySelector('input[type="password"]');
-      await userEvent.type(usernameInput, 'testuser');
+      await userEvent.type(emailInput, 'test@example.com');
       await userEvent.type(passwordInput!, 'testpass');
       await userEvent.click(screen.getByText('Soumettre'));
       expect(await screen.findByText(/Accueil|Bienvenue|Home/i)).toBeInTheDocument();
