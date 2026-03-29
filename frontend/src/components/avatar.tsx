@@ -7,15 +7,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import SearchBar from "./SearchBar";
-import { useState } from "react";
 import { Button } from "./ui/button";
 import { SidebarTrigger } from "./ui/sidebar";
 
 export default function AvatarInfo() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  const [search, setSearch] = useState("");
 
   const navigate = useNavigate();
 
@@ -24,7 +21,6 @@ export default function AvatarInfo() {
       <SidebarTrigger className="mr-4 text-foreground" />
       <div className="flex justify-end">
         <div className="flex items-center">
-          <SearchBar onSearch={setSearch} />
           {user ? (
             <div className="hidden md:flex items-center ml-2">
               <DropdownMenu>

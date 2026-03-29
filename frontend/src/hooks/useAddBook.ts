@@ -5,8 +5,7 @@
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addBookToUserList } from "@/api/books";
-import type { CreateBookDto, BookRow } from "@/@types/books";
-import type { ExternalBook } from "@/@types/externalBooks";
+import type { CreateBookDto, BookRow, BookDisplay } from "@/@types/books";
 import { getOpenLibIsbnData, getOpenLibWorkData } from "@/api/externalBooks";
 
 /**
@@ -33,17 +32,17 @@ const toIsoDate = (publishDate?: string): string => {
 export const useAddBook = (userId?: number) => {
   const queryClient = useQueryClient();
 
-  return useMutation<BookRow, Error, ExternalBook>({
-    // Map the external book payload into our backend DTO, then call the API
-    mutationFn: async (externalBook) => {
+  return useMutation<BookRow, Error, BookDisplay>({
+    // Map the book display payload into our backend DTO, then call the API
+    mutationFn: async (bookDisplay) => {
       if (!userId) throw new Error("UserId is required");
 
       // Fetch description only when adding the book
-      let description = externalBook.description || "";
+      let description = bookDisplay.description || "";
 
-      if (!description && externalBook.isbn) {
+      if (!description && bookDisplay.isbn) {
         try {
-          const dataIsbn = await getOpenLibIsbnData(externalBook.isbn);
+          const dataIsbn = await getOpenLibIsbnData(bookDisplay.isbn);
           const workKey = dataIsbn.works?.[0]?.key;
 
           if (workKey) {
@@ -57,7 +56,7 @@ export const useAddBook = (userId?: number) => {
           }
         } catch (err) {
           console.warn(
-            `Failed to fetch description for ${externalBook.isbn}:`,
+            `Failed to fetch description for ${bookDisplay.isbn}:`,
             err,
           );
         }
@@ -65,14 +64,15 @@ export const useAddBook = (userId?: number) => {
 
       const createBookDto: CreateBookDto = {
         // Fallbacks ensure minimal valid payloads if external fields are missing
-        name: externalBook.title || "Unknown Title",
-        author: externalBook.author || "Unknown Author",
-        isbn: externalBook.isbn || "N/A",
-        coverId: externalBook.cover || "default_cover.png",
+        name: bookDisplay.name || "Unknown Title",
+        author: bookDisplay.author || "Unknown Author",
+        isbn: bookDisplay.isbn || "N/A",
+        coverUrl:
+          bookDisplay.cover_url || bookDisplay.cover || "default_cover.png",
         description: description || "Pas de description pour ce livre",
-        publishingHouse: externalBook.publisher || "Unknown publisher",
-        publishedAt: toIsoDate(externalBook.publishDate),
-        categories: externalBook.categories || "Unknown category",
+        publishingHouse: bookDisplay.publisher || "Unknown publisher",
+        publishedAt: toIsoDate(bookDisplay.publishDate),
+        categories: bookDisplay.categories || [],
       };
 
       return addBookToUserList(userId, createBookDto);

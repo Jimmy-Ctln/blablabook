@@ -1,6 +1,12 @@
-import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import * as schema from 'src/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryResponseDto } from './dto/category-response.dto';
 
@@ -54,10 +60,15 @@ export class CategoryService {
    * Find a category by name or create it if it doesn't exist
    */
   async findOrCreateByName(name: string): Promise<CategoryResponseDto> {
+    const normalizedName = name.trim();
+    if (!normalizedName) {
+      throw new BadRequestException('Category name cannot be empty');
+    }
+
     const [existingCategory] = await this.db
       .select()
       .from(schema.category)
-      .where(eq(schema.category.name, name))
+      .where(sql`lower(${schema.category.name}) = lower(${normalizedName})`)
       .execute();
 
     if (existingCategory) {
@@ -69,7 +80,7 @@ export class CategoryService {
 
     const [newCategory] = await this.db
       .insert(schema.category)
-      .values({ name })
+      .values({ name: normalizedName })
       .returning();
 
     return {

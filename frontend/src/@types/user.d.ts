@@ -1,13 +1,7 @@
-export type User = {
+interface UserProps {
   id: number;
   username: string;
   email: string;
-  image?: string | null;
+  avatar_url: string | null;
+  roles: string;
 }
-
-export type UpdateUserInput = {
-  username: string;
-  email: string;
-  password?: string;
-  image?: string;
-};

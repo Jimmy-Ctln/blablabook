@@ -17,22 +17,20 @@ export class TokenRepository {
       .select()
       .from(schema.refreshToken)
       .leftJoin(schema.user, eq(schema.refreshToken.userId, schema.user.id))
-      .where(eq(schema.refreshToken.token, hashedToken));
+      .where(eq(schema.refreshToken.refresh_token, hashedToken));
     return result[0] ?? null;
   }
-
-  async destroyRefreshToken(token: string): Promise<boolean> {
-    await this.db
-      .delete(schema.refreshToken)
-      .where(eq(schema.refreshToken.token, token));
-    return true; //si détruit on retourne true
-  }
-
   async storeRefreshToken(payload: TokenInsert): Promise<TokenSelect | null> {
     const result = await this.db
       .insert(schema.refreshToken)
       .values(payload)
       .returning();
     return result[0] ?? null;
+  }
+  async destroyRefreshToken(refreshToken: string): Promise<boolean> {
+    await this.db
+      .delete(schema.refreshToken)
+      .where(eq(schema.refreshToken.refresh_token, refreshToken));
+    return true; //si détruit on retourne true
   }
 }

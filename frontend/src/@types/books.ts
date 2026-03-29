@@ -2,7 +2,7 @@ export type BookStatus = "Lu" | "En cours" | "À lire";
 
 export interface CreateBookDto {
   name: string;
-  coverId: string;
+  coverUrl: string;
   author: string;
   description: string;
   isbn: string;
@@ -11,6 +11,21 @@ export interface CreateBookDto {
   categories: string[];
 }
 
+export const CATEGORY_NAMES = [
+  "horreur",
+  "romance",
+  "aventure",
+  "fantasy",
+  "science-fiction",
+  "mystere",
+  "thriller",
+  "unknown",
+] as const;
+
+export type CategoryName = (typeof CATEGORY_NAMES)[number];
+
+export type BooksByCategory = Record<string, BookRow[]>;
+
 /**
  * Drizzle-generated type matching backend BookSelect.
  * This ensures frontend mocks and data align exactly with backend schema.
@@ -18,17 +33,17 @@ export interface CreateBookDto {
 export interface BookRow {
   id: number;
   name: string;
-  coverId: string;
+  cover_url: string;
   author: string;
   description: string;
   isbn: string;
   publishingHouse: string;
   publishedAt: string; // date format from Drizzle
+  categoryName: CategoryName;
+  status: BookStatus;
   readStart?: Date | null;
   readEnd?: Date | null;
   addedAt?: Date;
-  status?: BookStatus;
-  categories?: string[];
 }
 
 // /**
@@ -41,10 +56,20 @@ export interface BookRow {
 // BookDisplay: unified display type for the front end
 // Allows all components to use the same type, regardless of the source (internal or external)
 export interface BookDisplay {
-  key: string;
-  title: string;
+  id: string;
+  internalId?: number | undefined; // Only internal book
+  name: string;
+  description?: string;
   author: string;
-  cover: string;
-  isbn?: string;
+  cover_url: string;
+  cover?: string;
+  isbn: string;
+  publisher: string;
+  publishDate: string;
+  status?: string; //The status is optionnal because externals books don't have status
   categories?: string[];
+  categoryName?: string;
+  readStart?: Date | null;
+  readEnd?: Date | null;
+  addedAt?: Date;
 }

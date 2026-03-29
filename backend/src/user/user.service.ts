@@ -14,7 +14,6 @@ import { UserInsert, UserSelect } from './types/user';
 
 @Injectable()
 export class UserService {
-  //  TODO Filtrer les champs sensibles (password)
   async createUser(userInputData: UserInsert): Promise<UserSelect | null> {
     const normalizedEmail = userInputData.email.toLowerCase();
 
@@ -33,6 +32,16 @@ export class UserService {
       .select()
       .from(user)
       .where(and(ilike(user.username, username), isNull(user.deletedAt)));
+
+    return result[0] ?? null;
+  }
+
+  async getUserByEmail(email: string): Promise<UserSelect | null> {
+    const normalizedEmail = email.toLowerCase();
+    const result = await db
+      .select()
+      .from(user)
+      .where(and(eq(user.email, normalizedEmail), isNull(user.deletedAt)));
 
     return result[0] ?? null;
   }
@@ -128,5 +137,46 @@ export class UserService {
     return plainToInstance(UpdateUserResponseDto, deletedUser, {
       excludeExtraneousValues: true,
     });
+  }
+
+  async changePassword(
+    id: number,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const [userRow] = await db
+      .select()
+      .from(user)
+      .where(and(eq(user.id, id), isNull(user.deletedAt)))
+      .limit(1);
+
+    if (!userRow) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    // Verify current password
+    const isPasswordValid = await argon2.verify(
+      userRow.password,
+      currentPassword,
+    );
+    if (!isPasswordValid) {
+      throw new UnprocessableEntityException('Current password is incorrect');
+    }
+
+    // Hash new password and update
+    const hashedNewPassword = await argon2.hash(newPassword);
+    const [updatedUser] = await db
+      .update(user)
+      .set({ password: hashedNewPassword })
+      .where(eq(user.id, id))
+      .returning();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    return {
+      message: 'Password changed successfully',
+    };
   }
 }

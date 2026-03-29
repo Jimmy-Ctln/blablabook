@@ -1,81 +1,100 @@
-import { Mail, Lock, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import logo from "@/assets/Blablabook-svg.svg";
-
+import { Mail, Lock, FileText, Instagram, Twitter } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
+  const footerLinks = [
+    { label: "CGU", href: "/cgu", icon: FileText },
+    { label: "Confidentialité", href: "/confidentialite", icon: Lock },
+    { label: "Contact", href: "mailto:contact@blablabook.com", icon: Mail },
+  ];
+
+  const socialLinks = [
+    { icon: Instagram, href: "#", label: "Instagram" },
+    { icon: Twitter, href: "#", label: "Twitter" },
+  ];
+
   return (
-    <footer className="w-full py-8 mt-auto border-t bg-primary text-white">
-      <div className="container mx-auto max-w-7xl px-4">
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
-          {/* Logo et nom */}
-          <div className="flex flex-col items-center md:items-start gap-3">
-            <div className="flex items-center gap-3">
-              <img src={logo} className="w-10 h-10" alt="Logo Blablabook" />
-              <span className="text-xl font-semibold text-secondary tracking-wide">
+    <footer className="w-full bg-secondary border-t border-border mt-auto">
+      <div className="container px-4 sm:px-6 md:px-12 py-8 sm:py-10 md:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
+          <div className="flex flex-col items-center sm:items-start">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="font-bold text-lg text-foreground">
                 Blablabook
               </span>
             </div>
-            <p className="text-sm text-white/70 text-center md:text-left max-w-xs">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
               Votre bibliothèque personnelle en ligne
             </p>
           </div>
-          {/* Navigation / Liens */}
-          <nav className="flex flex-wrap items-center gap-3 justify-center">
-            {/* <Tooltip>
-              <TooltipTrigger asChild>
-                <a href="mailto:contact@blablabook.com">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 hover:bg-secondary/20 hover:text-secondary transition-colors"
-                  >
-                    <Mail className="h-4 w-4" />
-                    <span className="text-sm">Contact</span>
-                  </Button>
+          <div className="flex flex-col items-center sm:items-start">
+            <h3 className="font-semibold text-foreground mb-3 text-sm">
+              Navigation
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  to="/"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Accueil
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  À propos
                 </a>
-              </TooltipTrigger>
-              <TooltipContent>Envoyer un mail</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a href="/cgu">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 hover:bg-secondary/20 hover:text-secondary transition-colors"
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span className="text-sm">CGU</span>
-                  </Button>
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>
-                Conditions générales d’utilisation
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a href="/confidentialite">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 hover:bg-secondary/20 hover:text-secondary transition-colors"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span className="text-sm">Confidentialité</span>
-                  </Button>
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Politique de confidentialité</TooltipContent>
-            </Tooltip> */}
-          </nav>
-
-          {/* Copyright */}
-          <div className="text-sm text-white/70 text-center md:text-right">
-            © {new Date().getFullYear()} Blablabook
-            <br />
-            <span className="text-xs">Tous droits réservés</span>
+              </li>
+            </ul>
           </div>
+
+          <div className="flex flex-col items-center sm:items-start">
+            <h3 className="font-semibold text-foreground mb-3 text-sm">
+              Légal
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {footerLinks.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  >
+                    <link.icon className="w-3.5 h-3.5" />
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex flex-col items-center sm:items-start">
+            <h3 className="font-semibold text-foreground mb-3 text-sm">
+              Nous suivre
+            </h3>
+            <div className="flex gap-4">
+              {socialLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                    title={link.label}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="h-px bg-border mb-6" />
+        <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 text-xs sm:text-sm text-muted-foreground">
+          <p>© {currentYear} Blablabook. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

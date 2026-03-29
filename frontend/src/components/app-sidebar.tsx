@@ -1,15 +1,5 @@
 import * as React from "react";
-import {
-  BookOpen,
-  Users,
-  Home,
-  Settings,
-  Compass,
-  TrendingUp,
-  Book,
-  Share2,
-} from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
+import { BookOpen, Home, Book, LogIn, Loader2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,16 +7,61 @@ import {
   SidebarHeader,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { NavMain } from "./nav-main";
-import { Link } from "@tanstack/react-router";
-import SearchBar from "./SearchBar";
+import { Link, useNavigate } from "@tanstack/react-router";
+import UserCard from "./user-card";
+import { useUserBooks } from "@/hooks/useUserBooks";
+import type { BookStatus } from "@/@types/books";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const store = useAuthStore();
-  const [search, setSearch] = React.useState("");
+  const { data: currentUser, isLoading, isError } = useCurrentUser();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
+  const [loadedImages, setLoadedImages] = React.useState<
+    Record<string, boolean>
+  >({});
 
-  const logout = store.logout;
+  const STATUSBOOK: BookStatus = "En cours";
+
+  const userId = currentUser?.id;
+
+  const { books: BookRow } = useUserBooks(userId);
+
+  const inProgressBooks = BookRow.filter(
+    (inProgressBook) => inProgressBook.status === STATUSBOOK,
+  );
+
+  const isAuthenticated = !!currentUser && !isError;
+
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const handleClick = (bookIsbn: string) => {
+    closeMobileSidebar();
+    navigate({ to: `/books/${bookIsbn}` });
+  };
+
+  const handleLoginClick = () => {
+    closeMobileSidebar();
+    navigate({ to: "/login" });
+  };
+
+  const handleImageLoad = (bookId: string) => {
+    setLoadedImages((prev) => ({
+      ...prev,
+      [bookId]: true,
+    }));
+  };
 
   const items = {
     navMain: [
@@ -39,72 +74,131 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Ma bibliothèque",
         url: "/library",
         icon: Book,
-      },
-      {
-        title: "Communaute",
-        url: "/community",
-        icon: Users,
-      },
-    ],
-    discover: [
-      {
-        title: "Explorer",
-        url: "/",
-        icon: Compass,
-      },
-      {
-        title: "Tendances",
-        url: "/",
-        icon: TrendingUp,
-      },
-      {
-        title: "Ma biblio publique",
-        url: "/",
-        icon: Share2,
-      },
-    ],
-    general: [
-      {
-        title: "Parametres",
-        url: "/",
-        icon: Settings,
+        visible: isAuthenticated,
       },
     ],
   };
 
+  const visibleNavItems = items.navMain.filter(
+    (item) => item.visible !== false,
+  );
+
   return (
-    <Sidebar className="px-4 bg-secondary" {...props}>
-      <SidebarHeader className="mt-6 gap-6">
+    <Sidebar
+      className="px-3 sm:px-4 bg-secondary supports-backdrop-filter:bg-secondary/95 backdrop-blur-xl"
+      side={isMobile ? "right" : "left"}
+      {...props}
+    >
+      <SidebarHeader className="mt-4 sm:mt-6 gap-4">
         <Link
           to="/"
-          className="text-2xl cursor-pointer flex items-center gap-2"
+          onClick={closeMobileSidebar}
+          className="text-lg sm:text-2xl cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <div className="flex items-center gap-2 text-foreground">
-            <BookOpen />
-            Blablabook
+          <div className="flex items-center gap-2 text-foreground font-bold">
+            <BookOpen className="h-6 w-6" />
+            <span className="hidden sm:inline">Blablabook</span>
+            <span className="sm:hidden">BB</span>
           </div>
         </Link>
-        <SearchBar onSearch={setSearch} />
       </SidebarHeader>
-      <SidebarContent className="mt-6">
-        <SidebarMenuItem className="opacity-50">MENU</SidebarMenuItem>
-        <NavMain items={items.navMain} />
-        <SidebarMenuItem className="opacity-50 mt-4">DECOUVRIR</SidebarMenuItem>
-        <NavMain items={items.discover} />
-        <SidebarMenuItem className="opacity-50 mt-4">EN COURS</SidebarMenuItem>
+
+      <SidebarContent className="mt-4 sm:mt-6 flex flex-col gap-6">
+        <div>
+          <SidebarMenuItem className="opacity-50 text-xs font-semibold mb-3 uppercase tracking-wide">
+            Menu
+          </SidebarMenuItem>
+          <NavMain items={visibleNavItems} onItemClick={closeMobileSidebar} />
+        </div>
+
+        {isAuthenticated && inProgressBooks.length > 0 && (
+          <>
+            <Separator className="my-2" />
+            <div>
+              <SidebarMenuItem className="opacity-50 text-xs font-semibold mb-3 uppercase tracking-wide">
+                En cours de lecture
+              </SidebarMenuItem>
+              <div className="flex flex-col gap-2 w-full">
+                {inProgressBooks.map((book) => (
+                  <div
+                    key={book.id}
+                    className="group flex gap-2 sm:gap-3 items-start cursor-pointer rounded-lg p-2 transition-colors duration-200 hover:bg-primary/10"
+                    onClick={() => handleClick(book.isbn)}
+                  >
+                    <div className="relative w-8 h-12 sm:w-10 sm:h-14 shrink-0">
+                      {!loadedImages[book.id] && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-secondary rounded-md">
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      <img
+                        src={book.cover}
+                        onLoad={() => handleImageLoad(book.id)}
+                        className={`w-8 h-12 sm:w-10 sm:h-14 object-cover rounded-md shadow-sm group-hover:shadow-md transition-all duration-200 ${
+                          !loadedImages[book.id] ? "opacity-0" : "opacity-100"
+                        }`}
+                        alt={book.name}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0 justify-start">
+                      <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+                        {book.name}
+                      </span>
+                      {book.author && (
+                        <span className="text-xs text-muted-foreground truncate">
+                          {book.author}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {isAuthenticated && inProgressBooks.length === 0 && (
+          <>
+            <Separator className="my-2" />
+            <div className="text-center py-4 px-2">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Aucun livre en cours. Commencez à lire ! 📚
+              </p>
+              <Link
+                to="/library"
+                onClick={closeMobileSidebar}
+                className="text-xs sm:text-sm text-primary hover:underline mt-2 inline-block"
+              >
+                Voir votre bibliothèque
+              </Link>
+            </div>
+          </>
+        )}
       </SidebarContent>
-      <SidebarFooter className="mb-4 text-foreground">
-        {items.general.map((general) => (
-          <Link
-            className="flex items-center gap-2"
-            to={general.url}
-            key={general.title}
-          >
-            <general.icon />
-            {general.title}
-          </Link>
-        ))}
+
+      <SidebarFooter className="mb-3 sm:mb-4 gap-3">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : isAuthenticated ? (
+          <UserCard />
+        ) : (
+          <>
+            <Separator />
+            <Button
+              onClick={handleLoginClick}
+              className="w-full rounded-lg gap-2"
+              size="sm"
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">Se connecter</span>
+              <span className="sm:hidden">Login</span>
+            </Button>
+          </>
+        )}
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

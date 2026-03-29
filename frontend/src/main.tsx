@@ -25,9 +25,9 @@ globalThis.__TANSTACK_QUERY_CLIENT__ = queryClient;
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-          <Toaster position="bottom-right" richColors />
-          <RouterProvider router={router} />
+      <Toaster position="top-right" richColors />
+      <RouterProvider router={router} />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 );

@@ -10,7 +10,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import {
   ApiCreatedResponse,
@@ -90,8 +90,8 @@ export class AuthController {
   }
 
   @Post('/logout')
-  @UseGuards(AuthGuard) // add the guard for extract cookie
-  @HttpCode(HttpStatus.OK) // code 200 for the logout if success
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'User is logout and token is destroyed',
   })
@@ -100,12 +100,47 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const refreshToken = request['refresh_token'] as string;
-    await this.authService.logout(refreshToken); // destroy token
+    await this.authService.logout(refreshToken);
 
     const cookieConfig = this.cookieService.generateCookiesConfig();
     response.clearCookie('jwt_cookie', cookieConfig.jwtCookieConfig);
     response.clearCookie('refresh_cookie', cookieConfig.refreshCookieConfig);
 
     return { message: 'Logged out successfully' };
+  }
+
+  @Post('/refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: 'Access token refreshed successfully',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token is invalid or expired',
+  })
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    // Extract refresh token from cookies
+    const refreshToken = request.cookies?.['refresh_cookie'] as string;
+
+    // Call service to handle refresh logic
+    const rotatedTokens =
+      await this.authService.refreshUserSession(refreshToken);
+
+    // Update cookies with new tokens
+    const cookieConfig = this.cookieService.generateCookiesConfig();
+    response.cookie(
+      'jwt_cookie',
+      rotatedTokens.newJwtToken,
+      cookieConfig.jwtCookieConfig,
+    );
+    response.cookie(
+      'refresh_cookie',
+      rotatedTokens.newRefreshToken,
+      cookieConfig.refreshCookieConfig,
+    );
+
+    return { message: 'Token refreshed successfully' };
   }
 }

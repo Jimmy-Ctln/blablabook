@@ -9,7 +9,7 @@ export class CreateBookDto {
   // Cover ID or URL
   @IsString()
   @IsNotEmpty()
-  coverId: string;
+  coverUrl: string;
 
   // Author name
   @IsString()

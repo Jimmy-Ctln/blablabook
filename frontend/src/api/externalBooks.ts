@@ -15,7 +15,7 @@ import { getRandomQuery } from "../lib/utils";
 // CONSTANTS
 // -----------------------------
 
-const DEFAULT_COVER = "/default-book-cover.png";
+const DEFAULT_COVER = "/livre.png";
 
 // -----------------------------
 // HELPERS
@@ -24,14 +24,14 @@ const DEFAULT_COVER = "/default-book-cover.png";
 const parseDescription = (desc: unknown): string => {
   if (!desc) return "";
   if (typeof desc === "string") return desc;
-  
+
   if (typeof desc === "object" && desc !== null && "value" in desc) {
     const obj = desc as { value: unknown };
     if (typeof obj.value === "string") {
       return obj.value;
     }
   }
-  
+
   return "";
 };
 
@@ -106,7 +106,6 @@ export const searchExternalBooks = async (
   });
 
   const docs: WorkSearchDoc[] = response.data.docs || [];
-  const books: ExternalBook[] = [];
 
   let searchText = "";
   if (params.type === "searchText") {
@@ -116,30 +115,40 @@ export const searchExternalBooks = async (
   // Filter early on search results before fetching editions
   const filteredDocs = filterSearchResults(docs, searchText);
 
-  for (const work of filteredDocs) {
-    if (!work.edition_key || work.edition_key.length === 0) continue;
+  const results = await Promise.all(
+    filteredDocs.map(async (work) => {
+      if (!work.edition_key || work.edition_key.length === 0) return undefined;
 
-    const editionKey = work.edition_key[0];
-    try {
-      const editionResponse = await externalApi.get<EditionData>(
-        `/books/${editionKey}.json`,
-      );
-      const edition = editionResponse.data;
+      const editionKey = work.edition_key[0];
+      try {
+        const editionResponse = await externalApi.get<EditionData>(
+          `/books/${editionKey}.json`,
+        );
+        const edition = editionResponse.data;
 
-      const isbn = edition.isbn_13?.[0] || "";
-      if (!isbn) continue;
+        const isbn = edition.isbn_13?.[0];
+        if (!isbn) return undefined;
 
-      const coverUrl = buildCoverUrl(edition);
-      const categories = work.subject || [];
+        const coverUrl = buildCoverUrl(edition);
+        const categories = work.subject || [];
 
-      books.push(
-        createExternalBook(edition, work, isbn, coverUrl, "", categories),
-      );
-    } catch (err) {
-      console.warn(`Failed to fetch edition ${editionKey}:`, err);
-    }
-  }
-  return books;
+        return createExternalBook(
+          edition,
+          work,
+          isbn,
+          coverUrl,
+          "",
+          categories,
+        );
+      } catch (err) {
+        console.warn(`Failed to fetch edition ${editionKey}:`, err);
+        return undefined;
+      }
+    }),
+  );
+
+  // Filter out undefined values
+  return results.filter((book): book is ExternalBook => book !== undefined);
 };
 
 // -----------------------------

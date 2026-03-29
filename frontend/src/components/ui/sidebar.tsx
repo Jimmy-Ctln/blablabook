@@ -187,7 +187,10 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          className={cn(
+            "bg-secondary text-sidebar-foreground border-sidebar-border/80 w-(--sidebar-width) p-0 shadow-2xl supports-backdrop-filter:bg-secondary/95 backdrop-blur-xl",
+            className,
+          )}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
