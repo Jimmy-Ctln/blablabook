@@ -34,15 +34,15 @@ export const useAddBook = (userId?: number) => {
 
   return useMutation<BookRow, Error, BookDisplay>({
     // Map the book display payload into our backend DTO, then call the API
-    mutationFn: async (BookDisplay) => {
+    mutationFn: async (bookDisplay) => {
       if (!userId) throw new Error("UserId is required");
 
       // Fetch description only when adding the book
-      let description = BookDisplay.description || "";
+      let description = bookDisplay.description || "";
 
-      if (!description && BookDisplay.isbn) {
+      if (!description && bookDisplay.isbn) {
         try {
-          const dataIsbn = await getOpenLibIsbnData(BookDisplay.isbn);
+          const dataIsbn = await getOpenLibIsbnData(bookDisplay.isbn);
           const workKey = dataIsbn.works?.[0]?.key;
 
           if (workKey) {
@@ -56,7 +56,7 @@ export const useAddBook = (userId?: number) => {
           }
         } catch (err) {
           console.warn(
-            `Failed to fetch description for ${BookDisplay.isbn}:`,
+            `Failed to fetch description for ${bookDisplay.isbn}:`,
             err,
           );
         }
@@ -64,15 +64,15 @@ export const useAddBook = (userId?: number) => {
 
       const createBookDto: CreateBookDto = {
         // Fallbacks ensure minimal valid payloads if external fields are missing
-        name: BookDisplay.name || "Unknown Title",
-        author: BookDisplay.author || "Unknown Author",
-        isbn: BookDisplay.isbn || "N/A",
+        name: bookDisplay.name || "Unknown Title",
+        author: bookDisplay.author || "Unknown Author",
+        isbn: bookDisplay.isbn || "N/A",
         coverUrl:
-          BookDisplay.cover_url || BookDisplay.cover || "default_cover.png",
+          bookDisplay.cover_url || bookDisplay.cover || "default_cover.png",
         description: description || "Pas de description pour ce livre",
-        publishingHouse: BookDisplay.publisher || "Unknown publisher",
-        publishedAt: toIsoDate(BookDisplay.publishDate),
-        categories: BookDisplay.categories || [],
+        publishingHouse: bookDisplay.publisher || "Unknown publisher",
+        publishedAt: toIsoDate(bookDisplay.publishDate),
+        categories: bookDisplay.categories || [],
       };
 
       return addBookToUserList(userId, createBookDto);
