@@ -15,7 +15,7 @@ import { getRandomQuery } from "../lib/utils";
 // CONSTANTS
 // -----------------------------
 
-const DEFAULT_COVER = "/default-book-cover.png";
+const DEFAULT_COVER = "/livre.png";
 
 // -----------------------------
 // HELPERS

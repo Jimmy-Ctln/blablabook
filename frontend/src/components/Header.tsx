@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { SidebarTrigger, useSidebar } from "./ui/sidebar";
-import { BookOpen } from "lucide-react";
-
 export default function Header() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
@@ -29,7 +27,11 @@ export default function Header() {
             to="/"
             className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg shrink-0"
           >
-            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
+            <img
+              src="/livre.png"
+              alt="Blablabook"
+              className="w-5 h-5 sm:w-6 sm:h-6"
+            />
             <span className="hidden sm:inline">Blablabook</span>
           </Link>
         </div>
