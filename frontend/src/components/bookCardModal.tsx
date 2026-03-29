@@ -19,11 +19,13 @@ export default function BookCardModal({ book }: BookCardModalProps) {
   const currentUser = useCurrentUser();
   const userId = currentUser.data?.id;
 
-  const { data: userBooks = [] } = useQuery({
+  const { data: userBooksData } = useQuery({
     queryKey: ["userBooks", userId],
     queryFn: () => getUserBooks(userId!),
     enabled: !!userId,
   });
+
+  const userBooks = userBooksData?.books ?? [];
 
   // Navigate to internal book details page using the ISBN
   const handleCardClick = (book: BookDisplay) => {
