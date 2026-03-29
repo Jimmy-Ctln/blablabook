@@ -44,8 +44,15 @@ export const getBooks = async (
 };
 
 /** Get all books from a specific user's library (with computed status). */
-export const getUserBooks = async (userId: number): Promise<BookRow[]> => {
-  const response = await api.get<BookRow[]>(`/books/library/${userId}`);
+export const getUserBooks = async (
+  userId: number,
+  offset: number = 0,
+  limit: number = 10,
+): Promise<{ books: BookRow[]; total: number }> => {
+  const response = await api.get<{ books: BookRow[]; total: number }>(
+    `/books/library/${userId}`,
+    { params: { offset, limit } },
+  );
   return response.data;
 };
 
