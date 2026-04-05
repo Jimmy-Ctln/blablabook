@@ -123,16 +123,58 @@ export class UserService {
     });
   }
 
+  /**
+   * Fully anonymizes user data according to GDPR Right to be Forgotten (Article 17)
+   * Preserves referential integrity (reviews, history) without traceability
+   * @param id - User ID to anonymize
+   */
+  private async anonymizeUser(id: number): Promise<void> {
+    // Generate untraceable anonymized data
+    const anonymizedEmail = `deleted_${id}@anonymized.local`;
+    const anonymizedUsername = `DeletedUser_${id}`;
+    // Hash phantom password - invalid but hashed for security
+    const anonPhantomPassword = await argon2.hash(`phantom_${id}_deleted`);
+
+    await db
+      .update(user)
+      .set({
+        email: anonymizedEmail,
+        username: anonymizedUsername,
+        password: anonPhantomPassword,
+        avatar_url: null, // Remove avatar
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, id));
+  }
+
+  /**
+   * GDPR-compliant soft delete: anonymizes user and marks as deleted
+   * - Personal data fully anonymized
+   * - DB cascades remove: refreshTokens, userCategories, lists
+   * - Reviews preserved (userId = NULL) to maintain public feedback integrity
+   * @param id - User ID to delete
+   */
   async softDelete(id: number) {
+    // Step 1: Verify user exists
+    const [userRow] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, id))
+      .limit(1);
+
+    if (!userRow) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    // Step 2: Fully anonymize user data
+    await this.anonymizeUser(id);
+
+    // Step 3: Mark as deleted
     const [deletedUser] = await db
       .update(user)
       .set({ deletedAt: new Date() })
       .where(eq(user.id, id))
       .returning();
-
-    if (!deletedUser) {
-      throw new NotFoundException(`User not found`);
-    }
 
     return plainToInstance(UpdateUserResponseDto, deletedUser, {
       excludeExtraneousValues: true,
