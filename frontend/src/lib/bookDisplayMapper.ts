@@ -15,6 +15,7 @@ export function mapBookRowToDisplay(book: BookRow): BookDisplay {
     cover: resolvedCover,
     isbn: book.isbn,
     categoryName: book.categoryName,
+    categories: book.categoryName ? [book.categoryName] : [],
     publishDate: book.publishedAt,
     publisher: book.publishingHouse,
     status: book.status,

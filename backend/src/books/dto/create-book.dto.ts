@@ -36,9 +36,8 @@ export class CreateBookDto {
   @IsNotEmpty()
   publishedAt: string; // Drizzle date type expects a string or Date
 
-  // Categories (required - from external API)
+  // Categories (optional - from external API)
   @IsArray()
   @IsString({ each: true })
-  @IsNotEmpty()
-  categories: string[];
+  categories?: string[];
 }
