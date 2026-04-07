@@ -126,3 +126,21 @@ export const refreshToken = pgTable('refresh_token', {
     .references(() => user.id, { onDelete: 'cascade' })
     .notNull(),
 });
+
+export const bookKeyword = pgTable(
+  'book_keyword',
+  {
+    id: serial().primaryKey(),
+    bookId: integer('book_id')
+      .references(() => book.id, { onDelete: 'cascade' })
+      .notNull(),
+    keywordId: integer('keyword_id')
+      .references(() => keyword.id)
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    // prevent duplicate keyword for book
+    unique('unique_keyword_book').on(t.bookId, t.keywordId),
+  ],
+);
