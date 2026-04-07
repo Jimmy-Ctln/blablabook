@@ -3,7 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, afterEach, type Mock } from "vitest";
 import type { ExternalBook } from "@/@types/externalBooks";
-import type { BookRow } from "@/@types/books";
+import type { BookRow, BookDisplay } from "@/@types/books";
 import { useAddBook } from "./useAddBook";
 
 vi.mock("@/api/books", () => ({
@@ -16,9 +16,8 @@ vi.mock("@/api/externalBooks", () => ({
 }));
 
 const { addBookToUserList } = await import("@/api/books");
-const { getOpenLibIsbnData, getOpenLibWorkData } = await import(
-  "@/api/externalBooks"
-);
+const { getOpenLibIsbnData, getOpenLibWorkData } =
+  await import("@/api/externalBooks");
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -45,6 +44,20 @@ const baseExternalBook: ExternalBook = {
   cover: "cover.jpg",
   description: "A short description",
   publisher: "Test Publisher",
+  categories: ["Fiction"],
+};
+
+// Create a BookDisplay version for the mutation
+const baseBookDisplay: BookDisplay = {
+  id: "ext-1",
+  name: "Test Book",
+  author: "Jane Doe",
+  isbn: "1234567890",
+  cover_url: "cover.jpg",
+  cover: "cover.jpg",
+  publisher: "Test Publisher",
+  publishDate: "2023-05-01",
+  description: "A short description",
   categories: ["Fiction"],
 };
 
@@ -88,13 +101,13 @@ describe("useAddBook", () => {
     const backendBook = createMockBookRow({ id: 1 });
     (addBookToUserList as Mock).mockResolvedValueOnce(backendBook);
 
-    await result.current.mutateAsync(baseExternalBook);
+    await result.current.mutateAsync(baseBookDisplay);
 
     expect(addBookToUserList).toHaveBeenCalledWith(7, {
       name: "Test Book",
       author: "Jane Doe",
       isbn: "1234567890",
-      coverId: "cover.jpg",
+      coverUrl: "cover.jpg",
       description: "A short description",
       publishingHouse: "Test Publisher",
       publishedAt: "2023-05-01",

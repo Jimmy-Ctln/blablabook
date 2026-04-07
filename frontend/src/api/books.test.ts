@@ -89,7 +89,7 @@ describe("books api", () => {
 
     const result = await getBooks();
 
-    expect(mockApi.get).toHaveBeenCalledWith("/books");
+    expect(mockApi.get).toHaveBeenCalledWith("/books", expect.any(Object));
     expect(result).toEqual(responseData);
   });
 
@@ -99,7 +99,10 @@ describe("books api", () => {
 
     const result = await getUserBooks(7);
 
-    expect(mockApi.get).toHaveBeenCalledWith("/books/library/7");
+    expect(mockApi.get).toHaveBeenCalledWith(
+      "/books/library/7",
+      expect.objectContaining({ params: { offset: 0, limit: 10 } }),
+    );
     expect(result).toEqual(responseData);
   });
 
