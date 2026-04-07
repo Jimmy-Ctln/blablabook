@@ -1,139 +1,43 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BooksService } from './books.service';
 import { CategoryService } from '../category/category.service';
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { book, category, list, listBook } from '../db/schema';
-
-type BookRow = typeof book.$inferSelect;
-type CategoryRow = typeof category.$inferSelect;
-type ListRow = typeof list.$inferSelect;
-type ListBookRow = typeof listBook.$inferSelect;
-type UserBookRow = BookRow & {
-  readStart: Date | null;
-  readEnd: Date | null;
-  addedAt: Date;
-};
-type UserBook = BookRow & { status: string; categories: string[] };
-
-/**
- * INTERFACE DE MOCK POUR DRIZZLE
- * Drizzle utilise un "Fluent API" (chaînage de méthodes).
- * Chaque méthode (select, from, where, etc.) doit retourner l'objet lui-même (this)
- * pour que la chaîne ne soit pas brisée.
- */
-interface DrizzleMock {
-  select: jest.Mock;
-  from: jest.Mock;
-  where: jest.Mock;
-  orderBy: jest.Mock;
-  innerJoin: jest.Mock;
-  insert: jest.Mock;
-  values: jest.Mock;
-  returning: jest.Mock;
-  delete: jest.Mock;
-  update: jest.Mock;
-  set: jest.Mock;
-  onConflictDoNothing: jest.Mock;
-  // execute et returning sont les "terminaisons" qui renvoient la promesse de données
-  execute: jest.Mock;
-}
-
-interface CategoryServiceMock {
-  findOrCreateByName: jest.Mock<
-    Promise<Pick<CategoryRow, 'id' | 'name'>>,
-    [string]
-  >;
-}
-
-const makeBook = (overrides: Partial<BookRow> = {}): BookRow => ({
-  id: 1,
-  name: 'Book',
-  coverId: 'cover-id',
-  author: 'Author',
-  description: 'Description',
-  isbn: '1234567890',
-  publishingHouse: 'House',
-  publishedAt: '2023-01-01',
-  ...overrides,
-});
-
-const makeCategory = (overrides: Partial<CategoryRow> = {}): CategoryRow => ({
-  id: 1,
-  name: 'Fiction',
-  isActive: true,
-  ...overrides,
-});
-
-const makeList = (overrides: Partial<ListRow> = {}): ListRow => ({
-  id: 1,
-  name: 'My List',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  userId: 1,
-  ...overrides,
-});
-
-const makeListBook = (overrides: Partial<ListBookRow> = {}): ListBookRow => ({
-  id: 1,
-  comment: null,
-  readStart: null,
-  readEnd: null,
-  addedAt: new Date(),
-  updatedAt: new Date(),
-  bookId: 1,
-  listId: 1,
-  ...overrides,
-});
+import { HttpException } from '@nestjs/common';
 
 describe('BooksService', () => {
   let service: BooksService;
-  let mockDb: DrizzleMock;
-  let mockCategoryService: CategoryServiceMock;
+  let mockDb: any;
+  let mockCategoryService: any;
 
   beforeEach(async () => {
-    // Mock database operations
     mockDb = {
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      values: jest.fn().mockReturnThis(),
-      returning: jest.fn().mockResolvedValue([]),
-      delete: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      set: jest.fn().mockReturnThis(),
-      onConflictDoNothing: jest.fn().mockReturnThis(),
-      execute: jest.fn().mockResolvedValue([]),
+      select: jest.fn(),
+      insert: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     };
 
-    // Mock category service
     mockCategoryService = {
-      findOrCreateByName: jest.fn<
-        Promise<Pick<CategoryRow, 'id' | 'name'>>,
-        [string]
-      >(),
+      findOrCreateByName: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BooksService,
-        {
-          provide: 'DRIZZLE',
-          useValue: mockDb,
-        },
-        {
-          provide: CategoryService,
-          useValue: mockCategoryService,
-        },
+        { provide: 'DRIZZLE', useValue: mockDb },
+        { provide: CategoryService, useValue: mockCategoryService },
       ],
     }).compile();
 
     service = module.get<BooksService>(BooksService);
-  });
 
-  afterEach(() => {
+    // Mock logger to suppress error logs during tests
+    service['logger'] = {
+      error: jest.fn(),
+      warn: jest.fn(),
+      log: jest.fn(),
+      debug: jest.fn(),
+    };
+
     jest.clearAllMocks();
   });
 
@@ -142,518 +46,978 @@ describe('BooksService', () => {
   });
 
   describe('findAllBooks', () => {
-    it('should return all books from the database', async () => {
-      const mockBooks: (BookRow & { categories: string[] })[] = [
+    it('should return all books grouped by category', async () => {
+      const mockBooks = [
         {
-          ...makeBook({
-            id: 1,
-            name: 'Book 1',
-            author: 'Author 1',
-            isbn: '1234567890',
-          }),
-          categories: [],
+          id: 1,
+          name: 'Horror Book',
+          author: 'Author 1',
+          cover_url: 'url1',
+          description: 'desc1',
+          isbn: '123',
+          publishingHouse: 'House 1',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
         },
         {
-          ...makeBook({
-            id: 2,
-            name: 'Book 2',
-            author: 'Author 2',
-            isbn: '0987654321',
-          }),
-          categories: [],
+          id: 2,
+          name: 'Horror Book 2',
+          author: 'Author 2',
+          cover_url: 'url2',
+          description: 'desc2',
+          isbn: '456',
+          publishingHouse: 'House 2',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+        },
+        {
+          id: 3,
+          name: 'Romance Book',
+          author: 'Author 3',
+          cover_url: 'url3',
+          description: 'desc3',
+          isbn: '789',
+          publishingHouse: 'House 3',
+          publishedAt: new Date(),
+          categoryName: 'Romance',
         },
       ];
 
-      // Mock the full chain for getCategoriesForBook
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          innerJoin: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              orderBy: jest.fn().mockReturnValue({
-                execute: jest.fn().mockResolvedValue([]),
-              }),
-            }),
-          }),
-        }),
-      });
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockResolvedValue(mockBooks),
+      };
 
-      // Also mock for the initial books fetch
-      const originalSelect = mockDb.select;
-      mockDb.select = jest
-        .fn()
-        .mockReturnValueOnce({
-          from: jest.fn().mockResolvedValue(
-            mockBooks.map((b) => {
-              const { ...book } = b;
-              return book;
-            }),
-          ),
-        })
-        .mockReturnValue(originalSelect());
+      mockDb.select.mockReturnValue(selectChain);
 
       const result = await service.findAllBooks();
 
-      expect(result).toEqual(mockBooks);
-      expect(mockDb.select).toHaveBeenCalled();
+      expect(result.horror).toHaveLength(2);
+      expect(result.romance).toHaveLength(1);
+      expect(result.horror[0].name).toBe('Horror Book');
+    });
+
+    it('should filter books by single category', async () => {
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Horror Book',
+          author: 'Author 1',
+          cover_url: 'url1',
+          description: 'desc1',
+          isbn: '123',
+          publishingHouse: 'House 1',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+        },
+      ];
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await service.findAllBooks(['Horror']);
+
+      expect(result.horror).toHaveLength(1);
+      expect(selectChain.where).toHaveBeenCalled();
+    });
+
+    it('should filter books by multiple categories', async () => {
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Horror Book',
+          author: 'Author 1',
+          cover_url: 'url1',
+          description: 'desc1',
+          isbn: '123',
+          publishingHouse: 'House 1',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+        },
+        {
+          id: 2,
+          name: 'Romance Book',
+          author: 'Author 2',
+          cover_url: 'url2',
+          description: 'desc2',
+          isbn: '456',
+          publishingHouse: 'House 2',
+          publishedAt: new Date(),
+          categoryName: 'Romance',
+        },
+      ];
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await service.findAllBooks(['Horror', 'Romance']);
+
+      expect(result.horror).toHaveLength(1);
+      expect(result.romance).toHaveLength(1);
+    });
+
+    it('should normalize and filter empty categories', async () => {
+      const mockBooks = [];
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      await service.findAllBooks(['  ', '', '  Horror  ']);
+
+      expect(selectChain.where).toHaveBeenCalled();
+    });
+
+    it('should handle unknown category names', async () => {
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Unknown Book',
+          author: 'Author 1',
+          cover_url: 'url1',
+          description: 'desc1',
+          isbn: '123',
+          publishingHouse: 'House 1',
+          publishedAt: new Date(),
+          categoryName: null,
+        },
+      ];
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await service.findAllBooks();
+
+      expect(result.unknown).toHaveLength(1);
+    });
+  });
+
+  describe('getRandomBooks', () => {
+    it('should return random books with default limit', async () => {
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Random Book 1',
+          author: 'Author 1',
+          cover_url: 'url1',
+        },
+        {
+          id: 2,
+          name: 'Random Book 2',
+          author: 'Author 2',
+          cover_url: 'url2',
+        },
+      ];
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await service.getRandomBooks();
+
+      expect(result).toHaveLength(2);
+      expect(selectChain.limit).toHaveBeenCalledWith(10);
+    });
+
+    it('should return random books with custom limit', async () => {
+      const mockBooks = [
+        { id: 1, name: 'Random Book 1', author: 'Author 1', cover_url: 'url1' },
+      ];
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await service.getRandomBooks(5);
+
+      expect(result).toHaveLength(1);
+      expect(selectChain.limit).toHaveBeenCalledWith(5);
     });
   });
 
   describe('findUserBooks', () => {
-    it('should return user books with computed status and categories', async () => {
-      const userId = 1;
-      const mockRows: UserBookRow[] = [
+    it('should return user books with pagination', async () => {
+      const mockCountResult = [{ count: 20 }];
+      const mockBooks = [
         {
-          ...makeBook({
-            id: 1,
-            name: 'Book 1',
-            author: 'Author 1',
-            isbn: '1234567890',
-            coverId: 'cover1',
-            description: 'Description 1',
-            publishingHouse: 'House 1',
-            publishedAt: '2023-01-01',
-          }),
-          readStart: new Date('2024-01-01'),
-          readEnd: null,
-          addedAt: new Date('2024-01-01'),
-        },
-      ];
-
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          innerJoin: jest.fn().mockReturnValue({
-            innerJoin: jest.fn().mockReturnValue({
-              where: jest.fn().mockReturnValue({
-                orderBy: jest.fn().mockResolvedValue(mockRows),
-              }),
-            }),
-          }),
-        }),
-      } as DrizzleMock);
-
-      // Mock getCategoriesForBook
-      jest
-        .spyOn(service, 'getCategoriesForBook')
-        .mockResolvedValue([{ id: 1, name: 'Fiction' }]);
-
-      const result = await service.findUserBooks(userId);
-
-      expect(result).toHaveLength(1);
-      const first = result[0] as UserBook;
-      expect(first.status).toBe('En cours');
-      expect(first.categories).toEqual(['Fiction']);
-    });
-
-    it('should compute status as "À lire" when no dates are set', async () => {
-      const userId = 1;
-      const mockRows: UserBookRow[] = [
-        {
-          ...makeBook({
-            id: 1,
-            name: 'Book 1',
-            author: 'Author 1',
-            isbn: '1234567890',
-            coverId: 'cover1',
-            description: 'Description 1',
-            publishingHouse: 'House 1',
-            publishedAt: '2023-01-01',
-          }),
+          id: 1,
+          name: 'User Book 1',
+          author: 'Author 1',
+          cover_url: 'url1',
+          description: 'desc1',
+          isbn: '123',
+          publishingHouse: 'House 1',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
           readStart: null,
           readEnd: null,
-          addedAt: new Date('2024-01-01'),
+          addedAt: new Date(),
         },
       ];
 
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          innerJoin: jest.fn().mockReturnValue({
-            innerJoin: jest.fn().mockReturnValue({
-              where: jest.fn().mockReturnValue({
-                orderBy: jest.fn().mockResolvedValue(mockRows),
-              }),
-            }),
-          }),
-        }),
-      } as DrizzleMock);
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
 
-      jest.spyOn(service, 'getCategoriesForBook').mockResolvedValue([]);
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
 
-      const result = await service.findUserBooks(userId);
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
 
-      const first = result[0] as UserBook;
-      expect(first.status).toBe('À lire');
+      const result = await service.findUserBooks(1, 0, 10);
+
+      expect(result.books).toHaveLength(1);
+      expect(result.total).toBe(20);
+      expect(result.books[0].status).toBe('À lire');
     });
 
-    it('should compute status as "Lu" when readEnd is set', async () => {
-      const userId = 1;
-      const mockRows: UserBookRow[] = [
+    it('should return empty array when user has no books', async () => {
+      const mockCountResult = [{ count: 0 }];
+      const mockBooks = [];
+
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
+
+      const result = await service.findUserBooks(1);
+
+      expect(result.books).toHaveLength(0);
+      expect(result.total).toBe(0);
+    });
+
+    it('should compute status correctly for books with different read states', async () => {
+      const mockCountResult = [{ count: 3 }];
+      const mockBooks = [
         {
-          ...makeBook({
-            id: 1,
-            name: 'Book 1',
-            author: 'Author 1',
-            isbn: '1234567890',
-            coverId: 'cover1',
-            description: 'Description 1',
-            publishingHouse: 'House 1',
-            publishedAt: '2023-01-01',
-          }),
+          id: 1,
+          name: 'Book 1',
+          author: 'Author 1',
+          cover_url: 'url1',
+          description: 'desc1',
+          isbn: '123',
+          publishingHouse: 'House 1',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+          readStart: null,
+          readEnd: null,
+          addedAt: new Date(),
+        },
+        {
+          id: 2,
+          name: 'Book 2',
+          author: 'Author 2',
+          cover_url: 'url2',
+          description: 'desc2',
+          isbn: '456',
+          publishingHouse: 'House 2',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+          readStart: new Date('2024-01-01'),
+          readEnd: null,
+          addedAt: new Date(),
+        },
+        {
+          id: 3,
+          name: 'Book 3',
+          author: 'Author 3',
+          cover_url: 'url3',
+          description: 'desc3',
+          isbn: '789',
+          publishingHouse: 'House 3',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
           readStart: new Date('2024-01-01'),
           readEnd: new Date('2024-02-01'),
-          addedAt: new Date('2024-01-01'),
+          addedAt: new Date(),
         },
       ];
 
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          innerJoin: jest.fn().mockReturnValue({
-            innerJoin: jest.fn().mockReturnValue({
-              where: jest.fn().mockReturnValue({
-                orderBy: jest.fn().mockResolvedValue(mockRows),
-              }),
-            }),
-          }),
-        }),
-      } as DrizzleMock);
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
 
-      jest.spyOn(service, 'getCategoriesForBook').mockResolvedValue([]);
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
 
-      const result = await service.findUserBooks(userId);
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
 
-      const first = result[0] as UserBook;
-      expect(first.status).toBe('Lu');
+      const result = await service.findUserBooks(1);
+
+      expect(result.books[0].status).toBe('À lire');
+      expect(result.books[1].status).toBe('En cours');
+      expect(result.books[2].status).toBe('Lu');
+    });
+
+    it('should handle pagination with custom offset and limit', async () => {
+      const mockCountResult = [{ count: 50 }];
+      const mockBooks = [];
+
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
+
+      await service.findUserBooks(1, 20, 15);
+
+      expect(selectChain.offset).toHaveBeenCalledWith(20);
+      expect(selectChain.limit).toHaveBeenCalledWith(15);
     });
   });
 
   describe('addToUserList', () => {
-    const userId = 1;
-    const createBookDto = {
-      name: 'New Book',
-      author: 'New Author',
-      isbn: '1234567890',
-      coverId: 'cover123',
-      description: 'A new book',
-      publishingHouse: 'New House',
-      publishedAt: '2023-01-01',
-      categories: ['Fiction', 'Adventure'],
-    };
+    it('should reuse existing book when adding by ISBN', async () => {
+      const createDto = {
+        name: 'Existing Book',
+        author: 'Author',
+        coverUrl: 'url',
+        description: 'Description',
+        isbn: '123',
+        publishingHouse: 'House',
+        publishedAt: new Date(),
+        categories: [],
+      };
 
-    it('should create a new book if it does not exist', async () => {
-      const newBook: BookRow = makeBook({
+      const mockExistingBook = {
         id: 1,
-        name: createBookDto.name,
-        author: createBookDto.author,
-        isbn: createBookDto.isbn,
-        coverId: createBookDto.coverId,
-        description: createBookDto.description,
-        publishingHouse: createBookDto.publishingHouse,
-        publishedAt: createBookDto.publishedAt,
-      });
+        name: 'Existing Book',
+        author: 'Author',
+        cover_url: 'url',
+        description: 'Description',
+        isbn: '123',
+        publishingHouse: 'House',
+        publishedAt: new Date(),
+        categoryId: 1,
+      };
 
-      // Mock book not found
-      mockDb.select = jest
-        .fn()
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([]),
-          }),
-        } as DrizzleMock)
-        // Mock list found
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([makeList({ id: 1, userId })]),
-          }),
-        } as DrizzleMock);
+      const mockUserList = {
+        id: 1,
+        userId: 1,
+        name: 'My List',
+      };
 
-      // Mock book insert and listBook insert
-      mockDb.insert = jest
-        .fn()
-        .mockReturnValueOnce({
-          values: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([newBook]),
-          }),
-        } as DrizzleMock)
-        .mockReturnValueOnce({
-          values: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([]),
-          }),
-        } as DrizzleMock);
+      // Book found
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockExistingBook]),
+      };
 
-      jest
-        .spyOn(service, 'assignCategoriesFromNames')
-        .mockResolvedValue(undefined);
+      // User list found
+      const selectChain2 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
 
-      const result = await service.addToUserList(userId, createBookDto);
+      // Insert list book
+      const insertChain = {
+        values: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([]),
+      };
 
-      expect(result).toEqual(newBook);
+      mockDb.select
+        .mockReturnValueOnce(selectChain1)
+        .mockReturnValueOnce(selectChain2);
+
+      mockDb.insert.mockReturnValueOnce(insertChain);
+
+      const result = await service.addToUserList(1, createDto);
+
+      expect(result.id).toBe(1);
+      expect(result.isbn).toBe('123');
     });
 
-    it('should use existing book if it exists by ISBN', async () => {
-      const existingBook: BookRow = makeBook({
+    it('should create user list if not exists', async () => {
+      const createDto = {
+        name: 'New Book',
+        author: 'Author',
+        coverUrl: 'url',
+        description: 'Description',
+        isbn: '999',
+        publishingHouse: 'House',
+        publishedAt: new Date(),
+        categories: [],
+      };
+
+      const mockBook = {
         id: 1,
-        name: createBookDto.name,
-        author: createBookDto.author,
-        isbn: createBookDto.isbn,
-        coverId: createBookDto.coverId,
-        description: createBookDto.description,
-        publishingHouse: createBookDto.publishingHouse,
-        publishedAt: createBookDto.publishedAt,
-      });
+        name: 'New Book',
+        author: 'Author',
+        cover_url: 'url',
+        description: 'Description',
+        isbn: '999',
+        publishingHouse: 'House',
+        publishedAt: new Date(),
+        categoryId: 1,
+      };
 
-      // Mock book found
-      mockDb.select = jest
-        .fn()
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([existingBook]),
-          }),
-        } as DrizzleMock)
-        // Mock list found
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([makeList({ id: 1, userId })]),
-          }),
-        } as DrizzleMock);
+      const mockNewList = {
+        id: 1,
+        userId: 1,
+        name: 'My List',
+      };
 
-      // Mock listBook insert
-      mockDb.insert = jest.fn().mockReturnValue({
-        values: jest.fn().mockReturnValue({
-          returning: jest.fn().mockResolvedValue([]),
-        }),
-      } as DrizzleMock);
+      // Book found
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockBook]),
+      };
 
-      jest
-        .spyOn(service, 'assignCategoriesFromNames')
-        .mockResolvedValue(undefined);
+      // User list NOT found
+      const selectChain2 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
 
-      const result = await service.addToUserList(userId, createBookDto);
+      // Insert list
+      const insertChain1 = {
+        values: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([mockNewList]),
+      };
 
-      expect(result).toEqual(existingBook);
+      // Insert list book
+      const insertChain2 = {
+        values: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([]),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(selectChain1)
+        .mockReturnValueOnce(selectChain2);
+
+      mockDb.insert
+        .mockReturnValueOnce(insertChain1)
+        .mockReturnValueOnce(insertChain2);
+
+      const result = await service.addToUserList(1, createDto);
+
+      expect(result.id).toBe(1);
     });
 
-    it('should create user list if it does not exist', async () => {
-      const newBook: BookRow = makeBook({
-        id: 1,
-        name: createBookDto.name,
-        author: createBookDto.author,
-        isbn: createBookDto.isbn,
-        coverId: createBookDto.coverId,
-        description: createBookDto.description,
-        publishingHouse: createBookDto.publishingHouse,
-        publishedAt: createBookDto.publishedAt,
-      });
-      const newList: ListRow = makeList({ id: 1, name: 'My List', userId });
+    it('should throw HttpException on database errors', async () => {
+      const createDto = {
+        name: 'New Book',
+        author: 'Author',
+        coverUrl: 'url',
+        description: 'Description',
+        isbn: '777',
+        publishingHouse: 'House',
+        publishedAt: new Date(),
+        categories: [],
+      };
 
-      // Mock book not found, then list not found
-      mockDb.select = jest
-        .fn()
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([]),
-          }),
-        } as DrizzleMock)
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([]),
-          }),
-        } as DrizzleMock);
+      // Book lookup fails
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockRejectedValue(new Error('Database error')),
+      };
 
-      // Mock book insert and list insert
-      mockDb.insert = jest
-        .fn()
-        .mockReturnValueOnce({
-          values: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([newBook]),
-          }),
-        } as DrizzleMock)
-        .mockReturnValueOnce({
-          values: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([newList]),
-          }),
-        } as DrizzleMock)
-        .mockReturnValueOnce({
-          values: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([]),
-          }),
-        } as DrizzleMock);
+      mockDb.select.mockReturnValueOnce(selectChain1);
 
-      jest
-        .spyOn(service, 'assignCategoriesFromNames')
-        .mockResolvedValue(undefined);
+      await expect(service.addToUserList(1, createDto)).rejects.toThrow(
+        HttpException,
+      );
+    });
 
-      const result = await service.addToUserList(userId, createBookDto);
+    it('should add new book to user list without categories', async () => {
+      const createDto = {
+        name: 'Simple Book',
+        author: 'Author',
+        coverUrl: 'url',
+        description: 'Description',
+        isbn: '555',
+        publishingHouse: 'House',
+        publishedAt: new Date(),
+        categories: [],
+      };
 
-      expect(result).toEqual(newBook);
+      const mockBook = {
+        id: 2,
+        name: 'Simple Book',
+        author: 'Author',
+        cover_url: 'url',
+        isbn: '555',
+        categoryId: 1,
+      };
+
+      const mockUserList = { id: 1, userId: 1, name: 'My List' };
+
+      // Book not found
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
+
+      // Book created
+      const insertChain1 = {
+        values: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([mockBook]),
+      };
+
+      // List found
+      const selectChain2 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
+
+      // Insert list book
+      const insertChain2 = {
+        values: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([]),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(selectChain1)
+        .mockReturnValueOnce(selectChain2);
+
+      mockDb.insert
+        .mockReturnValueOnce(insertChain1)
+        .mockReturnValueOnce(insertChain2);
+
+      const result = await service.addToUserList(1, createDto);
+
+      expect(result.id).toBe(2);
+      expect(result.name).toBe('Simple Book');
     });
   });
 
   describe('removeFromUserList', () => {
     it('should remove book from user list', async () => {
-      const userId = 1;
-      const bookId = 1;
-      const deletedRow: ListBookRow = makeListBook({ bookId, listId: 1 });
+      const mockUserList = { id: 1, userId: 1 };
+      const mockDeletedItems = [{ id: 1, bookId: 1, listId: 1 }];
 
-      // Mock list found
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([makeList({ id: 1, userId })]),
-        }),
-      } as DrizzleMock);
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
 
-      // Mock delete
-      mockDb.delete = jest.fn().mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          returning: jest.fn().mockResolvedValue([deletedRow]),
-        }),
-      } as DrizzleMock);
+      const deleteChain = {
+        where: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue(mockDeletedItems),
+      };
 
-      const result = await service.removeFromUserList(userId, bookId);
+      mockDb.select.mockReturnValue(selectChain);
+      mockDb.delete.mockReturnValue(deleteChain);
 
-      expect(result).toEqual([deletedRow]);
+      const result = await service.removeFromUserList(1, 1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].bookId).toBe(1);
+    });
+
+    it('should return null when user has no list', async () => {
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await service.removeFromUserList(1, 1);
+
+      expect(result).toBeNull();
     });
   });
 
   describe('updateBookStatus', () => {
-    it('should update book reading dates and return computed status', async () => {
-      const userId = 1;
-      const bookId = 1;
+    it('should update book reading dates', async () => {
       const readStart = new Date('2024-01-01');
       const readEnd = new Date('2024-02-01');
-      const mockBook: BookRow = makeBook({
-        id: bookId,
-        name: 'Book 1',
-        author: 'Author 1',
-        isbn: '1234567890',
-      });
 
-      // Mock list found
-      mockDb.select = jest
-        .fn()
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([makeList({ id: 1, userId })]),
-          }),
-        } as DrizzleMock)
-        // Mock book found
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([mockBook]),
-          }),
-        } as DrizzleMock);
-
-      // Mock update
-      const updatedRow: ListBookRow = makeListBook({
-        bookId,
-        listId: 1,
-        readStart,
-        readEnd,
-      });
-      mockDb.update = jest.fn().mockReturnValue({
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([updatedRow]),
-          } as DrizzleMock),
-        } as DrizzleMock),
-      } as DrizzleMock);
-
-      const result = await service.updateBookStatus(
-        userId,
-        bookId,
-        readStart,
-        readEnd,
-      );
-
-      const typedResult = result as BookRow & {
-        status: string;
-        readStart: Date | null;
-        readEnd: Date | null;
-      };
-      expect(typedResult.status).toBe('Lu');
-      expect(typedResult.readStart).toEqual(readStart);
-      expect(typedResult.readEnd).toEqual(readEnd);
-    });
-
-    it('should throw HttpException if book not found in user list', async () => {
-      const userId = 1;
-      const bookId = 1;
-      const readStart = new Date('2024-01-01');
-      const readEnd = null;
-
-      // Mock list found
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([makeList({ id: 1, userId })]),
-        }),
-      } as DrizzleMock);
-
-      // Mock update returns empty
-      mockDb.update = jest.fn().mockReturnValue({
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([]),
-          }),
-        }),
-      } as DrizzleMock);
-
-      await expect(
-        service.updateBookStatus(userId, bookId, readStart, readEnd),
-      ).rejects.toThrow(
-        new HttpException('Book not found in user list', HttpStatus.NOT_FOUND),
-      );
-    });
-  });
-
-  describe('getCategoriesForBook', () => {
-    it('should return categories for a given book', async () => {
-      const bookId = 1;
-      const mockCategories: CategoryRow[] = [
-        makeCategory({ id: 1, name: 'Fiction' }),
-        makeCategory({ id: 2, name: 'Adventure' }),
+      const mockUserList = { id: 1, userId: 1 };
+      const mockUpdatedListBook = [
+        {
+          id: 1,
+          bookId: 1,
+          listId: 1,
+          readStart,
+          readEnd,
+        },
       ];
 
-      mockDb.select = jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          innerJoin: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              orderBy: jest.fn().mockReturnValue({
-                execute: jest.fn().mockResolvedValue(mockCategories),
-              }),
-            }),
-          }),
+      const mockBook = {
+        id: 1,
+        name: 'Test Book',
+        author: 'Author',
+        isbn: '123',
+        categoryId: 1,
+      };
+
+      // Find user list
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
+
+      // Update list book
+      const updateChain = {
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue(mockUpdatedListBook),
+      };
+
+      // Get book
+      const selectChain2 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockBook]),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(selectChain1)
+        .mockReturnValueOnce(selectChain2);
+
+      mockDb.update.mockReturnValue(updateChain);
+
+      const result = await service.updateBookStatus(1, 1, readStart, readEnd);
+
+      expect(result.id).toBe(1);
+      expect(updateChain.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          readStart,
+          readEnd,
         }),
-      } as DrizzleMock);
+      );
+    });
 
-      const result = await service.getCategoriesForBook(bookId);
+    it('should throw HttpException when user list not found', async () => {
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
 
-      expect(result).toEqual(mockCategories);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await expect(
+        service.updateBookStatus(999, 1, new Date(), null),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('should throw HttpException when book not in user list', async () => {
+      const mockUserList = { id: 1, userId: 1 };
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
+
+      const updateChain = {
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([]),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+      mockDb.update.mockReturnValue(updateChain);
+
+      await expect(
+        service.updateBookStatus(1, 999, new Date(), null),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('should throw HttpException when book not found', async () => {
+      const mockUserList = { id: 1, userId: 1 };
+      const mockUpdatedListBook = [
+        {
+          id: 1,
+          bookId: 1,
+          listId: 1,
+          readStart: new Date(),
+          readEnd: null,
+        },
+      ];
+
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
+
+      const updateChain = {
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue(mockUpdatedListBook),
+      };
+
+      const selectChain2 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(selectChain1)
+        .mockReturnValueOnce(selectChain2);
+
+      mockDb.update.mockReturnValue(updateChain);
+
+      await expect(
+        service.updateBookStatus(1, 1, new Date(), null),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('should compute status correctly based on read dates', async () => {
+      const readStart = new Date('2024-01-01');
+      const readEnd = new Date('2024-02-01');
+
+      const mockUserList = { id: 1, userId: 1 };
+      const mockUpdatedListBook = [
+        {
+          id: 1,
+          bookId: 1,
+          listId: 1,
+          readStart,
+          readEnd,
+        },
+      ];
+
+      const mockBook = {
+        id: 1,
+        name: 'Test Book',
+        author: 'Author',
+        isbn: '123',
+        categoryId: 1,
+      };
+
+      const selectChain1 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockUserList]),
+      };
+
+      const updateChain = {
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue(mockUpdatedListBook),
+      };
+
+      const selectChain2 = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([mockBook]),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(selectChain1)
+        .mockReturnValueOnce(selectChain2);
+
+      mockDb.update.mockReturnValue(updateChain);
+
+      const result = await service.updateBookStatus(1, 1, readStart, readEnd);
+
+      expect(result).toHaveProperty('status');
+      expect(result.status).toBe('Lu');
+    });
+
+    it('should handle generic errors', async () => {
+      const mockUserList = { id: 1, userId: 1 };
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockRejectedValue(new Error('Generic database error')),
+      };
+
+      mockDb.select.mockReturnValue(selectChain);
+
+      await expect(
+        service.updateBookStatus(1, 1, new Date(), null),
+      ).rejects.toThrow(HttpException);
     });
   });
 
-  describe('assignCategoriesFromNames', () => {
-    it('should assign categories to a book', async () => {
-      const bookId = 1;
-      const categoryNames = ['Fiction', 'Adventure'];
-      const mockCategory = makeCategory({ id: 1, name: 'Fiction' });
+  describe('computeStatus (private method via public methods)', () => {
+    it('should return "À lire" when no read dates', async () => {
+      const mockCountResult = [{ count: 1 }];
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Test',
+          author: 'Author',
+          cover_url: 'url',
+          description: 'desc',
+          isbn: '123',
+          publishingHouse: 'House',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+          readStart: null,
+          readEnd: null,
+          addedAt: new Date(),
+        },
+      ];
 
-      mockCategoryService.findOrCreateByName.mockResolvedValue(mockCategory);
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
 
-      mockDb.insert = jest.fn().mockReturnValue({
-        values: jest.fn().mockReturnValue({
-          onConflictDoNothing: jest.fn().mockReturnValue({
-            execute: jest.fn().mockResolvedValue(undefined),
-          }),
-        }),
-      } as DrizzleMock);
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
 
-      await service.assignCategoriesFromNames(bookId, categoryNames);
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
 
-      expect(mockCategoryService.findOrCreateByName).toHaveBeenCalledTimes(2);
-      expect(mockCategoryService.findOrCreateByName).toHaveBeenCalledWith(
-        'Fiction',
-      );
-      expect(mockCategoryService.findOrCreateByName).toHaveBeenCalledWith(
-        'Adventure',
-      );
+      const result = await service.findUserBooks(1);
+      expect(result.books[0].status).toBe('À lire');
+    });
+
+    it('should return "En cours" when readStart is set', async () => {
+      const mockCountResult = [{ count: 1 }];
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Test',
+          author: 'Author',
+          cover_url: 'url',
+          description: 'desc',
+          isbn: '123',
+          publishingHouse: 'House',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+          readStart: new Date('2024-01-01'),
+          readEnd: null,
+          addedAt: new Date(),
+        },
+      ];
+
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
+
+      const result = await service.findUserBooks(1);
+      expect(result.books[0].status).toBe('En cours');
+    });
+
+    it('should return "Lu" when both dates are set', async () => {
+      const mockCountResult = [{ count: 1 }];
+      const mockBooks = [
+        {
+          id: 1,
+          name: 'Test',
+          author: 'Author',
+          cover_url: 'url',
+          description: 'desc',
+          isbn: '123',
+          publishingHouse: 'House',
+          publishedAt: new Date(),
+          categoryName: 'Horror',
+          readStart: new Date('2024-01-01'),
+          readEnd: new Date('2024-02-01'),
+          addedAt: new Date(),
+        },
+      ];
+
+      const countChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockCountResult),
+      };
+
+      const selectChain = {
+        from: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockBooks),
+      };
+
+      mockDb.select
+        .mockReturnValueOnce(countChain)
+        .mockReturnValueOnce(selectChain);
+
+      const result = await service.findUserBooks(1);
+      expect(result.books[0].status).toBe('Lu');
     });
   });
 });
