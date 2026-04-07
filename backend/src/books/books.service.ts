@@ -203,28 +203,30 @@ export class BooksService {
         categoryName: string;
       }> = [];
 
-      // Always perform matching logic - whether the book is new or existing
-      const normalizedSubjects = (createBookDto.categories ?? [])
-        .map((c) => c.trim())
-        .filter((c) => c.length > 0);
-
-      if (normalizedSubjects.length > 0) {
-        // Get all keywords that match the book subjects
-        matchedKeywords = await this.db
-          .select({
-            keywordId: keyword.id,
-            keywordName: keyword.name,
-            categoryId: category.id,
-            categoryName: category.name,
-          })
-          .from(keyword)
-          .innerJoin(category, eq(category.id, keyword.categoryId))
-          .where(
-            sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
-          );
-      }
-
       if (!existingBook) {
+        // NEW BOOK - Perform matching and category determination
+
+        // Normalize subjects from DTO
+        const normalizedSubjects = (createBookDto.categories ?? [])
+          .map((c) => c.trim())
+          .filter((c) => c.length > 0);
+
+        // Get all keywords that match the book subjects
+        if (normalizedSubjects.length > 0) {
+          matchedKeywords = await this.db
+            .select({
+              keywordId: keyword.id,
+              keywordName: keyword.name,
+              categoryId: category.id,
+              categoryName: category.name,
+            })
+            .from(keyword)
+            .innerJoin(category, eq(category.id, keyword.categoryId))
+            .where(
+              sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+            );
+        }
+
         // Determine category based on matching results
         let categoryId = 1; // Default category "Unknown"
 
@@ -244,6 +246,7 @@ export class BooksService {
           categoryId = categoryResult[0]?.categoryId ?? 1;
         }
 
+        // Create the book
         const inserted = await this.db
           .insert(book)
           .values({
@@ -259,24 +262,25 @@ export class BooksService {
           .returning();
 
         existingBook = inserted[0];
-      }
 
-      // Record matched keywords for audit trail (only real matches)
-      if (matchedKeywords.length > 0) {
-        try {
-          await this.db.insert(bookKeyword).values(
-            matchedKeywords.map((kw) => ({
-              bookId: existingBook.id,
-              keywordId: kw.keywordId,
-            })),
-          );
-        } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : String(err);
-          if (!errorMsg.includes('unique') && !errorMsg.includes('UNIQUE')) {
-            throw err;
+        // Record matched keywords for audit trail (only for new books)
+        if (matchedKeywords.length > 0) {
+          try {
+            await this.db.insert(bookKeyword).values(
+              matchedKeywords.map((kw) => ({
+                bookId: existingBook.id,
+                keywordId: kw.keywordId,
+              })),
+            );
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            if (!errorMsg.includes('unique') && !errorMsg.includes('UNIQUE')) {
+              throw err;
+            }
           }
         }
       }
+      // For existing books: reuse as-is with their existing category and keywords
 
       // Retrieve (or lazily create) the user's list
       const userListFound = await this.db
