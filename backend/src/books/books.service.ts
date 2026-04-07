@@ -261,7 +261,7 @@ export class BooksService {
         existingBook = inserted[0];
       }
 
-      // Record all matched keywords for audit purposes (only if matching found)
+      // Record matched keywords for audit trail (only real matches)
       if (matchedKeywords.length > 0) {
         try {
           await this.db.insert(bookKeyword).values(
