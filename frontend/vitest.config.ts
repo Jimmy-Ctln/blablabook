@@ -21,6 +21,7 @@ export default defineConfig({
         "**/*.spec.tsx",
         "src/components/ui/**", // Exclude shadcn/ui components
         "src/@types/**",
+        "src/*.loader.tsx",
       ],
       include: ["src/**/*.{ts,tsx}"],
     },
