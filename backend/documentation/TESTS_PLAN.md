@@ -99,38 +99,102 @@ Ce plan détaille les tests mis en place, couvrant les fonctionnalités essentie
 
 ## Frontend - Tests Frontend
 
-### API Integration
+### API Integration (`books.test.ts`)
 
-Parties testées :
+Parties testées avec les cas d'erreur:
 
-- `getBooks` - Récupération des livres
-- `getUserBooks` - Récupération des livres de l'utilisateur
-- `addBookToUserList` - Ajout d'un livre à la liste
-- `removeBookFromUserList` - Suppression d'un livre de la liste
-- `updateBookStatus` - Mise à jour du statut (À lire / En cours / Lu)
-- `getSearchBooks` - Recherche de livres
-- `searchExternalBooks` - Recherche dans API externe (text / category / random / skip)
+| Fonction                          | Cas Testé               | Données                                  | Résultat Attendu               | Code Erreur |
+| --------------------------------- | ----------------------- | ---------------------------------------- | ------------------------------ | ----------- |
+| `getBooks`                        | Récupération succès     | aucune                                   | Retourne {[category]: books[]} | 200         |
+| `getBooks`                        | Erreur réseau           | aucune                                   | Erreur réseau                  | Erreur      |
+| `getUserBooks`                    | Succès avec livres      | userId valide                            | Retourne {books: [], total: N} | 200         |
+| `getUserBooks`                    | Utilisateur sans livres | userId valide, empty                     | {books: [], total: 0}          | 200         |
+| `getUserBooks`                    | User ID invalide        | userId inexistant                        | Erreur not found               | 404         |
+| `addBookToUserList`               | Ajout succès            | {userId, bookId}                         | Book ajouté à la liste         | 201         |
+| `addBookToUserList`               | Book inexistant         | bookId invalide                          | Erreur not found               | 404         |
+| `addBookToUserList`               | User inexistant         | userId invalide                          | Erreur unauthorized            | 401         |
+| `removeBookFromUserList`          | Suppression succès      | {userId, bookId}                         | Book retiré de la liste        | 200         |
+| `removeBookFromUserList`          | Book non trouvé         | bookId inexistant                        | Erreur not found               | 404         |
+| `updateBookStatus`                | Statut "À lire"         | {userId, bookId, readStart: null}        | Status mis à jour              | 200         |
+| `updateBookStatus`                | Statut "En cours"       | {userId, bookId, readStart: date}        | Status mis à jour              | 200         |
+| `updateBookStatus`                | Statut "Lu"             | {userId, bookId, readEnd: date}          | Status mis à jour              | 200         |
+| `updateBookStatus`                | Données invalides       | dates invalides                          | Erreur validation              | 422         |
+| `getSearchBooks`                  | Recherche succès        | query: "fiction"                         | Retourne livres filtrés        | 200         |
+| `getSearchBooks`                  | Query vide              | query: ""                                | Retourne [] ou erreur          | 400         |
+| `searchExternalBooks` - text      | Recherche OpenLib       | {type: "searchText", searchText: "Book"} | Retourne résultats externes    | 200         |
+| `searchExternalBooks` - category  | Filtre par catégorie    | {type: "category", category: "fiction"}  | Livres filtrés                 | 200         |
+| `searchExternalBooks` - random    | Livres aléatoires       | {type: "random"}                         | Retourne N livres aléatoires   | 200         |
+| `searchExternalBooks` - API error | Erreur OpenLibrary      | query invalide                           | Erreur API externe             | Erreur      |
 
 ### Hooks
 
-Parties testées :
+#### `useAddBook` (`useAddBook.test.tsx`)
 
-- `useAddBook` - Hook d'ajout de livre
-- `useUserBooks` - Hook de récupération des livres utilisateur
-- `useCurrentUser` - Hook pour récupérer l'utilisateur actuel
+| Cas Testé              | Setup                         | Résultat Attendu              | Code Erreur |
+| ---------------------- | ----------------------------- | ----------------------------- | ----------- |
+| Mutation succès        | Mock ISBN data valide         | Book ajouté, cache updated    | 201         |
+| Mutation avec keywords | Categories détectées          | Keywords enregistrés          | 201         |
+| ISBN inexistant        | ISBN non trouvé en API        | Error state, refetch support  | 404         |
+| Données validation     | Champs obligatoires manquants | Erreur validation en mutation | 422         |
+| Optimistic update      | Mutation en cours             | UI updated immédiatement      | Pending     |
+
+#### `useUserBooks` (`useUserBooks.test.tsx`)
+
+| Cas Testé              | Setup                   | Résultat Attendu               | Code Erreur |
+| ---------------------- | ----------------------- | ------------------------------ | ----------- |
+| Query succès           | userId valide           | Retourne {books: [], total: N} | 200         |
+| Query vide             | Utilisateur sans livres | {books: [], total: 0}          | 200         |
+| Mutation update status | newStatus valide        | Book status mis à jour         | 200         |
+| Mutation remove book   | bookId valide           | Book supprimé de la liste      | 200         |
+| Query error            | userId invalide         | Erreur state, can retry        | 401         |
+| Invalidation cache     | Après mutation          | Cache revalidé automatiquement | —           |
+
+#### `useCurrentUser` (`useCurrentUser.test.tsx`)
+
+| Cas Testé                              | Input (Store)             | Output                     | Code/State  |
+| -------------------------------------- | ------------------------- | -------------------------- | ----------- |
+| User authenticated                     | user: User, isAuth: true  | data: User, isError: false | 200         |
+| User not authenticated                 | user: null, isAuth: false | data: null, isError: true  | 401         |
+| State inconsistent (user but not auth) | user: User, isAuth: false | data: User, isError: true  | State error |
+| State inconsistent (auth but no user)  | user: null, isAuth: true  | data: null, isError: false | State error |
+| After logout                           | user: null, isAuth: false | data: null, isError: true  | 204         |
+| isLoading always false                 | any state                 | isLoading: false           | N/A         |
 
 ### Components
 
-Parties testées :
+#### `AddBookModal` (`AddBookModal.test.tsx`)
 
-- `AddBookModal` - Modal d'ajout de livre
-- `BookCard` - Carte de livre
+| Cas Testé             | Action               | Résultat Attendu              | Code |
+| --------------------- | -------------------- | ----------------------------- | ---- |
+| Modal renders         | isOpen=true          | Modal visible avec SearchBar  | 200  |
+| Search books          | Tapez query ≥2 chars | Appel API lance automatically | 200  |
+| No search             | Query < 2 chars      | Aucun appel API               | —    |
+| Select book           | Click sur book       | Modal close, book added       | 201  |
+| Modal close           | Click X ou backdrop  | Modal hidden, cache reset     | 200  |
+| Show internal books   | Pas de search        | Affiche 10 livres random      | 200  |
+| Show external results | Search lancée        | Affiche résultats OpenLibrary | 200  |
+
+#### `BookCard` (`BookCard.test.tsx`)
+
+| Cas Testé        | Props             | Action                              | Résultat                |
+| ---------------- | ----------------- | ----------------------------------- | ----------------------- |
+| Card renders     | book: BookDisplay | Affiche titre + auteur + couverture | 200                     |
+| Click navigation | book: BookDisplay | Click card                          | Navigate to /books/{id} |
+| Missing cover    | cover: undefined  | Placeholder image affiché           | —                       |
+| Hover state      | Mouse over        | Visual feedback shown               | —                       |
 
 ### Stores
 
-Parties testées :
+#### `authStore` (`authStore.test.ts`)
 
-- `authStore` - Gestion de l'authentification
+| Cas Testé                | Action                       | Résultat Attendu              | Erreur       |
+| ------------------------ | ---------------------------- | ----------------------------- | ------------ |
+| Login success            | setUser + setAuth true       | Store updated                 | —            |
+| Logout                   | setUser null + setAuth false | Store cleared                 | —            |
+| Token refresh            | setToken + newJWT            | JWT actualisé                 | 401 si error |
+| Multiple state selectors | useAuthStore((s) => s.user)  | Correct slice retourné        | —            |
+| Store persistence        | localStorage sync            | State persisted               | —            |
+| Unauthorized state       | isAuth false                 | useCurrentUser → isError true | 401          |
 
 ---
 
