@@ -90,7 +90,6 @@ vi.mock("@/api/books", () => ({
 describe("AddBookModal", () => {
   it("does not trigger search when query is empty", async () => {
     setupDefaultQueries();
-    const user = userEvent.setup();
 
     render(<AddBookModal isOpen setOpen={() => undefined} />);
 
@@ -151,7 +150,6 @@ describe("AddBookModal", () => {
 
   it("calls mutate when clicking add button", async () => {
     setupDefaultQueries();
-    const user = userEvent.setup();
 
     render(<AddBookModal isOpen setOpen={() => undefined} />);
 
@@ -204,7 +202,6 @@ describe("AddBookModal", () => {
 
   it("navigates to details when clicking a result", async () => {
     setupDefaultQueries();
-    const user = userEvent.setup();
 
     render(<AddBookModal isOpen setOpen={() => undefined} />);
 
