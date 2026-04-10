@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "coverage": "vitest run --coverage --watch=false --outputFile ./coverage.json --reporter=json"
+    "coverage": "vitest run --coverage --watch=false"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
