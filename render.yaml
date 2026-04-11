@@ -21,7 +21,7 @@ services:
       - key: FRONTEND_URL_CORS
         value: https://blablabook.vercel.app
 
-  - type: pstg
+  - type: postgres
     name: blablabook-postgres
     runtime: postgres15
     region: frankfurt
