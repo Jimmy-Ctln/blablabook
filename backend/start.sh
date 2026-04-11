@@ -1,10 +1,8 @@
 #!/bin/sh
-# 1. Preparation - Apply Drizzle migrations
-# Uses drizzle-kit migrate (with SQL file history in ./drizzle/)
+# 1. Apply Drizzle migrations
 echo "Applying database migrations with Drizzle..."
 npm run migrate
 
-# Stop if migration fails
 if [ $? -ne 0 ]; then
   echo "Migration failed. Exiting."
   exit 1
@@ -12,6 +10,15 @@ fi
 
 echo "Migrations applied successfully."
 
-# 2. Launch the server
+# 2. Run seed data (categories, keywords, etc.)
+echo "Running seed data..."
+npm run seed
+
+if [ $? -ne 0 ]; then
+  echo "Seed failed. Continuing anyway..."
+  # On continue même si le seed échoue (ex: données déjà présentes)
+fi
+
+# 3. Launch server
 echo "Starting NestJS server..."
-exec npm run start:dev
+exec npm run start:prod
