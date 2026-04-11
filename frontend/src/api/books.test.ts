@@ -7,7 +7,7 @@ import {
   afterEach,
   type Mock,
 } from "vitest";
-import type { BookRow } from "../@types/books";
+import type { BookRow, CreateBookDto, BookDisplay } from "../@types/books";
 import {
   getSearchBooks,
   getBooks,
@@ -38,11 +38,11 @@ const createBookRow = (overrides?: Partial<BookRow>): BookRow => ({
   name: "Test Book",
   author: "Author",
   isbn: "123",
-  coverId: "cover.jpg",
+  cover_url: "cover.jpg",
   description: "Description",
   publishingHouse: "House",
   publishedAt: "2024-01-01",
-  categories: [],
+  categoryName: "unknown",
   readStart: null,
   readEnd: null,
   addedAt: new Date(),
@@ -107,9 +107,9 @@ describe("books api", () => {
   });
 
   it("adds a book to user list", async () => {
-    const dto = {
+    const dto: CreateBookDto = {
       name: "C",
-      coverId: "cover.jpg",
+      coverUrl: "cover.jpg",
       author: "Author C",
       description: "Description C",
       isbn: "9876543210",
@@ -143,7 +143,18 @@ describe("books api", () => {
       readStart: new Date("2024-01-01"),
       readEnd: new Date("2024-02-01"),
     });
-    await updateBookStatus(2, 1, "À lire", book);
+    const bookDisplay: BookDisplay = {
+      id: "1",
+      name: book.name,
+      author: book.author,
+      isbn: book.isbn,
+      cover_url: book.cover_url,
+      publisher: "Test Publisher",
+      publishDate: book.publishedAt,
+      description: book.description,
+      status: book.status,
+    };
+    await updateBookStatus(2, 1, "À lire", bookDisplay);
 
     expect(mockApi.patch).toHaveBeenCalledWith(
       "/books/library/2/book/1/status",
@@ -159,7 +170,18 @@ describe("books api", () => {
       readStart: null,
       readEnd: null,
     });
-    await updateBookStatus(2, 1, "En cours", book);
+    const bookDisplay: BookDisplay = {
+      id: "1",
+      name: book.name,
+      author: book.author,
+      isbn: book.isbn,
+      cover_url: book.cover_url,
+      publisher: "Test Publisher",
+      publishDate: book.publishedAt,
+      description: book.description,
+      status: book.status,
+    };
+    await updateBookStatus(2, 1, "En cours", bookDisplay);
 
     expect(mockApi.patch).toHaveBeenCalledWith(
       "/books/library/2/book/1/status",
@@ -175,7 +197,18 @@ describe("books api", () => {
       readStart: new Date("2024-03-01T00:00:00.000Z"),
       readEnd: null,
     });
-    await updateBookStatus(2, 1, "Lu", book);
+    const bookDisplay: BookDisplay = {
+      id: "1",
+      name: book.name,
+      author: book.author,
+      isbn: book.isbn,
+      cover_url: book.cover_url,
+      publisher: "Test Publisher",
+      publishDate: book.publishedAt,
+      description: book.description,
+      status: book.status,
+    };
+    await updateBookStatus(2, 1, "Lu", bookDisplay);
 
     expect(mockApi.patch).toHaveBeenCalledWith(
       "/books/library/2/book/1/status",

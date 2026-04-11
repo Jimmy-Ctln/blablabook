@@ -2,7 +2,6 @@ import React from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, afterEach, type Mock } from "vitest";
-import type { ExternalBook } from "@/@types/externalBooks";
 import type { BookRow, BookDisplay } from "@/@types/books";
 import { useAddBook } from "./useAddBook";
 
@@ -34,19 +33,6 @@ const createWrapper = () => {
   return { wrapper, queryClient };
 };
 
-const baseExternalBook: ExternalBook = {
-  key: "work-1",
-  title: "Test Book",
-  author: "Jane Doe",
-  isbn: "1234567890",
-  language: [{ key: "en" }],
-  publishDate: "2023-05-01",
-  cover: "cover.jpg",
-  description: "A short description",
-  publisher: "Test Publisher",
-  categories: ["Fiction"],
-};
-
 // Create a BookDisplay version for the mutation
 const baseBookDisplay: BookDisplay = {
   id: "ext-1",
@@ -69,11 +55,11 @@ const createMockBookRow = (overrides?: Partial<BookRow>): BookRow => ({
   name: "Test Book",
   author: "Jane Doe",
   isbn: "1234567890",
-  coverId: "cover.jpg",
+  cover_url: "cover.jpg",
   description: "A short description",
   publishingHouse: "Test Publisher",
   publishedAt: "2023-05-01",
-  categories: ["Fiction"],
+  categoryName: "unknown",
   readStart: null,
   readEnd: null,
   addedAt: new Date(),
@@ -90,7 +76,7 @@ describe("useAddBook", () => {
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useAddBook(), { wrapper });
 
-    await expect(result.current.mutateAsync(baseExternalBook)).rejects.toThrow(
+    await expect(result.current.mutateAsync(baseBookDisplay)).rejects.toThrow(
       "UserId is required",
     );
   });
@@ -129,8 +115,8 @@ describe("useAddBook", () => {
       description: { value: "Fetched description" },
     });
 
-    const bookWithoutDescription: ExternalBook = {
-      ...baseExternalBook,
+    const bookWithoutDescription: BookDisplay = {
+      ...baseBookDisplay,
       description: undefined,
       isbn: "0987654321",
     };
@@ -155,7 +141,7 @@ describe("useAddBook", () => {
       createMockBookRow({ id: 3 }),
     );
 
-    await result.current.mutateAsync(baseExternalBook);
+    await result.current.mutateAsync(baseBookDisplay);
 
     await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith({

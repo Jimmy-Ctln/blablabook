@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { RouterProvider } from "@tanstack/react-router";
 import { router } from "@/routes/routes";
-import RootLayout from "./RootLayout";
 
 describe("RootLayout", () => {
   it("should render root layout", () => {

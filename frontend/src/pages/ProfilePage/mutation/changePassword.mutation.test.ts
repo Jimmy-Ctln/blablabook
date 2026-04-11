@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@tanstack/react-query", () => ({
-  useMutation: vi.fn((config) => ({
+  useMutation: vi.fn((_config) => ({
     mutate: vi.fn(),
     mutateAsync: vi.fn(),
     isLoading: false,

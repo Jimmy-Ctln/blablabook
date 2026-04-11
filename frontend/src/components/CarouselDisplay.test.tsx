@@ -4,19 +4,21 @@ import CarouselDisplay from "./CarouselDisplay";
 import type { BookDisplay } from "@/@types/books";
 
 // Mock IntersectionObserver
-(global as any).IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  takeRecords() {
-    return [];
-  }
-  unobserve() {}
-};
+if (typeof window !== "undefined") {
+  window.IntersectionObserver = class IntersectionObserver {
+    constructor() {}
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return [];
+    }
+    unobserve() {}
+  } as any;
+}
 
 // Mock Carousel components
 vi.mock("@/components/ui/carousel", () => ({
-  Carousel: ({ children, title }: any) => (
+  Carousel: ({ children }: any) => (
     <div data-testid="carousel">{children}</div>
   ),
   CarouselContent: ({ children }: any) => (
@@ -34,7 +36,7 @@ vi.mock("@/components/ui/carousel", () => ({
 // Mock BookCardCarousel
 vi.mock("./BookCardCarousel", () => ({
   default: ({ book }: { book: BookDisplay }) => (
-    <div data-testid={`book-card-${book.id}`}>{book.title}</div>
+    <div data-testid={`book-card-${book.id}`}>{book.name}</div>
   ),
 }));
 
@@ -48,19 +50,25 @@ vi.mock("@tanstack/react-router", () => ({
 describe("CarouselDisplay Component", () => {
   const mockBooks: BookDisplay[] = [
     {
-      id: 1,
-      title: "Book 1",
+      id: "1",
+      name: "Book 1",
       author: "Author 1",
+      cover_url: "cover1.jpg",
       cover: "cover1.jpg",
       isbn: "isbn1",
+      publisher: "Publisher 1",
+      publishDate: "2024-01-01",
       status: "À lire",
     },
     {
-      id: 2,
-      title: "Book 2",
+      id: "2",
+      name: "Book 2",
       author: "Author 2",
+      cover_url: "cover2.jpg",
       cover: "cover2.jpg",
       isbn: "isbn2",
+      publisher: "Publisher 2",
+      publishDate: "2024-01-02",
       status: "Lu",
     },
   ];
@@ -110,11 +118,14 @@ describe("CarouselDisplay Component", () => {
 
   it("should display multiple books correctly", () => {
     const manyBooks = Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      title: `Book ${i + 1}`,
+      id: String(i + 1),
+      name: `Book ${i + 1}`,
       author: `Author ${i + 1}`,
+      cover_url: `cover${i + 1}.jpg`,
       cover: `cover${i + 1}.jpg`,
       isbn: `isbn${i + 1}`,
+      publisher: `Publisher ${i + 1}`,
+      publishDate: `2024-01-0${i + 1}`,
       status: "À lire" as const,
     }));
 

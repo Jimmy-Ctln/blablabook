@@ -12,25 +12,28 @@ vi.mock("@tanstack/react-router", () => ({
 
 describe("BookCardCarousel Component", () => {
   const mockBook: BookDisplay = {
-    id: 1,
-    title: "Test Book",
+    id: "1",
+    name: "Test Book",
     author: "Test Author",
+    cover_url: "https://example.com/cover.jpg",
     cover: "https://example.com/cover.jpg",
     isbn: "123-456-789",
+    publisher: "Test Publisher",
+    publishDate: "2024-01-01",
     status: "À lire",
   };
 
   it("should render book card", () => {
     render(<BookCardCarousel book={mockBook} />);
     expect(
-      screen.getByAltText(`Couverture de ${mockBook.title}`),
+      screen.getByAltText(`Couverture de ${mockBook.name}`),
     ).toBeInTheDocument();
   });
 
   it("should display book cover image with correct src", () => {
     render(<BookCardCarousel book={mockBook} />);
     const image = screen.getByAltText(
-      `Couverture de ${mockBook.title}`,
+      `Couverture de ${mockBook.name}`,
     ) as HTMLImageElement;
     expect(image.src).toContain("example.com/cover.jpg");
   });
@@ -56,7 +59,7 @@ describe("BookCardCarousel Component", () => {
   it("should render image with correct dimensions", () => {
     render(<BookCardCarousel book={mockBook} />);
     const image = screen.getByAltText(
-      `Couverture de ${mockBook.title}`,
+      `Couverture de ${mockBook.name}`,
     ) as HTMLImageElement;
     expect(image.width).toBe(128);
     expect(image.height).toBe(192);
@@ -65,7 +68,7 @@ describe("BookCardCarousel Component", () => {
   it("should render without ISBN", () => {
     const bookWithoutIsbn: BookDisplay = {
       ...mockBook,
-      isbn: undefined,
+      isbn: "",
     };
     render(<BookCardCarousel book={bookWithoutIsbn} />);
     expect(screen.getByAltText(/Couverture de/)).toBeInTheDocument();
@@ -74,11 +77,12 @@ describe("BookCardCarousel Component", () => {
   it("should handle book with different cover URL", () => {
     const bookWithDifferentCover: BookDisplay = {
       ...mockBook,
+      cover_url: "https://different.com/book.jpg",
       cover: "https://different.com/book.jpg",
     };
     render(<BookCardCarousel book={bookWithDifferentCover} />);
     const image = screen.getByAltText(
-      `Couverture de ${mockBook.title}`,
+      `Couverture de ${mockBook.name}`,
     ) as HTMLImageElement;
     expect(image.src).toContain("different.com/book.jpg");
   });
@@ -94,7 +98,7 @@ describe("BookCardCarousel Component", () => {
     const card = container.firstChild;
     expect(card).toBeInTheDocument();
     expect(
-      screen.getByAltText(`Couverture de ${mockBook.title}`),
+      screen.getByAltText(`Couverture de ${mockBook.name}`),
     ).toBeInTheDocument();
   });
 });
