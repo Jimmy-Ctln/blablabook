@@ -10,13 +10,13 @@ fi
 
 echo "Migrations applied successfully."
 
-# 2. Run seed data (categories, keywords, etc.)
+# 2. Run compiled seed (seed.ts is compiled to dist/seed.js at build time)
 echo "Running seed data..."
-npm run seed
+node dist/seed.js
 
 if [ $? -ne 0 ]; then
   echo "Seed failed. Continuing anyway..."
-  # On continue même si le seed échoue (ex: données déjà présentes)
+  # Continue on seed fail (data might already exist)
 fi
 
 # 3. Launch server
