@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/axios";
 import { useAuthStore } from "@/stores/authStore";
+import type { UserProps } from "@/@types/user";
 
 export const useUpdateUser = (
   userId: number,

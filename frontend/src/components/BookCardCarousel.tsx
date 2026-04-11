@@ -23,8 +23,8 @@ export default function BookCardCarousel({
     >
       <CardContent className="w-full h-full items-center p-0">
         <img
-          src={book.cover}
-          alt={`Couverture de ${book.title}`}
+          src={book.cover_url || book.cover}
+          alt={`Couverture de ${book.name}`}
           width="128"
           height="192"
           className="h-full w-full object-cover rounded-3xl"

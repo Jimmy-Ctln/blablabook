@@ -5,7 +5,14 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { book, list, listBook, category, keyword } from '../db/schema';
+import {
+  book,
+  list,
+  listBook,
+  category,
+  keyword,
+  bookKeyword,
+} from '../db/schema';
 import * as schema from '../db/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CreateBookDto } from './dto/create-book.dto';
@@ -181,10 +188,6 @@ export class BooksService {
     createBookDto: CreateBookDto,
   ): Promise<BookSelect> {
     try {
-      this.logger.debug(
-        `addToUserList userId=${userId} payload=${JSON.stringify(createBookDto)}`,
-      );
-
       // Check if the book already exists by ISBN to avoid duplicates
       const found = await this.db
         .select()
@@ -193,24 +196,57 @@ export class BooksService {
 
       let existingBook = found[0];
 
+      let matchedKeywords: Array<{
+        keywordId: number;
+        keywordName: string;
+        categoryId: number;
+        categoryName: string;
+      }> = [];
+
       if (!existingBook) {
+        // NEW BOOK - Perform matching and category determination
+
+        // Normalize subjects from DTO
         const normalizedSubjects = (createBookDto.categories ?? [])
           .map((c) => c.trim())
           .filter((c) => c.length > 0);
 
-        const categoryResult = await this.db
-          .select({ categoryName: category.name, categoryId: category.id })
-          .from(keyword)
-          .innerJoin(category, eq(category.id, keyword.categoryId))
-          .where(
-            sql`'%' || ${keyword.name} || '%' ILIKE ${normalizedSubjects.join(' ')}`,
-          )
-          .groupBy(category.id)
-          .orderBy(desc(count(keyword.id)))
-          .limit(1);
+        // Get all keywords that match the book subjects
+        if (normalizedSubjects.length > 0) {
+          matchedKeywords = await this.db
+            .select({
+              keywordId: keyword.id,
+              keywordName: keyword.name,
+              categoryId: category.id,
+              categoryName: category.name,
+            })
+            .from(keyword)
+            .innerJoin(category, eq(category.id, keyword.categoryId))
+            .where(
+              sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+            );
+        }
 
-        const categoryId = categoryResult[0]?.categoryId ?? 1;
+        // Determine category based on matching results
+        let categoryId = 1; // Default category "Unknown"
 
+        if (matchedKeywords.length > 0) {
+          // Get the winning category (the one with the most matches)
+          const categoryResult = await this.db
+            .select({ categoryName: category.name, categoryId: category.id })
+            .from(keyword)
+            .innerJoin(category, eq(category.id, keyword.categoryId))
+            .where(
+              sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+            )
+            .groupBy(category.id)
+            .orderBy(desc(count(keyword.id)))
+            .limit(1);
+
+          categoryId = categoryResult[0]?.categoryId ?? 1;
+        }
+
+        // Create the book
         const inserted = await this.db
           .insert(book)
           .values({
@@ -226,7 +262,25 @@ export class BooksService {
           .returning();
 
         existingBook = inserted[0];
+
+        // Record matched keywords for audit trail (only for new books)
+        if (matchedKeywords.length > 0) {
+          try {
+            await this.db.insert(bookKeyword).values(
+              matchedKeywords.map((kw) => ({
+                bookId: existingBook.id,
+                keywordId: kw.keywordId,
+              })),
+            );
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            if (!errorMsg.includes('unique') && !errorMsg.includes('UNIQUE')) {
+              throw err;
+            }
+          }
+        }
       }
+      // For existing books: reuse as-is with their existing category and keywords
 
       // Retrieve (or lazily create) the user's list
       const userListFound = await this.db

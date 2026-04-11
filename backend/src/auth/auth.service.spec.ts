@@ -11,9 +11,8 @@ import { TokenService } from '../security/token/token.service';
 describe('AuthService', () => {
   let authService: AuthService;
 
-  // mock dépendances
   const userServiceMock = {
-    getUserByUsername: jest.fn(),
+    getUserByEmail: jest.fn(),
     checkUserExisting: jest.fn(),
     createUser: jest.fn(),
   };
@@ -29,7 +28,6 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    // skip les log d'erreur déclencher par le test
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const module: TestingModule = await Test.createTestingModule({
@@ -71,12 +69,12 @@ describe('AuthService', () => {
     };
 
     const payload: LoginRequestDto = {
-      username,
+      email,
       password,
     };
 
     it('should return user if login is valid', async () => {
-      userServiceMock.getUserByUsername.mockResolvedValue(resolvedValue);
+      userServiceMock.getUserByEmail.mockResolvedValue(resolvedValue);
 
       passwordServiceMock.checkPassword.mockResolvedValue(true);
 
@@ -90,23 +88,23 @@ describe('AuthService', () => {
     });
 
     it('should throw error if user not exist', async () => {
-      userServiceMock.getUserByUsername.mockResolvedValue(null);
+      userServiceMock.getUserByEmail.mockResolvedValue(null);
 
       await expect(
-        authService.login({ username: 'unknow', password }),
-      ).rejects.toThrow('username or password is invalid');
+        authService.login({ email: 'unknown@mail.com', password }),
+      ).rejects.toThrow('email or password is invalid');
 
       expect(passwordServiceMock.checkPassword).not.toHaveBeenCalled();
     });
 
     it('should throw error UnauthorizedError if password is not valid', async () => {
-      userServiceMock.getUserByUsername.mockResolvedValue(resolvedValue);
+      userServiceMock.getUserByEmail.mockResolvedValue(resolvedValue);
 
       passwordServiceMock.checkPassword.mockResolvedValue(false);
 
       await expect(
-        authService.login({ username, password: 'not_valid_password' }),
-      ).rejects.toThrow('username or password is invalid');
+        authService.login({ email, password: 'not_valid_password' }),
+      ).rejects.toThrow('email or password is invalid');
     });
   });
 
@@ -160,12 +158,14 @@ describe('AuthService', () => {
 
       const result = await authService.register(payload);
 
-      // On vérifie que le hashage a bien été appelé avec le mot de passe clair
       expect(passwordServiceMock.hashPassword).toHaveBeenCalledWith(
         payload.password,
       );
 
-      expect(result).toEqual(resolvedValue);
+      expect(result.id).toBe(userId);
+      expect(result.email).toBe(email);
+      expect(result.username).toBe(username);
+      expect(result.role).toBe('USER');
     });
 
     it('should throw error if user is not create', async () => {
@@ -193,7 +193,7 @@ describe('AuthService', () => {
       const username = 'gizmo';
       const email = 'gizmo@mail.com';
       const password = '12345678';
-      const confirmPassword = '87654321'; // différent
+      const confirmPassword = '87654321';
 
       const payload: RegisterRequestDto = {
         username,

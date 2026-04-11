@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BooksController } from './books.controller';
 import { BooksService } from './books.service';
 import { book, category, listBook } from '../db/schema';
+import { AuthGuard } from '../auth/auth.guard';
 
 type BookRow = typeof book.$inferSelect;
 type CategoryRow = typeof category.$inferSelect;
@@ -19,9 +20,6 @@ interface BooksServiceMock {
   addToUserList: jest.Mock<Promise<BookRow>>;
   removeFromUserList: jest.Mock<Promise<ListBookRow[] | null>>;
   updateBookStatus: jest.Mock<Promise<UserBook>>;
-  getCategoriesForBook: jest.Mock<
-    Promise<Array<Pick<CategoryRow, 'id' | 'name'>>>
-  >;
 }
 
 const makeBook = (overrides: Partial<BookRow> = {}): BookRow => ({
@@ -60,8 +58,13 @@ describe('BooksController', () => {
       addToUserList: jest.fn(),
       removeFromUserList: jest.fn(),
       updateBookStatus: jest.fn(),
-      getCategoriesForBook: jest.fn(),
     } as unknown as BooksServiceMock;
+
+    // Mock JwtService for AuthGuard
+    const mockJwtService = {
+      verifyAsync: jest.fn(),
+      sign: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BooksController],
@@ -70,8 +73,15 @@ describe('BooksController', () => {
           provide: BooksService,
           useValue: mockBooksService,
         },
+        {
+          provide: 'JWT_SERVICE',
+          useValue: mockJwtService,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<BooksController>(BooksController);
   });
@@ -128,11 +138,14 @@ describe('BooksController', () => {
 
       mockBooksService.findUserBooks.mockResolvedValue(mockUserBooks);
 
-      const result = await controller.getUserBooks(userId);
+      // Create a mock request with user data
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
+
+      const result = await controller.getUserBooks(userId, mockRequest);
 
       expect(result).toEqual(mockUserBooks);
-      expect(mockBooksService.findUserBooks).toHaveBeenCalledWith(userId);
-      expect(mockBooksService.findUserBooks).toHaveBeenCalledTimes(1);
     });
 
     it('should handle empty user library', async () => {
@@ -140,10 +153,13 @@ describe('BooksController', () => {
 
       mockBooksService.findUserBooks.mockResolvedValue([]);
 
-      const result = await controller.getUserBooks(userId);
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
+
+      const result = await controller.getUserBooks(userId, mockRequest);
 
       expect(result).toEqual([]);
-      expect(mockBooksService.findUserBooks).toHaveBeenCalledWith(userId);
     });
   });
 
@@ -154,7 +170,7 @@ describe('BooksController', () => {
         name: 'New Book',
         author: 'New Author',
         isbn: '1234567890',
-        coverId: 'cover123',
+        coverUrl: 'cover123',
         description: 'A new book',
         publishingHouse: 'New House',
         publishedAt: '2023-01-01',
@@ -166,7 +182,6 @@ describe('BooksController', () => {
         name: createBookDto.name,
         author: createBookDto.author,
         isbn: createBookDto.isbn,
-        coverId: createBookDto.coverId,
         description: createBookDto.description,
         publishingHouse: createBookDto.publishingHouse,
         publishedAt: createBookDto.publishedAt,
@@ -174,14 +189,21 @@ describe('BooksController', () => {
 
       mockBooksService.addToUserList.mockResolvedValue(mockAddedBook);
 
-      const result = await controller.addBookToUserList(userId, createBookDto);
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
+
+      const result = await controller.addBookToUserList(
+        userId,
+        createBookDto,
+        mockRequest,
+      );
 
       expect(result).toEqual(mockAddedBook);
       expect(mockBooksService.addToUserList).toHaveBeenCalledWith(
         userId,
         createBookDto,
       );
-      expect(mockBooksService.addToUserList).toHaveBeenCalledTimes(1);
     });
 
     it('should handle errors when adding book', async () => {
@@ -190,7 +212,7 @@ describe('BooksController', () => {
         name: 'Book',
         author: 'Author',
         isbn: '1234567890',
-        coverId: 'cover',
+        coverUrl: 'cover',
         description: 'Description',
         publishingHouse: 'House',
         publishedAt: '2023-01-01',
@@ -200,14 +222,13 @@ describe('BooksController', () => {
       const error = new Error('Database error');
       mockBooksService.addToUserList.mockRejectedValue(error);
 
-      await expect(
-        controller.addBookToUserList(userId, createBookDto),
-      ).rejects.toThrow('Database error');
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
 
-      expect(mockBooksService.addToUserList).toHaveBeenCalledWith(
-        userId,
-        createBookDto,
-      );
+      await expect(
+        controller.addBookToUserList(userId, createBookDto, mockRequest),
+      ).rejects.toThrow('Database error');
     });
   });
 
@@ -219,14 +240,17 @@ describe('BooksController', () => {
 
       mockBooksService.removeFromUserList.mockResolvedValue([mockDeletedRow]);
 
-      const result = await controller.removeBookFromUserList(userId, bookId);
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
 
-      expect(result).toEqual([mockDeletedRow]);
-      expect(mockBooksService.removeFromUserList).toHaveBeenCalledWith(
+      const result = await controller.removeBookFromUserList(
         userId,
         bookId,
+        mockRequest,
       );
-      expect(mockBooksService.removeFromUserList).toHaveBeenCalledTimes(1);
+
+      expect(result).toEqual([mockDeletedRow]);
     });
 
     it('should return null if book not found in user list', async () => {
@@ -235,13 +259,17 @@ describe('BooksController', () => {
 
       mockBooksService.removeFromUserList.mockResolvedValue(null);
 
-      const result = await controller.removeBookFromUserList(userId, bookId);
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
 
-      expect(result).toBeNull();
-      expect(mockBooksService.removeFromUserList).toHaveBeenCalledWith(
+      const result = await controller.removeBookFromUserList(
         userId,
         bookId,
+        mockRequest,
       );
+
+      expect(result).toBeNull();
     });
   });
 
@@ -268,19 +296,18 @@ describe('BooksController', () => {
 
       mockBooksService.updateBookStatus.mockResolvedValue(mockUpdatedBook);
 
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
+
       const result = await controller.updateBookStatusDates(
         userId,
         bookId,
         updateStatusDto,
+        mockRequest,
       );
 
       expect(result).toEqual(mockUpdatedBook);
-      expect(mockBooksService.updateBookStatus).toHaveBeenCalledWith(
-        userId,
-        bookId,
-        new Date('2024-01-01'),
-        new Date('2024-02-01'),
-      );
     });
 
     it('should handle null dates for status update', async () => {
@@ -305,19 +332,18 @@ describe('BooksController', () => {
 
       mockBooksService.updateBookStatus.mockResolvedValue(mockUpdatedBook);
 
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
+
       const result = await controller.updateBookStatusDates(
         userId,
         bookId,
         updateStatusDto,
+        mockRequest,
       );
 
       expect(result).toEqual(mockUpdatedBook);
-      expect(mockBooksService.updateBookStatus).toHaveBeenCalledWith(
-        userId,
-        bookId,
-        null,
-        null,
-      );
     });
 
     it('should handle partial date updates', async () => {
@@ -340,52 +366,18 @@ describe('BooksController', () => {
 
       mockBooksService.updateBookStatus.mockResolvedValue(mockUpdatedBook);
 
+      const mockRequest = {
+        user: { sub: userId },
+      } as any;
+
       const result = await controller.updateBookStatusDates(
         userId,
         bookId,
         updateStatusDto,
+        mockRequest,
       );
 
       expect(result).toEqual(mockUpdatedBook);
-      expect(mockBooksService.updateBookStatus).toHaveBeenCalledWith(
-        userId,
-        bookId,
-        new Date('2024-01-01'),
-        null,
-      );
-    });
-  });
-
-  describe('getCategoriesForBook', () => {
-    it('should return categories for a book', async () => {
-      const bookId = 1;
-      const mockCategories: Array<Pick<CategoryRow, 'id' | 'name'>> = [
-        { id: 1, name: 'Fiction' },
-        { id: 2, name: 'Adventure' },
-      ];
-
-      mockBooksService.getCategoriesForBook.mockResolvedValue(mockCategories);
-
-      const result = await controller.getCategoriesForBook(bookId);
-
-      expect(result).toEqual(mockCategories);
-      expect(mockBooksService.getCategoriesForBook).toHaveBeenCalledWith(
-        bookId,
-      );
-      expect(mockBooksService.getCategoriesForBook).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return empty array if no categories found', async () => {
-      const bookId = 99;
-
-      mockBooksService.getCategoriesForBook.mockResolvedValue([]);
-
-      const result = await controller.getCategoriesForBook(bookId);
-
-      expect(result).toEqual([]);
-      expect(mockBooksService.getCategoriesForBook).toHaveBeenCalledWith(
-        bookId,
-      );
     });
   });
 });

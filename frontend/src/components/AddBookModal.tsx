@@ -29,7 +29,6 @@ type AddBookModalProps = {
 
 export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   const [query, setQuery] = useState("");
-  const [hasSearched, setHasSearched] = useState(false);
 
   const { data: booksByCategory = {} } = useQuery<BooksByCategory>({
     queryKey: ["Allbooks"],
@@ -42,7 +41,6 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setQuery("");
-      setHasSearched(false);
     }
     setOpen(nextOpen);
   };
@@ -61,14 +59,12 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   useEffect(() => {
     if (query.trim().length >= 2) {
       refetchExternalBooks();
-      setHasSearched(true);
-    } else if (query.trim().length === 0) {
-      setHasSearched(false);
     }
   }, [query, refetchExternalBooks]);
 
   const tenBooks = allBooks.slice(0, 10).map(mapBookRowToDisplay);
   const normalizedQuery = query.trim();
+  const hasSearched = normalizedQuery.length >= 2;
   const showExternalResults = hasSearched && normalizedQuery.length > 0;
   const displayedBooks = showExternalResults
     ? externalBookResult.map(mapExternalBookToDisplay)

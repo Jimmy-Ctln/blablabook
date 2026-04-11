@@ -10,8 +10,9 @@ import {
   beforeEach,
   type Mock,
 } from "vitest";
-import type { BookRow } from "@/@types/books";
+import type { BookRow, BookDisplay } from "@/@types/books";
 import { useUserBooks } from "./useUserBooks";
+import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 
 vi.mock("@/api/books", () => ({
   getUserBooks: vi.fn(),
@@ -19,9 +20,8 @@ vi.mock("@/api/books", () => ({
   updateBookStatus: vi.fn(),
 }));
 
-const { getUserBooks, removeBookFromUserList, updateBookStatus } = await import(
-  "@/api/books"
-);
+const { getUserBooks, removeBookFromUserList, updateBookStatus } =
+  await import("@/api/books");
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -51,11 +51,11 @@ const createBookRow = (overrides?: Partial<BookRow>): BookRow => ({
   name: "Book A",
   author: "Author A",
   isbn: "111",
-  coverId: "a.jpg",
+  cover_url: "a.jpg",
   description: "desc",
   publishingHouse: "PH",
   publishedAt: "2024-01-01",
-  categories: ["Fiction"],
+  categoryName: "unknown",
   readStart: null,
   readEnd: null,
   addedAt: new Date("2024-01-15"),
@@ -65,20 +65,21 @@ const createBookRow = (overrides?: Partial<BookRow>): BookRow => ({
 
 describe("useUserBooks", () => {
   beforeEach(() => {
-    (getUserBooks as Mock).mockResolvedValue([]);
+    (getUserBooks as Mock).mockResolvedValue({ books: [], total: 0 });
   });
 
   it("fetches books when userId is provided", async () => {
     const books: BookRow[] = [createBookRow()];
+    const expectedBooks: BookDisplay[] = books.map(mapBookRowToDisplay);
 
-    (getUserBooks as Mock).mockResolvedValueOnce(books);
+    (getUserBooks as Mock).mockResolvedValueOnce({ books, total: 1 });
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useUserBooks(10), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.books).toEqual(books);
-    expect(getUserBooks).toHaveBeenCalledWith(10);
+    expect(result.current.books).toEqual(expectedBooks);
+    expect(getUserBooks).toHaveBeenCalledWith(10, 0, 10);
   });
 
   it("does not fetch when userId is missing", () => {
@@ -102,22 +103,29 @@ describe("useUserBooks", () => {
     await waitFor(() => {
       expect(removeBookFromUserList).toHaveBeenCalledWith(3, 5);
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ["userBooks", 3],
+        queryKey: ["userBooks"],
       });
     });
   });
 
   it("updates book status via API", async () => {
-    const updatedBook = createBookRow({
+    const bookRow = createBookRow({
+      id: 2,
+      status: "À lire",
+      readEnd: null,
+    });
+    const updatedbookRow = createBookRow({
       id: 2,
       status: "Lu",
       readEnd: new Date("2024-02-15"),
     });
+    const currentBook = mapBookRowToDisplay(bookRow);
+    const updatedBook = updatedbookRow;
+
     (updateBookStatus as Mock).mockResolvedValueOnce(updatedBook);
 
     const { wrapper, queryClient } = createWrapper();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const currentBook = createBookRow({ id: 2 });
 
     const { result } = renderHook(() => useUserBooks(4), { wrapper });
 
@@ -128,7 +136,7 @@ describe("useUserBooks", () => {
     await waitFor(() => {
       expect(updateBookStatus).toHaveBeenCalledWith(4, 2, "Lu", currentBook);
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ["userBooks", 4],
+        queryKey: ["userBooks"],
       });
     });
   });

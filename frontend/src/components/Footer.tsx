@@ -1,12 +1,12 @@
-import { Mail, Lock, FileText, Instagram, Twitter } from "lucide-react";
+import { Lock, FileText, Instagram, Twitter } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = [
-    { label: "CGU", href: "/cgu", icon: FileText },
-    { label: "Confidentialité", href: "/confidentialite", icon: Lock },
-    { label: "Contact", href: "mailto:contact@blablabook.com", icon: Mail },
+    { label: "Mentions Légales", href: "/legal", icon: FileText },
+    { label: "Politique de Confidentialité", href: "/privacy", icon: Lock },
+    { label: "Conditions d'Utilisation", href: "/terms", icon: FileText },
   ];
 
   const socialLinks = [
@@ -59,13 +59,13 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               {footerLinks.map((link) => (
                 <li key={link.href}>
-                  <a
-                    href={link.href}
+                  <Link
+                    to={link.href as any}
                     className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
                   >
                     <link.icon className="w-3.5 h-3.5" />
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
