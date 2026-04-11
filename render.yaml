@@ -13,19 +13,8 @@ services:
       - key: PORT
         value: 3000
       - key: DATABASE_URL
-        fromDatabase:
-          name: blablabook-postgres
-          property: connectionString
+        value: ${DATABASE_URL}
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL_CORS
         value: https://blablabook.vercel.app
-
-  - type: postgres
-    name: blablabook-postgres
-    runtime: postgres15
-    region: frankfurt
-    plan: free
-    databaseName: blablabook
-    user: blablabook_user
-    postgresMajorVersion: 15

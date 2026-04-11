@@ -28,11 +28,12 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should return authenticated user data", () => {
-    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
-      selector({
-        user: mockUser,
-        isAuthenticated: true,
-      }),
+    (useAuthStore as any).mockImplementation(
+      (selector: (state: AuthState) => any) =>
+        selector({
+          user: mockUser,
+          isAuthenticated: true,
+        }),
     );
 
     const { result } = renderHook(() => useCurrentUser());
@@ -44,11 +45,12 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should return false for isAuthenticated when user is null", () => {
-    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
-      selector({
-        user: null,
-        isAuthenticated: false,
-      }),
+    (useAuthStore as any).mockImplementation(
+      (selector: (state: AuthState) => any) =>
+        selector({
+          user: null,
+          isAuthenticated: false,
+        }),
     );
 
     const { result } = renderHook(() => useCurrentUser());
@@ -60,11 +62,12 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should handle inconsistent state: user exists but not authenticated (error case)", () => {
-    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
-      selector({
-        user: mockUser,
-        isAuthenticated: false,
-      }),
+    (useAuthStore as any).mockImplementation(
+      (selector: (state: AuthState) => any) =>
+        selector({
+          user: mockUser,
+          isAuthenticated: false,
+        }),
     );
 
     const { result } = renderHook(() => useCurrentUser());
@@ -75,11 +78,12 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should handle inconsistent state: authenticated but no user (error case)", () => {
-    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
-      selector({
-        user: null,
-        isAuthenticated: true,
-      }),
+    (useAuthStore as any).mockImplementation(
+      (selector: (state: AuthState) => any) =>
+        selector({
+          user: null,
+          isAuthenticated: true,
+        }),
     );
 
     const { result } = renderHook(() => useCurrentUser());
@@ -90,11 +94,12 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should always return isLoading as false", () => {
-    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
-      selector({
-        user: mockUser,
-        isAuthenticated: true,
-      }),
+    (useAuthStore as any).mockImplementation(
+      (selector: (state: AuthState) => any) =>
+        selector({
+          user: mockUser,
+          isAuthenticated: true,
+        }),
     );
 
     const { result } = renderHook(() => useCurrentUser());
@@ -103,11 +108,12 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should handle logout state (user null, not authenticated)", () => {
-    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
-      selector({
-        user: null,
-        isAuthenticated: false,
-      }),
+    (useAuthStore as any).mockImplementation(
+      (selector: (state: AuthState) => any) =>
+        selector({
+          user: null,
+          isAuthenticated: false,
+        }),
     );
 
     const { result } = renderHook(() => useCurrentUser());
