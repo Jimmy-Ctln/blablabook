@@ -1,7 +1,4 @@
 {
-  "env": {
-    "VITE_BACKEND_URL": "@vite_backend_url"
-  },
   "routes": [
     {
       "src": "/(.*)",
