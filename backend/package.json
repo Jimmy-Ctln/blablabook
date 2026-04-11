@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "npx -y @nestjs/cli build",
+    "build": "npx -y @nestjs/cli build --skip-swc",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "seed": "ts-node src/seed.ts",
