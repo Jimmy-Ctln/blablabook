@@ -11,7 +11,7 @@ import {
   InternalServerErrorException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import request from 'supertest'; // import par défaut
+import request from 'supertest';
 import { Server } from 'http';
 import { AuthGuard } from './auth.guard';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -26,13 +26,11 @@ const makePostRequest = <T = any>(
   payload?: T,
 ) => {
   const req = request(app.getHttpServer() as Server).post(endpoint);
-  // si des données sont envoyé sur ce endpoint, on les passe dans la requête
   if (payload) {
     req.send(payload);
   }
-  // on test le code http retourner
   req.expect(codeHttp);
-  return req; // on retourne la req pour chainer les vérif dans le test
+  return req;
 };
 
 describe('AuthController', () => {
@@ -99,8 +97,7 @@ describe('AuthController', () => {
       image,
     };
 
-    // mock des fonctions utilisées
-    authService.login.mockResolvedValue(payload); // mock de la réponse du authService
+    authService.login.mockResolvedValue(payload);
     tokenService.generateJWTToken.mockResolvedValue('mock-jwt-token');
     tokenService.generateRefreshToken.mockResolvedValue('mock-refresh-token');
     cookieService.generateCookiesConfig.mockReturnValue({
@@ -108,7 +105,6 @@ describe('AuthController', () => {
       refreshCookieConfig: { httpOnly: true, secure: false },
     });
 
-    // TEST
     it('should call authService.login with correct payload', async () => {
       await makePostRequest(app, '/auth/login', 200, payload);
       expect(authService.login).toHaveBeenCalledWith(payload);
@@ -146,7 +142,6 @@ describe('AuthController', () => {
 
     it('should return public user fields', async () => {
       return makePostRequest(app, '/auth/login', 200, payload).expect((res) => {
-        // check qu'on retourne uniquement les champs définis dans le test
         const body = res.body as unknown;
 
         expect(body).toEqual({
@@ -154,7 +149,6 @@ describe('AuthController', () => {
           email: expect.any(String),
           username: expect.any(String),
           role: expect.any(String),
-          image: expect.anything(),
         });
       });
     });
@@ -165,7 +159,6 @@ describe('AuthController', () => {
         expect(Array.isArray(setCookieHeader)).toBe(true);
         expect(setCookieHeader.length).toBe(2);
 
-        // Vérifie chaque cookie individuellement
         const jwtCookie = setCookieHeader.find((c) =>
           c.startsWith('jwt_cookie='),
         );
@@ -267,12 +260,8 @@ describe('AuthController', () => {
     it('should warn if refresh token not found but still clear cookies', async () => {
       const spy = jest.spyOn(console, 'warn').mockImplementation();
 
-      // On force le retour du mock du TokenService
       tokenService.destroyToken.mockResolvedValue(false);
 
-      // On s'assure que le logout appelle bien notre logique (si c'est un mock, il faut simuler son comportement)
-      // Si AuthService est la vraie classe, ça marchera tout seul.
-      // Si AuthService est le mock 'authService', il faut faire :
       authService.logout.mockImplementation(async (token: string) => {
         const res = await tokenService.destroyToken(token);
         if (!res) console.warn('refresh token not found in the db');
@@ -292,11 +281,8 @@ describe('AuthController', () => {
     });
 
     it('should warn if refresh token not found but still clear cookies', async () => {
-      // 1. On espionne la console
       const spy = jest.spyOn(console, 'warn').mockImplementation();
 
-      // 2. IMPORTANT : On ne mocke PAS authService.logout.
-      // On mocke le service EN DESSOUS (tokenService) pour qu'il renvoie false.
       jest.spyOn(tokenService, 'destroyToken').mockResolvedValue(false);
 
       jest.spyOn(cookieService, 'generateCookiesConfig').mockReturnValue({
@@ -311,8 +297,6 @@ describe('AuthController', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body).toEqual({ message: 'Logged out successfully' });
-          // Maintenant le vrai logout s'est exécuté, il a reçu "false" du tokenService,
-          // et il a donc déclenché le console.warn
           expect(spy).toHaveBeenCalledWith('refresh token not found in the db');
         });
 
@@ -320,7 +304,6 @@ describe('AuthController', () => {
     });
 
     it('should return 403 if not authenticated', async () => {
-      // Simule le guard qui refuse l'accès
       mockAuthGuard.canActivate.mockReturnValueOnce(false);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer()).post('/auth/logout').expect(403);

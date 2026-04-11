@@ -9,7 +9,6 @@ import { useAuthStore } from "@/stores/authStore";
 import RegisterPage from "@/pages/Auth/RegisterPage/RegisterPage";
 import LoginPage from "@/pages/Auth/LoginPage/LoginPage";
 import NotFound from "@/pages/NotFound";
-import SeeAllPage from "@/pages/SeeAllPage";
 import LibraryPage from "@/pages/LibraryPage";
 import BookDetails from "@/pages/Book/BookDetails";
 import HomePage from "@/pages/HomePage";
@@ -39,12 +38,6 @@ const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: () => <HomePage />,
-});
-
-export const seeAllRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/see-all",
-  component: () => <SeeAllPage />,
 });
 
 const registerPage = createRoute({
@@ -101,7 +94,6 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   registerPage,
   loginPage,
-  seeAllRoute,
   bookDetailsRoute,
   privacyRoute,
   legalRoute,

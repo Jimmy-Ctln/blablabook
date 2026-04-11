@@ -26,7 +26,6 @@ describe('CookieService', () => {
       expect(config).toHaveProperty('jwtCookieConfig');
       expect(config).toHaveProperty('refreshCookieConfig');
 
-      // Vérification des valeurs communes
       expect(config.jwtCookieConfig.httpOnly).toBe(true);
       expect(config.refreshCookieConfig.path).toBe('/');
     });

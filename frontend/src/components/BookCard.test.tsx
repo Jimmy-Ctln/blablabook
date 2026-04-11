@@ -1,7 +1,7 @@
 import { expect, it, describe, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { BookRow } from "@/@types/books";
+import type { BookDisplay } from "@/@types/books";
 import { BookCard } from "@/components/BookCard";
 
 const navigateMock = vi.fn();
@@ -11,22 +11,23 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 /**
- * Factory function to create BookRow test data matching Drizzle types.
+ * Factory function to create BookDisplay test data.
  */
-const createBookRow = (overrides?: Partial<BookRow>): BookRow => ({
-  id: 1,
+const createBook = (overrides?: Partial<BookDisplay>): BookDisplay => ({
+  id: "1",
+  internalId: 1,
   name: "Test Book",
-  coverId: "cover.jpg",
+  cover_url: "cover.jpg",
+  cover: "cover.jpg",
   author: "Author",
   description: "Description",
   isbn: "123",
-  publishingHouse: "Publisher",
-  publishedAt: "2024-01-01",
-  categories: [],
+  publisher: "Publisher",
+  publishDate: "2024-01-01",
+  categoryName: "",
   status: "À lire",
   readStart: null,
   readEnd: null,
-  addedAt: new Date(),
   ...overrides,
 });
 
@@ -34,8 +35,8 @@ describe("BookCard", () => {
   it("renders the first category", () => {
     render(
       <BookCard
-        book={createBookRow({
-          categories: ["Fantasy", "Drama"],
+        book={createBook({
+          categoryName: "Fantasy",
         })}
         onRemove={() => undefined}
       />,
@@ -50,8 +51,8 @@ describe("BookCard", () => {
 
     render(
       <BookCard
-        book={createBookRow({
-          categories: ["Fantasy"],
+        book={createBook({
+          categoryName: "Fantasy",
         })}
         onRemove={onRemove}
       />,
@@ -66,8 +67,8 @@ describe("BookCard", () => {
   it("does not render category badge when empty", () => {
     render(
       <BookCard
-        book={createBookRow({
-          categories: [],
+        book={createBook({
+          categoryName: "",
         })}
         onRemove={() => undefined}
       />,
@@ -81,8 +82,8 @@ describe("BookCard", () => {
 
     const { container } = render(
       <BookCard
-        book={createBookRow({
-          categories: ["Fantasy"],
+        book={createBook({
+          isbn: "123",
         })}
         onRemove={() => undefined}
       />,
@@ -103,9 +104,9 @@ describe("BookCard", () => {
 
     render(
       <BookCard
-        book={createBookRow({
+        book={createBook({
           status: "À lire",
-          categories: ["Fantasy"],
+          categoryName: "Fantasy",
         })}
         onRemove={() => undefined}
         onStatusChange={onStatusChange}

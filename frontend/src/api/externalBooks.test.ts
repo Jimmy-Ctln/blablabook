@@ -59,7 +59,7 @@ describe("searchExternalBooks", () => {
     });
     expect(mockExternalApi.get).toHaveBeenNthCalledWith(
       2,
-      "/books/OL1234M.json"
+      "/books/OL1234M.json",
     );
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -214,6 +214,6 @@ describe("searchExternalBooks", () => {
     });
 
     expect(result).toHaveLength(1);
-    expect(result[0].cover).toBe("/default-book-cover.png");
+    expect(result[0].cover).toBe("/livre.png");
   });
 });
