@@ -20,6 +20,9 @@ RUN npm install --production
 # Copy the rest of the backend source code into the container
 COPY . .
 
+# Build the application
+RUN npm run build
+
 # Expose backend API port
 EXPOSE 3000
 
