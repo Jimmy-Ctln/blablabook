@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useAuthStore } from "./authStore";
 import api from "@/api/axios";
+import type { UserProps } from "@/@types/user";
 
 vi.mock("@/api/axios", () => ({
   default: {
@@ -24,14 +25,11 @@ describe("authStore", () => {
 
   it("should login user correctly", () => {
     const testUser: UserProps = {
-      id: "1",
+      id: 1,
       email: "test@example.com",
       username: "testuser",
-      role: "user",
-      createdAt: new Date(),
-      softDeleted: false,
-      emailVerified: null,
-      passwordChangedAt: null,
+      roles: "user",
+      avatar_url: null,
     };
 
     const store = useAuthStore.getState();
@@ -44,14 +42,11 @@ describe("authStore", () => {
 
   it("should logout user and call api.post", async () => {
     const testUser: UserProps = {
-      id: "1",
+      id: 1,
       email: "test@example.com",
       username: "testuser",
-      role: "user",
-      createdAt: new Date(),
-      softDeleted: false,
-      emailVerified: null,
-      passwordChangedAt: null,
+      roles: "user",
+      avatar_url: null,
     };
 
     const store = useAuthStore.getState();
@@ -68,14 +63,11 @@ describe("authStore", () => {
 
   it("should handle logout error gracefully", async () => {
     const testUser: UserProps = {
-      id: "1",
+      id: 1,
       email: "test@example.com",
       username: "testuser",
-      role: "user",
-      createdAt: new Date(),
-      softDeleted: false,
-      emailVerified: null,
-      passwordChangedAt: null,
+      roles: "user",
+      avatar_url: null,
     };
 
     const store = useAuthStore.getState();
@@ -93,14 +85,11 @@ describe("authStore", () => {
 
   it("should update user correctly", () => {
     const initialUser: UserProps = {
-      id: "1",
+      id: 1,
       email: "test@example.com",
       username: "testuser",
-      role: "user",
-      createdAt: new Date(),
-      softDeleted: false,
-      emailVerified: null,
-      passwordChangedAt: null,
+      roles: "user",
+      avatar_url: null,
     };
 
     const updatedUser: UserProps = {
@@ -118,14 +107,11 @@ describe("authStore", () => {
 
   it("should clear auth state", () => {
     const testUser: UserProps = {
-      id: "1",
+      id: 1,
       email: "test@example.com",
       username: "testuser",
-      role: "user",
-      createdAt: new Date(),
-      softDeleted: false,
-      emailVerified: null,
-      passwordChangedAt: null,
+      roles: "user",
+      avatar_url: null,
     };
 
     const store = useAuthStore.getState();

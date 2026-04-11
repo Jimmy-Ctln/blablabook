@@ -1,6 +1,7 @@
 import api from "@/api/axios";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { UserProps } from "@/@types/user";
 
 interface AuthStoreProps {
   user: UserProps | null;

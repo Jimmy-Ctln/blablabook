@@ -9,12 +9,17 @@ vi.mock("@/stores/authStore", () => ({
 
 const { useAuthStore } = await import("@/stores/authStore");
 
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+}
+
 const mockUser: User = {
   id: 1,
   email: "test@example.com",
   username: "testuser",
-  role: "user",
-  createdAt: new Date("2024-01-01"),
+  roles: "user",
+  avatar_url: null,
 };
 
 describe("useCurrentUser Hook", () => {
@@ -23,7 +28,7 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should return authenticated user data", () => {
-    (useAuthStore as any).mockImplementation((selector) =>
+    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
       selector({
         user: mockUser,
         isAuthenticated: true,
@@ -39,7 +44,7 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should return false for isAuthenticated when user is null", () => {
-    (useAuthStore as any).mockImplementation((selector) =>
+    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
       selector({
         user: null,
         isAuthenticated: false,
@@ -55,7 +60,7 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should handle inconsistent state: user exists but not authenticated (error case)", () => {
-    (useAuthStore as any).mockImplementation((selector) =>
+    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
       selector({
         user: mockUser,
         isAuthenticated: false,
@@ -70,7 +75,7 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should handle inconsistent state: authenticated but no user (error case)", () => {
-    (useAuthStore as any).mockImplementation((selector) =>
+    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
       selector({
         user: null,
         isAuthenticated: true,
@@ -85,7 +90,7 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should always return isLoading as false", () => {
-    (useAuthStore as any).mockImplementation((selector) =>
+    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
       selector({
         user: mockUser,
         isAuthenticated: true,
@@ -98,7 +103,7 @@ describe("useCurrentUser Hook", () => {
   });
 
   it("should handle logout state (user null, not authenticated)", () => {
-    (useAuthStore as any).mockImplementation((selector) =>
+    (useAuthStore as any).mockImplementation((selector: (state: AuthState) => any) =>
       selector({
         user: null,
         isAuthenticated: false,
