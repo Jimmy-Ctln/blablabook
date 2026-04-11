@@ -8,7 +8,8 @@ export class CookieService {
 
   generateCookiesConfig(): CookiesConfig {
     // if we set TRUE, we need to be on HTTPS, so for the dev we use false for save the cookie
-    const secureProps = process.env.NODE_ENV === 'prod';
+    // TODO: Change back to 'prod' after testing
+    const secureProps = false;
 
     // Use 'lax' instead of 'strict' because frontend (Vercel) and backend (Render) are on different domains.
     // 'strict' blocks cookies in cross-domain requests, but 'lax' allows them when withCredentials is set (which axios has).
