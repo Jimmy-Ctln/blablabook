@@ -3,6 +3,9 @@
 # Use Node.js 20 Alpine as a lightweight base image
 FROM node:20-alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Set working directory inside the container
 WORKDIR /app
 
