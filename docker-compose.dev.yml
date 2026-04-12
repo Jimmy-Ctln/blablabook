@@ -57,6 +57,7 @@ services:
 
   # Frontend service (React + Vite)
   frontend:
+    container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev

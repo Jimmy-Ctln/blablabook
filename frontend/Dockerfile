@@ -1,7 +1,7 @@
 # Dockerfile for the Vite/React frontend
 
 # Use Node.js 20 Alpine as a lightweight base image
-FROM node:20-alpine AS build
+FROM node:20-alpine
 
 # Set working directory inside the container
 WORKDIR /app
@@ -17,3 +17,9 @@ COPY . .
 
 # Build the frontend (Vite) for production
 RUN npm run build
+
+# Expose port 5173 for preview server
+EXPOSE 5173
+
+# Serve the built frontend using Vite preview
+CMD ["npm", "run", "preview", "--", "--host", "--port", "5173"]
