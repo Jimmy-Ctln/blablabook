@@ -8,10 +8,9 @@ on:
   pull_request:
     branches:
       - main
-      - dev
 
 jobs:
-### FRONT CI ###
+  ### FRONT CI ###
   ci-frontend:
     # le job s’exécute sur une machine virtuelle Ubuntu dernière version
     runs-on: ubuntu-latest
@@ -41,6 +40,10 @@ jobs:
           export VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
           npm run build
 
+      # lance les tests frontend
+      - name: Frontend tests
+        run: npm run test
+
       # Sauvegarde le build pour le déploiement
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -48,8 +51,7 @@ jobs:
           name: frontend-build
           path: frontend/dist
 
-
-### BACK CI ###
+  ### BACK CI ###
   ci-backend:
     runs-on: ubuntu-latest
     defaults:
@@ -59,7 +61,7 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-  
+
     steps:
       # Clone repo
       - uses: actions/checkout@v4
@@ -75,9 +77,13 @@ jobs:
       - name: Backend ci
         run: npm ci
 
-      # Synch Drizzle Schema to Db supabase
-      - name: Push Schema to Supabase
-        run: npx drizzle-kit push
+      # Lance les tests backend
+      - name: Backend tests
+        run: npm run test
+
+      # Apply migrations from git (développeur créé les migrations localement)
+      - name: Apply database migrations
+        run: npm run migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
@@ -87,8 +93,7 @@ jobs:
       # Build Docker image si besoin
       - run: docker build -t blablabook-back .
 
-
-### DOCKER CI ###
+  ### DOCKER CI ###
   ci-docker:
     runs-on: ubuntu-latest
     needs: [ci-frontend, ci-backend]
@@ -102,9 +107,9 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      FRONTEND_URL_CORS: "https://pooka-blablabook.surge.sh"
+      FRONTEND_URL_CORS: ${{ secrets.FRONTEND_URL_CORS }}
       VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-      NODE_ENV: "prod"
+      NODE_ENV: "production"
 
     steps:
       # Clone le repo
@@ -151,11 +156,9 @@ jobs:
             exit 1
           fi
 
-
-      # vérifie que le back fcontionne dans le container 
+      # vérifie que le back fcontionne dans le container
       #- name: Run backend tests
       #  run: docker exec backend npm run test
-
 
       # Vérifie que les containers tournent
       - name: Docker status
@@ -165,40 +168,22 @@ jobs:
       - name: Stop containers
         run: docker compose down
 
-
-
-### DEPLOY FRONTEND TO SURGE ###
+  ### DEPLOY FRONTEND TO VERCEL ###
   deploy-frontend:
-    needs: ci-frontend
+    needs: ci-docker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
-      
-      - name: Create 200.html for SPA routing
-        run: cp frontend/dist/index.html frontend/dist/200.html
-      
-      - name: Deploy to Surge
-      # ne pas oublier de mettre SURGE_DOMAIN et SURGE_TOKEN dans le secret de GitHub
+      - name: Trigger Vercel deployment via Deploy Hook
         run: |
-          npm install -g surge
-          surge frontend/dist ${{ secrets.SURGE_DOMAIN }} \
-            --token ${{ secrets.SURGE_TOKEN }}
+          curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        env:
+          WEBHOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK }}
 
-### DEPLOY BACKEND TO RENDER ###
+  ### DEPLOY BACKEND TO RENDER ###
   deploy-backend:
     needs: ci-docker
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render deploy via API
+      - name: Trigger Render deployment via Deploy Hook
         run: |
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{"clearCache": true}' \
-            https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}

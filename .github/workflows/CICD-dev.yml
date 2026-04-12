@@ -38,6 +38,10 @@ jobs:
       # génère le dossier dist du front
       - run: npm run build
 
+      # lance les tests frontend
+      - name: Frontend tests
+        run: npm run test
+
   ### BACK CI ###
   ci-backend:
     runs-on: ubuntu-latest
@@ -67,6 +71,10 @@ jobs:
       # Build backend
       - run: npm run build
 
+      # Lance les tests backend
+      - name: Backend tests
+        run: npm run test
+
       # Build Docker image si besoin
       - run: docker build -t blablabook-back .
 
@@ -84,8 +92,8 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      FRONTEND_URL_CORS: "http://localhost:5173"
-      VITE_BACKEND_URL: "http://localhost:3000"
+      FRONTEND_URL_CORS: ${{ secrets.FRONTEND_URL_CORS }}
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
       NODE_ENV: "dev"
 
     steps:
@@ -99,7 +107,7 @@ jobs:
       - name: Start docker compose
         # injecte les env GitHub directement dans le shell
         # le | c'est pour un script multi lignes
-        run: docker compose -f docker-compose.yml up -d --build
+        run: docker compose -f docker-compose.dev.yml up -d --build
 
       # vérifie si on accède à Postgres via le container postgres
       - name: Wait for Postgres
