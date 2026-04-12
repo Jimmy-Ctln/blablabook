@@ -75,9 +75,6 @@ jobs:
       - name: Backend tests
         run: npm run test
 
-      # Build Docker image si besoin
-      - run: docker build -t blablabook-back .
-
   ### DOCKER CI ###
   ci-docker:
     runs-on: ubuntu-latest
