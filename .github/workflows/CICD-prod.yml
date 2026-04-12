@@ -119,6 +119,10 @@ jobs:
       - name: Check Docker
         run: docker --version
 
+      # Install curl if not available
+      - name: Install curl
+        run: apt-get update && apt-get install -y curl
+
       - name: Start docker compose
         # Inject GitHub env vars directly into shell
         # | is for multi-line script
@@ -145,7 +149,7 @@ jobs:
         run: |
           max_attempts=10
           attempt=1
-          until node -e "fetch(process.env.VITE_BACKEND_URL + '/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))" || [ $attempt -ge $max_attempts ]; do
+          until curl -f "$VITE_BACKEND_URL/health" || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for backend..."
             sleep 5
             attempt=$((attempt + 1))
@@ -164,8 +168,8 @@ jobs:
       - name: Test Frontend to Backend connectivity
         run: |
           echo "Testing Frontend container calling Backend API..."
-          # From frontend container, call backend API
-          docker exec frontend node -e "fetch('http://backend:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1))" || exit 1
+          # From frontend container, call backend API using curl
+          docker exec frontend curl -f http://backend:3000/health || exit 1
           echo "✓ Frontend can reach Backend API"
 
       # Integration test: Backend -> Database
