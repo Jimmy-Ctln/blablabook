@@ -81,12 +81,6 @@ jobs:
       - name: Backend tests
         run: npm run test
 
-      # Apply migrations from git (developer creates migrations locally)
-      - name: Apply database migrations
-        run: npm run migrate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
       # Build backend
       - run: npm run build
 
@@ -143,6 +137,17 @@ jobs:
             echo "Postgres failed to start in time!"
             exit 1
           fi
+
+      # Apply database migrations (now that database is ready)
+      - name: Apply database migrations
+        run: |
+          echo "Applying database migrations..."
+          docker exec backend npm run migrate || {
+            echo "Migration failed, checking logs..."
+            docker compose logs backend
+            exit 1
+          }
+          echo "✓ Migrations applied successfully"
 
       # Wait for Backend to be ready
       - name: Wait for Backend
