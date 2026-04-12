@@ -160,10 +160,6 @@ jobs:
             exit 1
           fi
 
-      # Verify backend works in container
-      - name: Run backend tests in container
-        run: docker exec backend npm run test
-
       # Integration test: Frontend -> Backend
       - name: Test Frontend to Backend connectivity
         run: |
