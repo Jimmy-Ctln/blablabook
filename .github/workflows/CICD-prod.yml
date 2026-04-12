@@ -193,6 +193,7 @@ jobs:
   deploy-frontend:
     needs: ci-docker
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
       - name: Trigger Vercel deployment via Deploy Hook
         run: |
@@ -204,6 +205,7 @@ jobs:
   deploy-backend:
     needs: ci-docker
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
       - name: Trigger Render deployment via Deploy Hook
         run: |
