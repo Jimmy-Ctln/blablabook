@@ -1,183 +1,392 @@
-# 📚 BlablaBook
+# BlablaBook
 
-**BlablaBook** is an open-source personal book management platform for tracking your reading journey.  
-It allows you to mark books as read, currently reading, or to-read, in a **containerized and easily deployable** environment (Docker).
-
----
-
-## 📚 Table of Contents
-
-- [📚 BlablaBook](#-blablabook)
-  - [📚 Table of Contents](#-table-of-contents)
-  - [🎯 Project Objective](#-project-objective)
-  - [⚙️ Technologies Used](#️-technologies-used)
-  - [🧱 Local Installation and Execution](#-local-installation-and-execution)
-    - [1️⃣ Prerequisites](#1️⃣-prerequisites)
-    - [2️⃣ Clone the repository](#2️⃣-clone-the-repository)
-    - [3️⃣ Create a .env file](#3️⃣-create-a-env-file)
-    - [4️⃣ Start the project](#4️⃣-start-the-project)
-    - [5️⃣ Access the services](#5️⃣-access-the-services)
-    - [6️⃣ Verify functionality](#6️⃣-verify-functionality)
-  - [🔧 Useful Commands](#-useful-commands)
-  - [🧭 Project Structure](#-project-structure)
-  - [🧪 Test Plan](#-test-plan)
-    - [🔹 Category Module Validation](#-category-module-validation)
+An open-source personal book management platform for tracking your reading journey. Organize your library, mark books as read, currently reading, or to-read.
 
 ---
 
-## 🎯 Project Objective
+## Table of Contents
 
-The goal of **BlablaBook** is to provide a simple and intuitive personal library management solution, allowing users to:
-
-- **add books** to their personal library via the OpenLibrary API;
-- **track reading status**: "Read", "Currently Reading", "To Read";
-- **search books** by title in their collection;
-
----
-
-## ⚙️ Technologies Used
-
-| Technology                  | Role                                   |
-| --------------------------- | -------------------------------------- |
-| **Docker & Docker Compose** | Containerization and orchestration     |
-| **React + TypeScript**      | Modern, typed frontend framework       |
-| **Vite**                    | Ultra-fast build tool                  |
-| **Zustand**                 | Lightweight state management           |
-| **Tanstack Query**          | Data fetching and caching              |
-| **Tanstack Router**         | Type-safe routing                      |
-| **Zod**                     | Schema validation                      |
-| **Axios**                   | HTTP client                            |
-| **Tailwind CSS**            | Utility-first CSS framework            |
-| **Shadcn/ui**               | Pre-built UI components                |
-| **NestJS**                  | Structured Node.js backend framework   |
-| **PostgreSQL**              | Relational database                    |
-| **Drizzle ORM**             | Modern, typed ORM                      |
-| **Swagger**                 | Automatic API documentation            |
-| **Adminer**                 | SQL administration interface           |
-| **OpenLibrary API**         | Book data source                       |
-| **Vitest**                  | Frontend testing                       |
-| **Jest**                    | Backend testing                        |
-| **Lighthouse**              | Performance and accessibility auditing |
-| **Artillery**               | Load testing                           |
-| **GitHub Actions**          | CI/CD                                  |
+- [Project Overview](#project-overview)
+- [Technologies Stack](#technologies-stack)
+- [Getting Started](#getting-started)
+- [Deployment & CI/CD](#deployment--cicd)
+- [Project Structure](#project-structure)
+- [Commands Reference](#commands-reference)
+- [Testing](#testing)
 
 ---
 
-## 🧱 Local Installation and Execution
+## Project Overview
 
-### 1️⃣ Prerequisites
+BlablaBook provides a simple and intuitive solution for managing your personal library. Whether you're tracking your reading progress or discovering new books through the OpenLibrary API, this platform makes it easy to:
 
-- Docker installed on your system
+- Add books to your library from OpenLibrary
+- Track reading status: Read, Currently Reading, or To Read
+- Search and manage your collection
+- Access a clean, modern interface built with React
 
-### 2️⃣ Clone the repository
+---
+
+## Technologies Stack
+
+| Technology               | Purpose                                        |
+| ------------------------ | ---------------------------------------------- |
+| Docker & Docker Compose  | Containerization and orchestration             |
+| React + TypeScript       | Frontend framework with type safety            |
+| Vite                     | Build tool for blazing-fast development        |
+| Zustand                  | State management                               |
+| TanStack Query & Router  | Data fetching and type-safe routing            |
+| Zod                      | Schema validation                              |
+| Tailwind CSS & Shadcn/ui | Styling and UI components                      |
+| NestJS                   | Backend framework with structured architecture |
+| PostgreSQL               | Production-grade relational database           |
+| Drizzle ORM              | Type-safe database queries                     |
+| Swagger                  | Interactive API documentation                  |
+| Jest & Vitest            | Testing frameworks                             |
+| GitHub Actions           | Continuous Integration and Deployment          |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Docker installed and running
+- Git for cloning the repository
+
+### Installation
+
+1. Clone the repository:
 
 ```bash
 git clone <your-repo-url>
 cd projet-blablabook
 ```
 
-### 3️⃣ Create a .env file
-
-Create a `.env` file at the project root based on `.env.example`.
-
-### 4️⃣ Start the project
+2. Create a `.env` file at the project root:
 
 ```bash
-docker-compose up
+cp .env.example .env
 ```
 
-### 🌱 Seed the database (books)
+3. Start the development environment:
 
-This populates the `book` table and links them to the test user's list.
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
+### Docker Environments
+
+**Development** (`docker-compose.dev.yml`)
+
+- Frontend with hot reload via Vite dev server
+- Backend with watch mode for live file changes
+- Adminer for database management
+- Perfect for active development
+
+**Production** (`docker-compose.yml`)
+
+- Optimized React build served via Nginx
+- Production-ready NestJS backend
+- PostgreSQL with persistent volumes
+- Ready to deploy on Render and Vercel
+
+### Starting the Application
+
+Development:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
+Production:
+
+```bash
+docker compose up -d
+```
+
+### Database Setup
+
+To seed initial data:
 
 ```bash
 cd backend
 npx ts-node src/seed.ts
 ```
 
-### 5️⃣ Access the services
+### Access Services
 
-| Service               | URL                                                    |
-| --------------------- | ------------------------------------------------------ |
-| Frontend              | [http://localhost:5173](http://localhost:5173)         |
-| Backend API           | [http://localhost:3000](http://localhost:3000)         |
-| Swagger Documentation | [http://localhost:3000/api](http://localhost:3000/api) |
-| Adminer               | [http://localhost:8080](http://localhost:8080)         |
-
-### 6️⃣ Verify functionality
-
-**➤ Check the API**  
-Open in browser: [http://localhost:3000/api](http://localhost:3000/api)  
-Explore the interactive Swagger documentation.
-
-**➤ Check the frontend**  
-Go to: [http://localhost:5173](http://localhost:5173)  
-The React interface should display correctly.
-
-**➤ Check Adminer**  
-Go to: [http://localhost:8080](http://localhost:8080)
+| Service           | URL                       |
+| ----------------- | ------------------------- |
+| Frontend          | http://localhost:5173     |
+| Backend API       | http://localhost:3000     |
+| API Documentation | http://localhost:3000/api |
+| Database Admin    | http://localhost:8080     |
 
 ---
 
-## 🔧 Useful Commands
+## Deployment & CI/CD
 
-| Command                            | Description                      |
-| ---------------------------------- | -------------------------------- |
-| `docker-compose up`                | Start the project                |
-| `docker-compose up -d`             | Start in detached mode           |
-| `docker-compose down`              | Stop containers                  |
-| `docker-compose down -v`           | Remove containers and volumes    |
-| `docker-compose logs -f`           | Display continuous logs          |
-| `docker exec -it backend sh`       | Open shell in backend container  |
-| `docker exec -it frontend sh`      | Open shell in frontend container |
-| `docker ps`                        | List active containers           |
-| `docker-compose restart <service>` | Restart a specific service       |
+This project uses GitHub Actions for automated testing and deployment. The CI/CD pipeline is designed to prevent broken code from reaching production.
+
+### Pipeline Overview
+
+**Development Branch (`dev`)**
+
+- Triggers on: Push or Pull Request to `dev`
+- Runs: Frontend tests, Backend tests, Docker integration tests
+- Result: No deployment (safe testing environment)
+
+**Main Branch (`main`)**
+
+- Triggers on: Push or Pull Request to `main`
+- Runs: Frontend tests, Backend tests, Docker integration tests, database migrations
+- Result: If all tests pass → Automatic deployment to Vercel (frontend) and Render (backend)
+
+### Setting Up GitHub Secrets
+
+Create these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+
+| Secret               | Example Value                                                 | Purpose                   |
+| -------------------- | ------------------------------------------------------------- | ------------------------- |
+| `DATABASE_URL`       | `postgresql://username:password@localhost:5432/database_name` | Test database URL         |
+| `JWT_SECRET`         | `your-secret-key-for-jwt-signing`                             | JWT signing key           |
+| `DB_NAME`            | `your_database_name`                                          | Database name             |
+| `DB_USER`            | `your_database_user`                                          | Database user             |
+| `DB_PASSWORD`        | `your_secure_database_password`                               | Database password         |
+| `VITE_BACKEND_URL`   | `https://your-backend-url.onrender.com`                       | Production backend URL    |
+| `FRONTEND_URL_CORS`  | `https://your-frontend-url.vercel.app`                        | Frontend URL for CORS     |
+| `RENDER_DEPLOY_HOOK` | `https://api.render.com/deploy/srv-xxxxx/...`                 | Render deployment webhook |
+| `VERCEL_DEPLOY_HOOK` | `https://api.vercel.com/v1/integrations/deploy/...`           | Vercel deployment webhook |
+
+### Environment Variables Explained
+
+**During Tests (CI/CD)**
+
+- Uses `DATABASE_URL` pointing to local test database
+- Frontend uses `VITE_BACKEND_URL` for test backend
+- `NODE_ENV` set to `production` for production pipeline
+
+**Production (Render/Vercel)**
+
+- Backend receives secrets directly from GitHub Actions
+- Migrations are automatically applied at startup
+- Database seeding runs before server starts
+
+### Testing the Pipeline Locally
+
+**Test the dev pipeline:**
+
+1. Create a feature branch from `dev`
+2. Make changes and push
+3. Create a Pull Request to `dev`
+4. Check GitHub Actions (Settings → Actions) to see tests run
+5. No deployment occurs
+
+**Test the prod pipeline:**
+
+1. Create a feature branch from `main`
+2. Make changes and push
+3. Create a Pull Request to `main`
+4. If all tests pass, deployment to production automatically triggers
+
+### Database Migration Strategy
+
+Developer workflow:
+
+```bash
+# 1. Modify schema.ts
+# 2. Generate migration
+npx drizzle-kit generate
+
+# 3. Commit and push (migrations are versioned in git)
+git add drizzle/
+git commit -m "Add new schema migration"
+git push
+```
+
+Pipeline automatically:
+
+- Applies migrations from git
+- Runs tests
+- Deploys if tests pass
+- Seed data is loaded on production startup
 
 ---
 
-## 🧭 Project Structure
+## Project Structure
 
 ```
 .
-├── backend/              # NestJS API source code
+├── .github/workflows/
+│   ├── CICD-dev.yml           # Development pipeline
+│   └── CICD-prod.yml          # Production pipeline with deployment
+│
+├── backend/
 │   ├── src/
-│   │   ├── auth/        # Authentication
-│   │   ├── books/       # Books management
-│   │   ├── user/        # Users management
-│   │   ├── db/          # Database config and Drizzle schema
-│   │   └── main.ts      # Entry point
-│   ├── Dockerfile
+│   │   ├── auth/              # Authentication & JWT
+│   │   ├── books/             # Books management module
+│   │   ├── category/          # Categories module
+│   │   ├── user/              # User management
+│   │   ├── db/                # Database config & Drizzle schema
+│   │   ├── security/          # Security utilities (cookies, tokens)
+│   │   ├── main.ts            # Application entry point
+│   │   └── seed.ts            # Database seeding
+│   ├── drizzle/               # Migration files (version controlled)
+│   ├── Dockerfile             # Production image
+│   ├── Dockerfile.dev         # Development image
+│   ├── start.sh               # Production startup script
 │   └── package.json
-├── frontend/             # React + Vite application
+│
+├── frontend/
 │   ├── src/
-│   │   ├── components/  # Reusable components
-│   │   ├── pages/       # Application pages
-│   │   ├── api/         # API calls
-│   │   ├── stores/      # Zustand stores
-│   │   └── routes/      # Tanstack Router configuration
-│   ├── Dockerfile
+│   │   ├── components/        # Reusable React components
+│   │   ├── pages/             # Page components
+│   │   ├── api/               # API client functions
+│   │   ├── stores/            # Zustand state management
+│   │   ├── hooks/             # Custom React hooks
+│   │   ├── routes/            # TanStack Router configuration
+│   │   └── main.tsx           # Entry point
+│   ├── Dockerfile             # Production image
+│   ├── Dockerfile.dev         # Development image
 │   └── package.json
-├── docker-compose.yml    # Docker Compose configuration
-├── docker-compose.prod.yml # Production configuration
+│
+├── docker-compose.yml         # Production configuration
+├── docker-compose.dev.yml     # Development configuration
+├── .env.example               # Environment template
 └── README.md
 ```
----
-
-## 🧪 Test Plan
-
-The project follows a testing strategy to ensure data integrity and API reliability.
-
-### 🔹 Category Module Validation
-
-| Test Case | Expected Result | Status |
-| :--- | :--- | :--- |
-| **Get All Categories** | 200: Returns the list of active categories | 🟢 |
-| **Get Category by valid ID** | 200: Returns the specific category object | 🟢 |
-| **Get Category by non-existent ID** | 404: Error "Category with ID X not found" | 🔴 |
-| **Invalid ID format** (e.g., `/abc`) | 400: Validation error (ParseIntPipe) | 🔴 |
-| **Find or Create (Exists)** | Returns existing category without duplication | 🟢 |
-| **Find or Create (New)** | Persists new category in DB and returns it | 🟢 |
-
-> **Note:** Backend tests are performed using **Jest** with a fully mocked Drizzle ORM to isolate business logic from the database layer.
 
 ---
+
+## Commands Reference
+
+### Docker Compose
+
+| Command                                          | Purpose                            |
+| ------------------------------------------------ | ---------------------------------- |
+| `docker compose -f docker-compose.dev.yml up -d` | Start development environment      |
+| `docker compose up -d`                           | Start production environment       |
+| `docker compose down`                            | Stop all containers                |
+| `docker compose down -v`                         | Stop containers and remove volumes |
+| `docker compose logs -f`                         | Stream logs                        |
+| `docker compose logs -f <service>`               | Stream logs for specific service   |
+| `docker compose ps`                              | List running containers            |
+
+### Container Shell Access
+
+| Command                       | Purpose                         |
+| ----------------------------- | ------------------------------- |
+| `docker exec -it backend sh`  | Access backend container shell  |
+| `docker exec -it frontend sh` | Access frontend container shell |
+| `docker exec -it postgres sh` | Access database container shell |
+
+### Backend Commands
+
+| Command              | Purpose                   |
+| -------------------- | ------------------------- |
+| `npm run test`       | Run backend tests (Jest)  |
+| `npm run migrate`    | Apply database migrations |
+| `npm run build`      | Build for production      |
+| `npm run start:dev`  | Start with watch mode     |
+| `npm run start:prod` | Start production server   |
+
+### Frontend Commands
+
+| Command            | Purpose                       |
+| ------------------ | ----------------------------- |
+| `npm run test`     | Run frontend tests (Vitest)   |
+| `npm run build`    | Build for production          |
+| `npm run dev`      | Start development server      |
+| `npm run coverage` | Generate test coverage report |
+
+---
+
+## Testing
+
+The project includes comprehensive testing for both frontend and backend.
+
+### Backend Tests (Jest)
+
+- Unit tests for all modules
+- Authentication and authorization tests
+- Database query tests with mocked Drizzle ORM
+- API endpoint validation
+
+Run tests:
+
+```bash
+cd backend
+npm run test
+```
+
+### Frontend Tests (Vitest)
+
+- Component tests
+- Hook tests
+- Integration tests
+
+Run tests:
+
+```bash
+cd frontend
+npm run test
+```
+
+### Category Module Validation
+
+| Test Case                   | Expected Result                   |
+| --------------------------- | --------------------------------- |
+| Get All Categories          | Returns list of active categories |
+| Get Category by ID          | Returns specific category object  |
+| Category by non-existent ID | Returns 404 error                 |
+| Invalid ID format           | Returns 400 validation error      |
+| Find or Create (exists)     | Returns existing category         |
+| Find or Create (new)        | Creates and returns new category  |
+
+### Integration Tests
+
+The Docker integration tests verify that all services communicate correctly:
+
+- Database connectivity
+- API health checks
+- Service startup sequence
+- Environment configuration
+
+---
+
+## Troubleshooting
+
+**Port already in use?**
+
+```bash
+# Kill process on port (e.g., 3000)
+lsof -i :3000
+kill -9 <PID>
+```
+
+**Database connection issues?**
+
+- Verify `docker compose ps` shows all containers running
+- Check logs: `docker compose logs postgres`
+- Ensure `DATABASE_URL` is correct in `.env`
+
+**Tests failing in CI/CD?**
+
+- Check GitHub Actions logs
+- Verify all secrets are set in GitHub
+- Ensure migrations are committed to git
+
+---
+
+## About This Project
+
+This is a student project developed as part of a professional examination for a **Developer-Designer certification**. It demonstrates full-stack development capabilities including frontend development, backend architecture, database design, and CI/CD pipeline implementation.
+
+The project was built to showcase practical knowledge of:
+
+- Modern web application development (React, NestJS)
+- Database design and optimization (PostgreSQL, Drizzle ORM)
+- Containerization and orchestration (Docker)
+- Continuous Integration and Deployment (GitHub Actions)
+- API design and documentation
