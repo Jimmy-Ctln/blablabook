@@ -26,5 +26,9 @@ RUN npm run build
 # Expose backend API port
 EXPOSE 3000
 
-# Start the backend application
-CMD ["node", "dist/main.js"]
+# Copy start.sh script
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
+
+# Start the backend application via start.sh script
+CMD ["./start.sh"]

@@ -153,6 +153,8 @@ describe("books api", () => {
       publishDate: book.publishedAt,
       description: book.description,
       status: book.status,
+      readStart: book.readStart,
+      readEnd: book.readEnd,
     };
     await updateBookStatus(2, 1, "À lire", bookDisplay);
 
@@ -180,6 +182,8 @@ describe("books api", () => {
       publishDate: book.publishedAt,
       description: book.description,
       status: book.status,
+      readStart: book.readStart,
+      readEnd: book.readEnd,
     };
     await updateBookStatus(2, 1, "En cours", bookDisplay);
 
@@ -207,6 +211,8 @@ describe("books api", () => {
       publishDate: book.publishedAt,
       description: book.description,
       status: book.status,
+      readStart: book.readStart,
+      readEnd: book.readEnd,
     };
     await updateBookStatus(2, 1, "Lu", bookDisplay);
 

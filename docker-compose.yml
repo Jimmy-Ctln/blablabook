@@ -17,8 +17,8 @@ services:
       # Map host port 5433 to container 5432 for external access
       - "5433:5432"
     healthcheck:
-      # Check if Postgres is ready to accept connections
-      test: ["CMD-SHELL", "pg_isready -U postgres -d blablabook"]
+      # Check if PostgreSQL is ready to accept connections
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME}"]
       start_period: 15s
       interval: 15s
       timeout: 5s
@@ -29,22 +29,26 @@ services:
     container_name: backend
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     environment:
-      # Drizzle url
+      # Database connection variables
+      - PGHOST=${DB_HOST}
+      - PGUSER=${DB_USER}
+      - PGDATABASE=${DB_NAME}
+      - PGPASSWORD=${DB_PASSWORD}
+      - PGPORT=${DB_PORT}
+      # url pour drizzle
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-      # - REDIS_HOST=${REDIS_HOST}
-      # - REDIS_PORT=${REDIS_PORT}
-      - CHOKIDAR_USEPOLLING=true
-      - FRONTEND_URL_CORS=${FRONTEND_URL_CORS}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
       - NODE_ENV=${NODE_ENV}
     ports:
       # Publish backend port to host for direct access
       - "3000:3000"
     healthcheck:
       # Check if backend API is responding
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD-SHELL", "curl -f ${VITE_BACKEND_URL}/health || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -53,38 +57,22 @@ services:
       # Ensure Postgres is healthy before starting backend
       postgres:
         condition: service_healthy
-      # redis:
-      #   condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
 
-  # Frontend service (React + Vite)
+  # Frontend service (React/Vite build)
   frontend:
+    container_name: frontend
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     environment:
-      - VITE_BACKEND_URL=http://localhost:3000
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
     ports:
       # Publish frontend port to host for direct browser access
       - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-
-  # Redis service
-  # redis:
-  #   image: redis:7-alpine
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redisdata:/data
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 5
+    depends_on:
+      # Ensure backend is healthy before starting frontend
+      backend:
+        condition: service_healthy
 
   adminer:
     image: adminer

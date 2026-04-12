@@ -18,9 +18,7 @@ if (typeof window !== "undefined") {
 
 // Mock Carousel components
 vi.mock("@/components/ui/carousel", () => ({
-  Carousel: ({ children }: any) => (
-    <div data-testid="carousel">{children}</div>
-  ),
+  Carousel: ({ children }: any) => <div data-testid="carousel">{children}</div>,
   CarouselContent: ({ children }: any) => (
     <div data-testid="carousel-content">{children}</div>
   ),

@@ -8,12 +8,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
 
-  const frontendUrl = process.env.FRONTEND_URL_CORS;
+  const frontendUrl = process.env.FRONTEND_URL;
 
   // enabled CORS
   app.enableCors({
     origin: frontendUrl,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Set-Cookie'],
   });
 
   // Add ValidationPipe for use dto validator
