@@ -103,7 +103,7 @@ jobs:
 
       # Install curl if not available
       - name: Install curl
-        run: apt-get update && apt-get install -y curl
+        run: sudo apt-get update && sudo apt-get install -y curl
 
       - name: Start docker compose
         # Inject GitHub env vars directly into shell
