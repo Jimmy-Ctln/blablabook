@@ -14,8 +14,8 @@ WORKDIR /app
 # Copy package.json and package-lock.json (if exists) to install dependencies
 COPY package.json package-lock.json* ./
 
-# Install only production dependencies
-RUN npm install --production
+# Install all dependencies (including dev dependencies for building)
+RUN npm install
 
 # Copy the rest of the backend source code into the container
 COPY . .
@@ -23,8 +23,15 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Clean dev dependencies to reduce image size (optional, comment out if you need them)
+RUN npm prune --production
+
 # Expose backend API port
 EXPOSE 3000
 
-# Start the backend application
-CMD ["node", "dist/main.js"]
+# Copy start.sh script
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
+
+# Start the backend application via start.sh script
+CMD ["./start.sh"]

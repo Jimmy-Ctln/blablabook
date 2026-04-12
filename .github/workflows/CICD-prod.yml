@@ -1,6 +1,6 @@
 name: CICD-prod
 
-# à chaque push ce workflow va se lancer
+# At each push this workflow will run
 on:
   push:
     branches:
@@ -8,48 +8,50 @@ on:
   pull_request:
     branches:
       - main
-      - dev
 
 jobs:
-### FRONT CI ###
+  ### FRONT CI ###
   ci-frontend:
-    # le job s’exécute sur une machine virtuelle Ubuntu dernière version
+    # Job runs on the latest Ubuntu virtual machine
     runs-on: ubuntu-latest
     defaults:
       run:
-        # va chercher blablabook/frontend
+        # Set working directory to frontend
         working-directory: frontend
     steps:
-      # clone le repo sur la VM de Github
+      # Clone repository onto GitHub VM
       - uses: actions/checkout@v4
 
-      # installe Node.js version 20 dans la VM
+      # Install Node.js version 20
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Active le cache NPM pour accélérer les builds suivants
+          # Enable NPM cache to speed up subsequent builds
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # installe les dépendances du front
+      # Install frontend dependencies
       - name: Frontend CI
         run: npm ci
 
-      # build du front avec l'URL du back
+      # Build frontend with backend URL
       - name: Build frontend with backend URL
         run: |
           export VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
           npm run build
 
-      # Sauvegarde le build pour le déploiement
+      # Run frontend tests
+      - name: Frontend tests
+        run: npm run test
+
+      # Save built frontend for deployment
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-
-### BACK CI ###
+  ### BACK CI ###
   ci-backend:
     runs-on: ubuntu-latest
     defaults:
@@ -59,7 +61,7 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-  
+
     steps:
       # Clone repo
       - uses: actions/checkout@v4
@@ -71,55 +73,56 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # Install deps
+      # Install dependencies
       - name: Backend ci
         run: npm ci
 
-      # Synch Drizzle Schema to Db supabase
-      - name: Push Schema to Supabase
-        run: npx drizzle-kit push
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Run backend tests
+      - name: Backend tests
+        run: npm run test
 
       # Build backend
       - run: npm run build
 
-      # Build Docker image si besoin
+      # Build Docker image
       - run: docker build -t blablabook-back .
 
-
-### DOCKER CI ###
+  ### DOCKER CI ###
   ci-docker:
     runs-on: ubuntu-latest
     needs: [ci-frontend, ci-backend]
     defaults:
       run:
         working-directory: .
-    # Bien mettre ces variables dans le secret de GitHub (settings > Secrets and variables > Secrets)
+    # Make sure to add these variables to GitHub Secrets (settings > Secrets and variables > Secrets)
     env:
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      FRONTEND_URL_CORS: "https://pooka-blablabook.surge.sh"
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
       VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-      NODE_ENV: "prod"
+      NODE_ENV: "production"
 
     steps:
-      # Clone le repo
+      # Clone repo
       - uses: actions/checkout@v4
 
-      # Vérifie la version de Docker
+      # Check Docker version
       - name: Check Docker
         run: docker --version
 
+      # Install curl if not available
+      - name: Install curl
+        run: sudo apt-get update && sudo apt-get install -y curl
+
       - name: Start docker compose
-        # injecte les env GitHub directement dans le shell
-        # le | c'est pour un script multi lignes
+        # Inject GitHub env vars directly into shell
+        # | is for multi-line script
         run: docker compose -f docker-compose.yml up -d --build
 
-      # vérifie si on accède à Postgres via le container postgres
+      # Wait for Postgres to be ready
       - name: Wait for Postgres
         run: |
           max_attempts=10
@@ -135,12 +138,23 @@ jobs:
             exit 1
           fi
 
-      # vérifie si le container du back marche bien via http://localhost:3000/health
+      # Apply database migrations (now that database is ready)
+      - name: Apply database migrations
+        run: |
+          echo "Applying database migrations..."
+          docker exec backend npm run migrate || {
+            echo "Migration failed, checking logs..."
+            docker compose logs backend
+            exit 1
+          }
+          echo "✓ Migrations applied successfully"
+
+      # Wait for Backend to be ready
       - name: Wait for Backend
         run: |
           max_attempts=10
           attempt=1
-          until docker exec backend curl -f http://localhost:3000/health || [ $attempt -ge $max_attempts ]; do
+          until curl -f "$VITE_BACKEND_URL/health" || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for backend..."
             sleep 5
             attempt=$((attempt + 1))
@@ -151,54 +165,48 @@ jobs:
             exit 1
           fi
 
+      # Integration test: Frontend -> Backend
+      - name: Test Frontend to Backend connectivity
+        run: |
+          echo "Testing Frontend container calling Backend API..."
+          # From frontend container, call backend API using curl
+          docker exec frontend curl -f http://backend:3000/health || exit 1
+          echo "✓ Frontend can reach Backend API"
 
-      # vérifie que le back fcontionne dans le container 
-      #- name: Run backend tests
-      #  run: docker exec backend npm run test
+      # Integration test: Backend -> Database
+      - name: Test Backend to Database connectivity
+        run: |
+          echo "Testing Backend to Database queries..."
+          # Verify that the database is accessible
+          PGPASSWORD="$DB_PASSWORD" docker exec -e PGPASSWORD="$DB_PASSWORD" postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" || exit 1
+          echo "✓ Database connectivity verified"
 
-
-      # Vérifie que les containers tournent
+      # Verify all containers are running
       - name: Docker status
         run: docker compose ps
 
-      # Stop proprement
+      # Stop containers gracefully
       - name: Stop containers
         run: docker compose down
 
-
-
-### DEPLOY FRONTEND TO SURGE ###
+  ### DEPLOY FRONTEND TO VERCEL ###
   deploy-frontend:
-    needs: ci-frontend
+    needs: ci-docker
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
-      
-      - name: Create 200.html for SPA routing
-        run: cp frontend/dist/index.html frontend/dist/200.html
-      
-      - name: Deploy to Surge
-      # ne pas oublier de mettre SURGE_DOMAIN et SURGE_TOKEN dans le secret de GitHub
+      - name: Trigger Vercel deployment via Deploy Hook
         run: |
-          npm install -g surge
-          surge frontend/dist ${{ secrets.SURGE_DOMAIN }} \
-            --token ${{ secrets.SURGE_TOKEN }}
+          curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        env:
+          WEBHOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK }}
 
-### DEPLOY BACKEND TO RENDER ###
+  ### DEPLOY BACKEND TO RENDER ###
   deploy-backend:
     needs: ci-docker
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
-      - name: Trigger Render deploy via API
+      - name: Trigger Render deployment via Deploy Hook
         run: |
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{"clearCache": true}' \
-            https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}

@@ -39,7 +39,7 @@ describe('CookieService', () => {
     });
 
     it('should set secure to true when in prod', () => {
-      process.env.NODE_ENV = 'prod';
+      process.env.NODE_ENV = 'production';
       const config = service.generateCookiesConfig();
 
       expect(config.jwtCookieConfig.secure).toBe(true);

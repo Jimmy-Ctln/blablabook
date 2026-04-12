@@ -1,11 +1,11 @@
 name: CICD-dev
 
-# à chaque push ce workflow va se lancer
+# At each push this workflow will run
 on:
   push:
     branches:
       - dev
-  # à chaque pull request vers dev ce workflow va se lancer
+  # At each pull request to dev this workflow will run
   pull_request:
     branches:
       - dev
@@ -13,30 +13,34 @@ on:
 jobs:
   ### FRONT CI ###
   ci-frontend:
-    # le job s’exécute sur une machine virtuelle Ubuntu dernière version
+    # Job runs on the latest Ubuntu virtual machine
     runs-on: ubuntu-latest
     defaults:
       run:
-        # va chercher blablabook/frontend
+        # Set working directory to frontend
         working-directory: frontend
     steps:
-      # clone le repo sur la VM de Github
+      # Clone repository onto GitHub VM
       - uses: actions/checkout@v4
 
-      # installe Node.js version 20 dans la VM
+      # Install Node.js version 20
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Active le cache NPM pour accélérer les builds suivants
+          # Enable NPM cache to speed up subsequent builds
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # installe les dépendances du front
+      # Install frontend dependencies
       - name: Frontend CI
         run: npm ci
 
-      # génère le dossier dist du front
+      # Build frontend (generates dist folder)
       - run: npm run build
+
+      # Run frontend tests
+      - name: Frontend tests
+        run: npm run test
 
   ### BACK CI ###
   ci-backend:
@@ -60,15 +64,16 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # Install deps
+      # Install dependencies
       - name: Backend ci
         run: npm ci
 
       # Build backend
       - run: npm run build
 
-      # Build Docker image si besoin
-      - run: docker build -t blablabook-back .
+      # Run backend tests
+      - name: Backend tests
+        run: npm run test
 
   ### DOCKER CI ###
   ci-docker:
@@ -84,24 +89,28 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      FRONTEND_URL_CORS: "http://localhost:5173"
-      VITE_BACKEND_URL: "http://localhost:3000"
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
       NODE_ENV: "dev"
 
     steps:
-      # Clone le repo
+      # Clone repo
       - uses: actions/checkout@v4
 
-      # Vérifie la version de Docker
+      # Check Docker version
       - name: Check Docker
         run: docker --version
 
-      - name: Start docker compose
-        # injecte les env GitHub directement dans le shell
-        # le | c'est pour un script multi lignes
-        run: docker compose -f docker-compose.yml up -d --build
+      # Install curl if not available
+      - name: Install curl
+        run: sudo apt-get update && sudo apt-get install -y curl
 
-      # vérifie si on accède à Postgres via le container postgres
+      - name: Start docker compose
+        # Inject GitHub env vars directly into shell
+        # | is for multi-line script
+        run: docker compose -f docker-compose.dev.yml up -d --build
+
+      # Wait for Postgres to be ready
       - name: Wait for Postgres
         run: |
           max_attempts=10
@@ -117,12 +126,12 @@ jobs:
             exit 1
           fi
 
-      # vérifie si le container du front marche bien via http://localhost:5173
+      # Wait for Frontend to be ready
       - name: Wait for Frontend
         run: |
           max_attempts=10
           attempt=1
-          until curl -f http://localhost:5173 || [ $attempt -ge $max_attempts ]; do
+          until curl -f "$FRONTEND_URL" || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for frontend..."
             sleep 5
             attempt=$((attempt + 1))
@@ -132,13 +141,15 @@ jobs:
             docker compose logs frontend
             exit 1
           fi
+        env:
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
 
-      # vérifie si le container du back marche bien via http://localhost:3000/health
+      # Wait for Backend to be ready
       - name: Wait for Backend
         run: |
           max_attempts=10
           attempt=1
-          until docker exec backend curl -f http://localhost:3000/health || [ $attempt -ge $max_attempts ]; do
+          until curl -f "$VITE_BACKEND_URL/health" || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for backend..."
             sleep 5
             attempt=$((attempt + 1))
@@ -149,14 +160,26 @@ jobs:
             exit 1
           fi
 
-      # vérifie que le back fcontionne dans le container
-      #- name: Run backend tests
-      #  run: docker exec backend npm run test
+      # Integration test: Frontend -> Backend
+      - name: Test Frontend to Backend connectivity
+        run: |
+          echo "Testing Frontend container calling Backend API..."
+          # From frontend container, call backend API using curl
+          docker exec frontend curl -f http://backend:3000/health || exit 1
+          echo "✓ Frontend can reach Backend API"
 
-      # Vérifie que les containers tournent
+      # Integration test: Backend -> Database
+      - name: Test Backend to Database connectivity
+        run: |
+          echo "Testing Backend to Database queries..."
+          # Verify that the database is accessible
+          PGPASSWORD="$DB_PASSWORD" docker exec -e PGPASSWORD="$DB_PASSWORD" postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" || exit 1
+          echo "✓ Database connectivity verified"
+
+      # Verify all containers are running
       - name: Docker status
         run: docker compose ps
 
-      # Stop proprement
+      # Stop containers gracefully
       - name: Stop containers
         run: docker compose down

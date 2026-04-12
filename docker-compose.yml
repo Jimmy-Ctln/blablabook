@@ -1,6 +1,7 @@
 services:
   # PostgreSQL service
   postgres:
+    container_name: postgres
     image: postgres:16-alpine
     environment:
       # Database environment variables
@@ -25,6 +26,7 @@ services:
 
   # Backend service (NestJS + Drizzle ORM)
   backend:
+    container_name: backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -38,14 +40,15 @@ services:
       # url pour drizzle
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - FRONTEND_URL_CORS=${FRONTEND_URL_CORS}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
       - NODE_ENV=${NODE_ENV}
     ports:
       # Publish backend port to host for direct access
       - "3000:3000"
     healthcheck:
       # Check if backend API is responding
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD-SHELL", "curl -f ${VITE_BACKEND_URL}/health || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -56,18 +59,20 @@ services:
         condition: service_healthy
 
   # Frontend service (React/Vite build)
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     # Publish frontend port to host for direct browser access
-  #     - "5173:80"
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "-a", "mysecretpassword", "ping"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 5
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+    ports:
+      # Publish frontend port to host for direct browser access
+      - "5173:5173"
+    depends_on:
+      # Ensure backend is healthy before starting frontend
+      backend:
+        condition: service_healthy
 
   adminer:
     image: adminer
