@@ -107,7 +107,7 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      FRONTEND_URL_CORS: ${{ secrets.FRONTEND_URL_CORS }}
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
       VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
       NODE_ENV: "production"
 
@@ -145,7 +145,7 @@ jobs:
         run: |
           max_attempts=10
           attempt=1
-          until docker exec backend curl -f http://localhost:3000/health || [ $attempt -ge $max_attempts ]; do
+          until docker exec backend node -e "fetch(process.env.VITE_BACKEND_URL + '/health').then(r => r.ok ? process.exit(0) : process.exit(1))" || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for backend..."
             sleep 5
             attempt=$((attempt + 1))
@@ -165,7 +165,7 @@ jobs:
         run: |
           echo "Testing Frontend container calling Backend API..."
           # From frontend container, call backend API
-          docker exec frontend curl -f http://backend:3000/health || exit 1
+          docker exec frontend node -e "fetch(process.env.VITE_BACKEND_URL + '/health').then(r => r.ok ? process.exit(0) : process.exit(1))" || exit 1
           echo "✓ Frontend can reach Backend API"
 
       # Integration test: Backend -> Database

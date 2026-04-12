@@ -155,7 +155,7 @@ Create these secrets in your GitHub repository (Settings → Secrets and variabl
 | `DB_USER`            | `your_database_user`                                          | Database user             |
 | `DB_PASSWORD`        | `your_secure_database_password`                               | Database password         |
 | `VITE_BACKEND_URL`   | `https://your-backend-url.onrender.com`                       | Production backend URL    |
-| `FRONTEND_URL_CORS`  | `https://your-frontend-url.vercel.app`                        | Frontend URL for CORS     |
+| `FRONTEND_URL`  | `https://your-frontend-url.vercel.app`                        | Frontend URL for CORS     |
 | `RENDER_DEPLOY_HOOK` | `https://api.render.com/deploy/srv-xxxxx/...`                 | Render deployment webhook |
 | `VERCEL_DEPLOY_HOOK` | `https://api.vercel.com/v1/integrations/deploy/...`           | Vercel deployment webhook |
 

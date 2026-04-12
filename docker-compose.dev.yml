@@ -35,14 +35,15 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - CHOKIDAR_USEPOLLING=true
-      - FRONTEND_URL_CORS=${FRONTEND_URL_CORS}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
       - NODE_ENV=${NODE_ENV}
     ports:
       # Publish backend port to host for direct access
       - "3000:3000"
     healthcheck:
       # Check if backend API is responding
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD-SHELL", "curl -f ${VITE_BACKEND_URL}/health || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -62,7 +63,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     environment:
-      - VITE_BACKEND_URL=http://localhost:3000
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
     ports:
       # Publish frontend port to host for direct browser access
       - "5173:5173"
