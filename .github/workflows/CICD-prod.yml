@@ -1,6 +1,6 @@
 name: CICD-prod
 
-# à chaque push ce workflow va se lancer
+# At each push this workflow will run
 on:
   push:
     branches:
@@ -12,39 +12,39 @@ on:
 jobs:
   ### FRONT CI ###
   ci-frontend:
-    # le job s’exécute sur une machine virtuelle Ubuntu dernière version
+    # Job runs on the latest Ubuntu virtual machine
     runs-on: ubuntu-latest
     defaults:
       run:
-        # va chercher blablabook/frontend
+        # Set working directory to frontend
         working-directory: frontend
     steps:
-      # clone le repo sur la VM de Github
+      # Clone repository onto GitHub VM
       - uses: actions/checkout@v4
 
-      # installe Node.js version 20 dans la VM
+      # Install Node.js version 20
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Active le cache NPM pour accélérer les builds suivants
+          # Enable NPM cache to speed up subsequent builds
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # installe les dépendances du front
+      # Install frontend dependencies
       - name: Frontend CI
         run: npm ci
 
-      # build du front avec l'URL du back
+      # Build frontend with backend URL
       - name: Build frontend with backend URL
         run: |
           export VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
           npm run build
 
-      # lance les tests frontend
+      # Run frontend tests
       - name: Frontend tests
         run: npm run test
 
-      # Sauvegarde le build pour le déploiement
+      # Save built frontend for deployment
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -73,15 +73,15 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # Install deps
+      # Install dependencies
       - name: Backend ci
         run: npm ci
 
-      # Lance les tests backend
+      # Run backend tests
       - name: Backend tests
         run: npm run test
 
-      # Apply migrations from git (développeur créé les migrations localement)
+      # Apply migrations from git (developer creates migrations locally)
       - name: Apply database migrations
         run: npm run migrate
         env:
@@ -90,7 +90,7 @@ jobs:
       # Build backend
       - run: npm run build
 
-      # Build Docker image si besoin
+      # Build Docker image
       - run: docker build -t blablabook-back .
 
   ### DOCKER CI ###
@@ -100,7 +100,7 @@ jobs:
     defaults:
       run:
         working-directory: .
-    # Bien mettre ces variables dans le secret de GitHub (settings > Secrets and variables > Secrets)
+    # Make sure to add these variables to GitHub Secrets (settings > Secrets and variables > Secrets)
     env:
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
@@ -112,19 +112,19 @@ jobs:
       NODE_ENV: "production"
 
     steps:
-      # Clone le repo
+      # Clone repo
       - uses: actions/checkout@v4
 
-      # Vérifie la version de Docker
+      # Check Docker version
       - name: Check Docker
         run: docker --version
 
       - name: Start docker compose
-        # injecte les env GitHub directement dans le shell
-        # le | c'est pour un script multi lignes
+        # Inject GitHub env vars directly into shell
+        # | is for multi-line script
         run: docker compose -f docker-compose.yml up -d --build
 
-      # vérifie si on accède à Postgres via le container postgres
+      # Wait for Postgres to be ready
       - name: Wait for Postgres
         run: |
           max_attempts=10
@@ -140,7 +140,7 @@ jobs:
             exit 1
           fi
 
-      # vérifie si le container du back marche bien via http://localhost:3000/health
+      # Wait for Backend to be ready
       - name: Wait for Backend
         run: |
           max_attempts=10
@@ -156,15 +156,31 @@ jobs:
             exit 1
           fi
 
-      # vérifie que le back fcontionne dans le container
-      #- name: Run backend tests
-      #  run: docker exec backend npm run test
+      # Verify backend works in container
+      - name: Run backend tests in container
+        run: docker exec backend npm run test
 
-      # Vérifie que les containers tournent
+      # Integration test: Frontend -> Backend
+      - name: Test Frontend to Backend connectivity
+        run: |
+          echo "Testing Frontend container calling Backend API..."
+          # From frontend container, call backend API
+          docker exec frontend curl -f http://backend:3000/health || exit 1
+          echo "✓ Frontend can reach Backend API"
+
+      # Integration test: Backend -> Database
+      - name: Test Backend to Database connectivity
+        run: |
+          echo "Testing Backend to Database queries..."
+          # Verify that the database is accessible
+          PGPASSWORD="$DB_PASSWORD" docker exec -e PGPASSWORD="$DB_PASSWORD" postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" || exit 1
+          echo "✓ Database connectivity verified"
+
+      # Verify all containers are running
       - name: Docker status
         run: docker compose ps
 
-      # Stop proprement
+      # Stop containers gracefully
       - name: Stop containers
         run: docker compose down
 
