@@ -90,7 +90,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
       NODE_ENV: "dev"
 
     steps:
