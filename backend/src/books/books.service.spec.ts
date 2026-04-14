@@ -27,12 +27,6 @@ describe('BooksService', () => {
     }).compile();
 
     service = module.get<BooksService>(BooksService);
-    service['logger'] = {
-      error: jest.fn(),
-      warn: jest.fn(),
-      log: jest.fn(),
-      debug: jest.fn(),
-    };
 
     jest.clearAllMocks();
   });
@@ -49,7 +43,7 @@ describe('BooksService', () => {
       description: 'Description',
       isbn: '123',
       publishingHouse: 'House',
-      publishedAt: new Date(),
+      publishedAt: '2024-01-01',
       categories: [],
     };
 
@@ -102,7 +96,7 @@ describe('BooksService', () => {
     const result = await service.removeFromUserList(1, 1);
 
     expect(result).toHaveLength(1);
-    expect(result[0].bookId).toBe(1);
+    expect(result![0].bookId).toBe(1);
   });
 
   it('should find user books with status', async () => {
