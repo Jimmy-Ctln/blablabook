@@ -59,8 +59,8 @@ describe('UserService', () => {
     const result = await service.createUser(userInputData);
 
     expect(result).toBeDefined();
-    expect(result.email).toBe('newuser@example.com');
-    expect(result.username).toBe('newuser');
+    expect(result!.email).toBe('newuser@example.com');
+    expect(result!.username).toBe('newuser');
   });
 
   it('should get user by email', async () => {
@@ -81,7 +81,7 @@ describe('UserService', () => {
     const result = await service.getUserByEmail('test@example.com');
 
     expect(result).toBeDefined();
-    expect(result.email).toBe('test@example.com');
+    expect(result!.email).toBe('test@example.com');
   });
 
   it('should check if user exists by username or email', async () => {
@@ -104,6 +104,6 @@ describe('UserService', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result.username).toBe('existing');
+    expect(result!.username).toBe('existing');
   });
 });
