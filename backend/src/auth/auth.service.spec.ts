@@ -52,7 +52,6 @@ describe('AuthService', () => {
     const email = 'giz@mail.com';
     const username = 'giz';
     const role = 'USER';
-    const image = 'https://randomuser.me/api/portraits/lego/0.jpg';
     const password = '12345678';
     const date = new Date();
 
@@ -61,7 +60,7 @@ describe('AuthService', () => {
       email,
       password,
       username,
-      image,
+      avatar_url: 'https://randomuser.me/api/portraits/lego/0.jpg',
       role,
       createdAt: date,
       updatedAt: date,
@@ -138,7 +137,7 @@ describe('AuthService', () => {
         email,
         username,
         role: 'USER',
-        image: null,
+        avatar_url: null,
         password,
         createdAt: date,
         updatedAt: date,
