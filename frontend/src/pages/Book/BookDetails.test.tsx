@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
 
 describe("BookDetails - Data Logic", () => {
-  it("should have ISBN parameter", () => {
-    const isbn = "978-3-16-148410-0";
-    expect(isbn).toMatch(/^[0-9-]+$/);
-  });
-
   it("should format date for database correctly", () => {
     const formatDateForDB = (dateString: string): string => {
       if (!dateString) return new Date().toISOString().split("T")[0];
@@ -66,13 +61,5 @@ describe("BookDetails - Data Logic", () => {
       author: "Test Author",
     };
     expect(book.isbn).toBeTruthy();
-  });
-
-  it("should manage loading state", () => {
-    const isLoading = true;
-    expect(isLoading).toBe(true);
-
-    const loaded = false;
-    expect(loaded).toBe(false);
   });
 });

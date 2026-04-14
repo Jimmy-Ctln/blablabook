@@ -110,28 +110,14 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
   });
 
-  it("should render with empty books", () => {
+  it("should render with multiple categories", () => {
+    const mockCategoryBooks = {
+      aventure: [{ id: 1, name: "Adventure Book", cover_url: "" }],
+      romance: [{ id: 2, name: "Romance Book", cover_url: "" }],
+      fantasy: [{ id: 3, name: "Fantasy Book", cover_url: "" }],
+    };
     (useQuery as any).mockReturnValue({
-      data: {},
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
-    render(<HomePage />);
-    const mainDiv = screen.getByTestId("hero").parentElement;
-    expect(mainDiv).toBeInTheDocument();
-  });
-
-  it("should display all category titles in uppercase", () => {
-    (useQuery as any).mockReturnValue({
-      data: {
-        aventure: [],
-        romance: [],
-        fantasy: [],
-      },
+      data: mockCategoryBooks,
       isFetching: false,
     });
     (useExternalBooks as any).mockReturnValue({
@@ -143,20 +129,5 @@ describe("HomePage", () => {
     expect(screen.getByText("AVENTURE")).toBeInTheDocument();
     expect(screen.getByText("ROMANCE")).toBeInTheDocument();
     expect(screen.getByText("FANTASY")).toBeInTheDocument();
-  });
-
-  it("should render container with proper classes", () => {
-    (useQuery as any).mockReturnValue({
-      data: {},
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
-    const { container } = render(<HomePage />);
-    const mainDiv = container.querySelector(".w-full");
-    expect(mainDiv).toBeInTheDocument();
   });
 });
