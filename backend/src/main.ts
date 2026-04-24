@@ -30,15 +30,17 @@ async function bootstrap() {
     }),
   );
 
-  // add documentation with swagger
-  const config = new DocumentBuilder()
-    .setTitle('BlablaBook')
-    .setDescription('The BlablaBook API description')
-    .setVersion('1.0')
-    .addTag('blablabooks')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  // add documentation with swagger (only in development)
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('BlablaBook')
+      .setDescription('The BlablaBook API description')
+      .setVersion('1.0')
+      .addTag('blablabooks')
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, documentFactory);
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }
