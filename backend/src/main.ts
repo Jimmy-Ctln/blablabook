@@ -3,9 +3,11 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
   app.use(cookieParser());
 
   const frontendUrl = process.env.FRONTEND_URL;
@@ -23,7 +25,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
-      whitelist: true, // retire les champs non définis
+      whitelist: true, // removes fields not defined in DTO
       forbidNonWhitelisted: true, // return error if field unknow is send
     }),
   );
