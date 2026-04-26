@@ -4,7 +4,7 @@
 
 Suite de tests MVP pour les fonctionnalités essentielles. Focus sur l'authentification, la gestion des livres et les pages principales.
 
-**Total: 51 tests (37 backend + 14 frontend)**
+**Total: 59 tests (34 backend + 25 frontend)**
 
 ---
 
@@ -76,36 +76,32 @@ Suite de tests MVP pour les fonctionnalités essentielles. Focus sur l'authentif
 
 ---
 
-## Coverage
+## Test Coverage Détaillé
 
-| Zone          | Coverage                 |
-| ------------- | ------------------------ |
-| Backend Core  | 25% (focus sur services) |
-| Frontend Core | 32% (pages MVP)          |
-| Auth Service  | 78% ✅                   |
-| Books Service | 40%                      |
-| User Service  | 33%                      |
-| LibraryPage   | 82% ✅                   |
-| LoginPage     | 77% ✅                   |
-| HomePage      | 71% ✅                   |
+### Backend Services
+
+| Service       | Statements | Branch | Functions | Status |
+| ------------- | ---------- | ------ | --------- | ------ |
+| Auth Service  | **84.44%** | 80%    | 80%       | ✅     |
+| Books Service | **90%**    | 55.22% | 100%      | ✅     |
+| User Service  | **91.37%** | 61.53% | 100%      | ✅     |
+
+### Frontend Pages
+
+| Page         | Statements | Branch | Functions | Status |
+| ------------ | ---------- | ------ | --------- | ------ |
+| HomePage     | **92.3%**  | 100%   | 80%       | ✅     |
+| LibraryPage  | **82.35%** | 60%    | 69.23%    | ✅     |
+| LoginPage    | **100%**   | 75%    | 100%      | ✅     |
+| RegisterPage | **100%**   | 75%    | 100%      | ✅     |
 
 ---
 
-## Checklist MVP
-
-- ✅ Auth (register, login, logout)
-- ✅ Books (add, remove, find with status)
-- ✅ User (create, get by email, check existing)
-- ✅ Frontend auth pages (login/register)
-- ✅ Frontend library page (view, search, add)
-- ✅ Frontend home page (categories, carousel)
-- ✅ All tests passing
-- ✅ No TypeScript errors
-
 ## Résumé Global
 
-- **Backend** : 161 tests implémentés
-- **Frontend** : API Integration, Hooks, Components et Stores testés
+- **Backend Total** : 34 tests, **89.11%** statements coverage
+- **Frontend Total** : 25 tests, **93.2%** statements coverage
+- **All tests passing** : 59/59 ✅
 
 ---
 
