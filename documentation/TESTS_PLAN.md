@@ -4,11 +4,11 @@
 
 Suite de tests MVP pour les fonctionnalités essentielles. Focus sur l'authentification, la gestion des livres et les pages principales.
 
-**Total: 37 tests (17 backend + 20 frontend)**
+**Total: 51 tests (37 backend + 14 frontend)**
 
 ---
 
-## Backend - 17 tests
+## Backend - 37 tests
 
 ### Auth Service (3 tests)
 
@@ -36,9 +36,9 @@ Suite de tests MVP pour les fonctionnalités essentielles. Focus sur l'authentif
 
 ---
 
-## Frontend - 20 tests
+## Frontend - 14 tests
 
-### Pages (15 tests)
+### Pages (14 tests)
 
 #### Login Page (2 tests)
 
@@ -73,12 +73,6 @@ Suite de tests MVP pour les fonctionnalités essentielles. Focus sur l'authentif
 | `renders all cards when search empty` | Liste complète affichée    |
 | `shows empty state`                   | Message quand 0 livres     |
 | `opens AddBookModal`                  | Modal d'ajout fonctionne   |
-
-#### BookDetails (1 test)
-
-| Test                              | Description                  |
-| --------------------------------- | ---------------------------- |
-| `should format date for database` | Dates formatées correctement |
 
 ---
 
