@@ -106,4 +106,192 @@ describe('UserService', () => {
     expect(result).toBeDefined();
     expect(result!.username).toBe('existing');
   });
+
+  it('should get user by username', async () => {
+    const mockUser = {
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      role: 'USER',
+      deletedAt: null,
+    };
+
+    const mockSelectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockUser]),
+    };
+    mockDb.select.mockReturnValue(mockSelectChain);
+
+    const result = await service.getUserByUsername('testuser');
+
+    expect(result).toBeDefined();
+    expect(result!.username).toBe('testuser');
+  });
+
+  it('should find user by id', async () => {
+    const mockUser = {
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      role: 'USER',
+      deletedAt: null,
+    };
+
+    const mockSelectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([mockUser]),
+    };
+    mockDb.select.mockReturnValue(mockSelectChain);
+
+    const result = await service.findById(1);
+
+    expect(result).toBeDefined();
+    expect(result.id).toBe(1);
+  });
+
+  it('should throw error when user not found by id', async () => {
+    const mockSelectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([]),
+    };
+    mockDb.select.mockReturnValue(mockSelectChain);
+
+    await expect(service.findById(999)).rejects.toThrow(
+      'User with id 999 not found',
+    );
+  });
+
+  it('should update user successfully', async () => {
+    const updateData = {
+      username: 'updateduser',
+      email: 'updated@example.com',
+    };
+
+    const existingUser = { id: 1, email: 'other@example.com' };
+    const updatedUser = { id: 1, ...updateData, role: 'USER', deletedAt: null };
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
+    const updateChain = {
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockResolvedValue([updatedUser]),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+    mockDb.update.mockReturnValue(updateChain);
+
+    const result = await service.update(1, updateData);
+
+    expect(result).toBeDefined();
+    expect(updateChain.set).toHaveBeenCalled();
+  });
+
+  it('should throw error when email already in use', async () => {
+    const updateData = { email: 'existing@example.com' };
+
+    const existingUser = { id: 2, email: 'existing@example.com' };
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([existingUser]),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    await expect(service.update(1, updateData)).rejects.toThrow(
+      'Email already in use',
+    );
+  });
+
+  it('should change password successfully', async () => {
+    const { verify } = require('argon2');
+    const mockUser = {
+      id: 1,
+      password: 'hashed_old_password',
+      deletedAt: null,
+    };
+
+    verify.mockResolvedValue(true);
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([mockUser]),
+    };
+
+    const updateChain = {
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockResolvedValue([mockUser]),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+    mockDb.update.mockReturnValue(updateChain);
+
+    const result = await service.changePassword(
+      1,
+      'old_password',
+      'new_password',
+    );
+
+    expect(result).toBeDefined();
+    expect(result.message).toBe('Password changed successfully');
+  });
+
+  it('should throw error when current password is incorrect', async () => {
+    const { verify } = require('argon2');
+    const mockUser = {
+      id: 1,
+      password: 'hashed_old_password',
+      deletedAt: null,
+    };
+
+    verify.mockResolvedValue(false);
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([mockUser]),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    await expect(
+      service.changePassword(1, 'wrong_password', 'new_password'),
+    ).rejects.toThrow('Current password is incorrect');
+  });
+
+  it('should soft delete user with anonymization', async () => {
+    const mockUser = { id: 1, email: 'test@example.com', deletedAt: null };
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([mockUser]),
+    };
+
+    const updateChain = {
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      returning: jest
+        .fn()
+        .mockResolvedValue([{ ...mockUser, deletedAt: new Date() }]),
+    };
+
+    mockDb.select
+      .mockReturnValueOnce(selectChain)
+      .mockReturnValueOnce(updateChain);
+    mockDb.update.mockReturnValue(updateChain);
+
+    const result = await service.softDelete(1);
+
+    expect(result).toBeDefined();
+    expect(updateChain.set).toHaveBeenCalled();
+  });
 });

@@ -158,4 +158,269 @@ describe('BooksService', () => {
     expect(result.books[0].status).toBe('À lire');
     expect(result.books[1].status).toBe('En cours');
   });
+
+  it('should find all books by categories', async () => {
+    const mockBooks = [
+      {
+        id: 1,
+        name: 'Book 1',
+        author: 'Author 1',
+        cover_url: 'url1',
+        description: 'desc1',
+        isbn: '123',
+        publishingHouse: 'House 1',
+        publishedAt: new Date(),
+        categoryName: 'Horror',
+      },
+      {
+        id: 2,
+        name: 'Book 2',
+        author: 'Author 2',
+        cover_url: 'url2',
+        description: 'desc2',
+        isbn: '456',
+        publishingHouse: 'House 2',
+        publishedAt: new Date(),
+        categoryName: 'Horror',
+      },
+    ];
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue(mockBooks),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    const result = await service.findAllBooks(['Horror']);
+
+    expect(result['horror']).toHaveLength(2);
+    expect(result['horror'][0].name).toBe('Book 1');
+  });
+
+  it('should get random books with limit', async () => {
+    const mockBooks = [
+      { id: 1, name: 'Random Book 1', author: 'Author 1' },
+      { id: 2, name: 'Random Book 2', author: 'Author 2' },
+    ];
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue(mockBooks),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    const result = await service.getRandomBooks(2);
+
+    expect(result).toHaveLength(2);
+    expect(selectChain.limit).toHaveBeenCalledWith(2);
+  });
+
+  it('should update book status with reading dates', async () => {
+    const mockUserList = { id: 1, userId: 1 };
+    const mockBook = { id: 1, name: 'Test Book' };
+    const readStart = new Date('2024-01-01');
+    const readEnd = new Date('2024-02-01');
+
+    // Mock first select (get user list)
+    const selectChain1 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockUserList]),
+    };
+
+    // Mock update (modify listBook)
+    const returningChain = {
+      returning: jest.fn().mockResolvedValue([{ readStart, readEnd }]),
+    };
+    const updateChain = {
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnValue(returningChain),
+    };
+
+    // Mock second select (get book)
+    const selectChain2 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockBook]),
+    };
+
+    mockDb.select
+      .mockReturnValueOnce(selectChain1)
+      .mockReturnValueOnce(selectChain2);
+    mockDb.update.mockReturnValue(updateChain);
+
+    const result = await service.updateBookStatus(1, 1, readStart, readEnd);
+
+    expect(result).toBeDefined();
+    expect(updateChain.set).toHaveBeenCalled();
+  });
+
+  it('should throw error when user list not found during update', async () => {
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    await expect(
+      service.updateBookStatus(1, 1, new Date(), null),
+    ).rejects.toThrow();
+  });
+
+  it('should create new book when not existing', async () => {
+    const createDto = {
+      name: 'New Book',
+      author: 'New Author',
+      coverUrl: 'url',
+      description: 'Description',
+      isbn: '999',
+      publishingHouse: 'House',
+      publishedAt: '2024-03-01',
+      categories: ['Horror'],
+    };
+
+    const mockNewBook = { id: 2, isbn: '999' };
+
+    // Mock: book not found
+    const selectChain1 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
+    // Mock: keywords matching
+    const selectChain2 = {
+      from: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([{ categoryId: 2, keywordId: 5 }]),
+    };
+
+    // Mock: category result
+    const selectChain3 = {
+      from: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      groupBy: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([{ categoryId: 2 }]),
+    };
+
+    // Mock: insert book
+    const insertChain1 = {
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockResolvedValue([mockNewBook]),
+    };
+
+    // Mock: user list
+    const selectChain4 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([{ id: 1, userId: 1 }]),
+    };
+
+    // Mock: insert book-keyword
+    const insertChain2 = {
+      values: jest.fn().mockReturnThis(),
+    };
+
+    // Mock: insert list-book
+    const insertChain3 = {
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockResolvedValue([]),
+    };
+
+    mockDb.select
+      .mockReturnValueOnce(selectChain1)
+      .mockReturnValueOnce(selectChain2)
+      .mockReturnValueOnce(selectChain3)
+      .mockReturnValueOnce(selectChain4);
+
+    mockDb.insert
+      .mockReturnValueOnce(insertChain1)
+      .mockReturnValueOnce(insertChain2)
+      .mockReturnValueOnce(insertChain3);
+
+    const result = await service.addToUserList(1, createDto);
+
+    expect(result.id).toBe(2);
+    expect(result.isbn).toBe('999');
+  });
+
+  it('should create user list if not existing', async () => {
+    const createDto = {
+      name: 'Test Book',
+      author: 'Author',
+      coverUrl: 'url',
+      description: 'Description',
+      isbn: '123',
+      publishingHouse: 'House',
+      publishedAt: '2024-01-01',
+      categories: [],
+    };
+
+    const mockBook = { id: 1, isbn: '123' };
+    const mockCreatedList = { id: 1, userId: 1 };
+
+    // Mock: book exists
+    const selectChain1 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockBook]),
+    };
+
+    // Mock: user list not found
+    const selectChain2 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
+    // Mock: insert new list
+    const insertChain1 = {
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockResolvedValue([mockCreatedList]),
+    };
+
+    // Mock: insert list-book
+    const insertChain2 = {
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockResolvedValue([]),
+    };
+
+    mockDb.select
+      .mockReturnValueOnce(selectChain1)
+      .mockReturnValueOnce(selectChain2);
+
+    mockDb.insert
+      .mockReturnValueOnce(insertChain1)
+      .mockReturnValueOnce(insertChain2);
+
+    const result = await service.addToUserList(1, createDto);
+
+    expect(result.id).toBe(1);
+    expect(insertChain1.values).toHaveBeenCalled();
+  });
+
+  it('should handle error when adding book to list', async () => {
+    const createDto = {
+      name: 'Test Book',
+      author: 'Author',
+      coverUrl: 'url',
+      description: 'Description',
+      isbn: '123',
+      publishingHouse: 'House',
+      publishedAt: '2024-01-01',
+      categories: [],
+    };
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockRejectedValue(new Error('Database error')),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    await expect(service.addToUserList(1, createDto)).rejects.toThrow(
+      'Unable to add book to user list',
+    );
+  });
 });

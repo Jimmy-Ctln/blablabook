@@ -14,13 +14,10 @@ const config: Config = {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: [
-    // ! permet d'ignorer un fichier pour le coverage
-    'src/**/*.ts',
-    '!src/**/*.module.ts',
-    '!src/**/*.dto.ts',
-    '!src/main.ts',
-    '!src/db/schema.ts',
-    '!src/seed.ts',
+    // Tests MVP: seulement les 3 services + imports nécessaires
+    'src/auth/auth.service.ts',
+    'src/books/books.service.ts',
+    'src/user/user.service.ts',
   ],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
 };

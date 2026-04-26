@@ -256,4 +256,26 @@ describe('AuthService', () => {
       );
     });
   });
+
+  describe('AuthService.logout()', () => {
+    it('should destroy refresh token', async () => {
+      tokenServiceMock.destroyToken.mockResolvedValue(true);
+
+      await authService.logout('test-refresh-token');
+
+      expect(tokenServiceMock.destroyToken).toHaveBeenCalledWith(
+        'test-refresh-token',
+      );
+    });
+
+    it('should handle missing refresh token gracefully', async () => {
+      tokenServiceMock.destroyToken.mockResolvedValue(false);
+
+      await authService.logout('invalid-token');
+
+      expect(tokenServiceMock.destroyToken).toHaveBeenCalledWith(
+        'invalid-token',
+      );
+    });
+  });
 });
