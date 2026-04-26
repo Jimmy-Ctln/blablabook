@@ -33,10 +33,19 @@ async function bootstrap() {
   // add documentation with swagger (only in development)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('BlablaBook')
-      .setDescription('The BlablaBook API description')
-      .setVersion('1.0')
-      .addTag('blablabooks')
+      .setTitle('BlablaBook API')
+      .setDescription(
+        'Gérez votre bibliothèque personnelle, découvrez de nouveaux titres.',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'JWT',
+      )
+      .addTag('Auth', 'Authentication - Register, Login, Logout')
+      .addTag('Books', 'Book Management - View, Add, Remove, Update Status')
+      .addTag('Category', 'Categories - Browse available book categories')
+      .addTag('User', 'User Profile - View, Update, Delete account')
       .build();
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, documentFactory);

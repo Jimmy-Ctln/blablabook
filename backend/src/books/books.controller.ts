@@ -17,14 +17,19 @@ import type { Request } from 'express';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookStatusDto } from './dto/update-book-status.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 
 /**
  * REST controller for book-related routes.
  * Delegates business logic to `BooksService` and handles parameter parsing.
  */
-@ApiTags('books')
+@ApiTags('Books')
 @Controller('books')
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
@@ -61,6 +66,7 @@ export class BooksController {
    */
   @UseGuards(AuthGuard)
   @Get('library/:userId')
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get all books for a user' })
   @ApiResponse({
     status: 200,
@@ -89,6 +95,7 @@ export class BooksController {
    */
   @UseGuards(AuthGuard)
   @Post('library/:userId')
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Add a book to a user library' })
   @ApiResponse({ status: 201, description: 'Book added to user library' })
   @ApiResponse({ status: 403, description: 'Access denied' })
@@ -115,6 +122,7 @@ export class BooksController {
    */
   @UseGuards(AuthGuard)
   @Delete('library/:userId/book/:bookId')
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Remove a book from a user library' })
   @ApiResponse({ status: 200, description: 'Book removed from user library' })
   @ApiResponse({ status: 403, description: 'Access denied' })
@@ -142,6 +150,7 @@ export class BooksController {
    */
   @UseGuards(AuthGuard)
   @Patch('library/:userId/book/:bookId/status')
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Update reading status for a book in user library' })
   @ApiResponse({ status: 200, description: 'Book status updated successfully' })
   @ApiResponse({ status: 403, description: 'Access denied' })
