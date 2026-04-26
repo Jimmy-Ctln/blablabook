@@ -58,5 +58,25 @@ describe("Register Page", () => {
       });
       postSpy.mockRestore();
     });
+
+    it("should handle registration error", async () => {
+      const postSpy = vi.spyOn(api, "post").mockRejectedValue({
+        response: { data: { message: "Email déjà utilisé" } },
+        message: "Error",
+      });
+      const { container } = await renderWithProviders("/register");
+      const inputs = screen.getAllByRole("textbox");
+      const passwordInput = container.querySelector('input[type="password"]');
+      await userEvent.type(inputs[0], "existing@email.com");
+      await userEvent.type(inputs[1], "user");
+      await userEvent.type(passwordInput!, "password123");
+      const confirmInput = container.querySelectorAll(
+        'input[type="password"]',
+      )[1];
+      await userEvent.type(confirmInput!, "password123");
+      await userEvent.click(screen.getByText("Soumettre"));
+      expect(await screen.findByText("Email déjà utilisé")).toBeInTheDocument();
+      postSpy.mockRestore();
+    });
   });
 });

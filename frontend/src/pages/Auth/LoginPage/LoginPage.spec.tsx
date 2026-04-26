@@ -61,4 +61,21 @@ describe("Login Page", async () => {
     });
     postSpy.mockRestore();
   });
+
+  it("should handle login error and show message", async () => {
+    const postSpy = vi.spyOn(api, "post").mockRejectedValue({
+      response: { data: { message: "Email ou mot de passe incorrect" } },
+      message: "Error",
+    });
+    const { container } = await renderWithProviders("/login");
+    const emailInput = screen.getAllByRole("textbox")[0];
+    const passwordInput = container.querySelector('input[type="password"]');
+    await userEvent.type(emailInput, "wrong@example.com");
+    await userEvent.type(passwordInput!, "wrongpass");
+    await userEvent.click(screen.getByText("Soumettre"));
+    expect(
+      await screen.findByText("Email ou mot de passe incorrect"),
+    ).toBeInTheDocument();
+    postSpy.mockRestore();
+  });
 });

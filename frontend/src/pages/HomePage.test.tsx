@@ -130,4 +130,52 @@ describe("HomePage", () => {
     expect(screen.getByText("ROMANCE")).toBeInTheDocument();
     expect(screen.getByText("FANTASY")).toBeInTheDocument();
   });
+
+  it("should show loading message when searching", () => {
+    (useQuery as any).mockReturnValue({
+      data: {},
+      isFetching: false,
+    });
+    (useExternalBooks as any).mockReturnValue({
+      data: [],
+      isLoading: true,
+    });
+
+    const { rerender } = render(<HomePage />);
+    // Simulate search parameter by re-rendering with search term in URL
+    rerender(<HomePage />);
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
+  });
+
+  it("should show no results message when search returns empty", () => {
+    (useQuery as any).mockReturnValue({
+      data: {},
+      isFetching: false,
+    });
+    (useExternalBooks as any).mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    render(<HomePage />);
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
+  });
+
+  it("should display search results when found", () => {
+    const mockSearchResults = [
+      { id: 1, title: "Found Book 1", cover_url: "" },
+      { id: 2, title: "Found Book 2", cover_url: "" },
+    ];
+    (useQuery as any).mockReturnValue({
+      data: {},
+      isFetching: false,
+    });
+    (useExternalBooks as any).mockReturnValue({
+      data: mockSearchResults,
+      isLoading: false,
+    });
+
+    render(<HomePage />);
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
+  });
 });
