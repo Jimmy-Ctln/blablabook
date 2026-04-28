@@ -33,7 +33,7 @@ export const useExternalBooks = (options: UseExternalBooksOptions) => {
   return useQuery<ExternalBook[]>({
     queryKey,
     queryFn,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     enabled,
     ...queryOptions,
   });
