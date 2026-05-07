@@ -85,5 +85,3 @@ services:
 volumes:
   # Persistent volume for PostgreSQL data
   pgdata:
-  # Persistent volume for Redis data
-  # redisdata:
