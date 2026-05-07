@@ -1,13 +1,9 @@
 import CarouselDisplay from "@/components/CarouselDisplay";
 import Hero from "@/components/Hero";
 import { useEffect, useState } from "react";
-import { useExternalBooks } from "@/hooks/useExternalBooks";
 import { getBooks, getRandomBooks } from "@/api/books";
 import type { BookRow, BooksByCategory } from "@/@types/books";
-import {
-  mapBookRowToDisplay,
-  mapExternalBookToDisplay,
-} from "@/lib/bookDisplayMapper";
+import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 import { useQuery } from "@tanstack/react-query";
 
 export default function HomePage() {
