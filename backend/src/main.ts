@@ -3,9 +3,11 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
   app.use(cookieParser());
 
   const frontendUrl = process.env.FRONTEND_URL;
@@ -23,20 +25,31 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
-      whitelist: true, // retire les champs non définis
+      whitelist: true, // removes fields not defined in DTO
       forbidNonWhitelisted: true, // return error if field unknow is send
     }),
   );
 
-  // add documentation with swagger
-  const config = new DocumentBuilder()
-    .setTitle('BlablaBook')
-    .setDescription('The BlablaBook API description')
-    .setVersion('1.0')
-    .addTag('blablabooks')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  // add documentation with swagger (only in development)
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('BlablaBook API')
+      .setDescription(
+        'Gérez votre bibliothèque personnelle, découvrez de nouveaux titres.',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'JWT',
+      )
+      .addTag('Auth', 'Authentication - Register, Login, Logout')
+      .addTag('Books', 'Book Management - View, Add, Remove, Update Status')
+      .addTag('Category', 'Categories - Browse available book categories')
+      .addTag('User', 'User Profile - View, Update, Delete account')
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, documentFactory);
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

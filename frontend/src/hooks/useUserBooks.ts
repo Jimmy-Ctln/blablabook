@@ -76,7 +76,7 @@ export const useUserBooks = (userId?: number) => {
     },
   });
 
-  // Update book status (via dates)
+  // Update book status
   const updateStatusMutation = useMutation({
     mutationFn: ({
       bookId,

@@ -19,6 +19,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
@@ -29,7 +30,7 @@ import { AuthGuard } from './auth.guard';
 import { CookieService } from '../security/cookie/cookie.service';
 import { TokenService } from '../security/token/token.service';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
 export class AuthController {
@@ -91,6 +92,7 @@ export class AuthController {
 
   @Post('/logout')
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('JWT')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'User is logout and token is destroyed',
