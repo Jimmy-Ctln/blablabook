@@ -52,7 +52,6 @@ describe('AuthService', () => {
     const email = 'giz@mail.com';
     const username = 'giz';
     const role = 'USER';
-    const image = 'https://randomuser.me/api/portraits/lego/0.jpg';
     const password = '12345678';
     const date = new Date();
 
@@ -61,7 +60,7 @@ describe('AuthService', () => {
       email,
       password,
       username,
-      image,
+      avatar_url: 'https://randomuser.me/api/portraits/lego/0.jpg',
       role,
       createdAt: date,
       updatedAt: date,
@@ -138,7 +137,7 @@ describe('AuthService', () => {
         email,
         username,
         role: 'USER',
-        image: null,
+        avatar_url: null,
         password,
         createdAt: date,
         updatedAt: date,
@@ -254,6 +253,28 @@ describe('AuthService', () => {
 
       await expect(authService.register(payload)).rejects.toThrow(
         'username is already in use',
+      );
+    });
+  });
+
+  describe('AuthService.logout()', () => {
+    it('should destroy refresh token', async () => {
+      tokenServiceMock.destroyToken.mockResolvedValue(true);
+
+      await authService.logout('test-refresh-token');
+
+      expect(tokenServiceMock.destroyToken).toHaveBeenCalledWith(
+        'test-refresh-token',
+      );
+    });
+
+    it('should handle missing refresh token gracefully', async () => {
+      tokenServiceMock.destroyToken.mockResolvedValue(false);
+
+      await authService.logout('invalid-token');
+
+      expect(tokenServiceMock.destroyToken).toHaveBeenCalledWith(
+        'invalid-token',
       );
     });
   });
