@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import {
@@ -40,6 +41,7 @@ export class AuthController {
     private readonly tokenService: TokenService,
   ) {}
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('/register')
   @ApiCreatedResponse({
     description: 'User is created with password hashed.',
@@ -54,6 +56,7 @@ export class AuthController {
     return this.authService.register(payload);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('/login')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
@@ -90,6 +93,7 @@ export class AuthController {
     });
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('/logout')
   @UseGuards(AuthGuard)
   @ApiBearerAuth('JWT')
@@ -111,6 +115,7 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('/refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({

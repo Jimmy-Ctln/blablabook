@@ -11,6 +11,7 @@ import {
   UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UserService } from './user.service';
@@ -26,6 +27,7 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Patch('change-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiBearerAuth('JWT')
   @ApiResponse({
     status: 200,
@@ -52,6 +54,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get(':id')
   @ApiBearerAuth('JWT')
   @ApiResponse({ status: 200, type: UpdateUserResponseDto })
@@ -72,6 +75,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id')
   @ApiBearerAuth('JWT')
   @ApiResponse({ status: 200, type: UpdateUserResponseDto })

@@ -1,14 +1,11 @@
 import CarouselDisplay from "@/components/CarouselDisplay";
 import Hero from "@/components/Hero";
-import { useEffect, useState } from "react";
 import { getBooks, getRandomBooks } from "@/api/books";
 import type { BookRow, BooksByCategory } from "@/@types/books";
 import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 import { useQuery } from "@tanstack/react-query";
 
 export default function HomePage() {
-  const [randomBooks, setRandomBooks] = useState<BookRow[]>();
-
   const categories = [
     "aventure",
     "romance",
@@ -19,36 +16,38 @@ export default function HomePage() {
     "thriller",
   ];
 
+  const { data: randomBooks = [], isLoading: isLoadingRandom } = useQuery<
+    BookRow[]
+  >({
+    queryKey: ["random-books"],
+    queryFn: () => getRandomBooks(20),
+  });
+
   const { data: books = {}, isFetching } = useQuery<BooksByCategory>({
     queryKey: ["books-carousel"],
     queryFn: () => getBooks(categories),
   });
 
-  useEffect(() => {
-    getRandomBooks(20).then((fetchedBooks) => {
-      setRandomBooks(fetchedBooks);
-    });
-  }, []);
-
   const content = (
     <>
       <CarouselDisplay
         title={"SUGGESTIONS ALEATOIRE"}
-        books={(randomBooks || []).map(mapBookRowToDisplay)}
-        isLoading={!randomBooks}
+        books={randomBooks.map(mapBookRowToDisplay)}
+        isLoading={isLoadingRandom}
       />
 
       {categories.map((categoryTitle) => {
         const categoryKey = categoryTitle.toLowerCase();
         const title = categoryTitle.toUpperCase();
         const categoryBooks = books[categoryKey] ?? [];
+        const isLoading = isFetching || categoryBooks.length === 0;
 
         return (
           <CarouselDisplay
             key={categoryTitle}
             title={title}
             books={categoryBooks.map(mapBookRowToDisplay)}
-            isLoading={isFetching}
+            isLoading={isLoading}
           />
         );
       })}

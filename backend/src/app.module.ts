@@ -14,7 +14,7 @@ import { DrizzleModule } from './db/drizzle.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 seconds
-        limit: 10, // Max 10
+        limit: 60, // Default: 60 requests per 60s
       },
     ]),
     DrizzleModule.forRoot({
