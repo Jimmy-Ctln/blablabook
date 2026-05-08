@@ -13,6 +13,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
@@ -39,6 +40,7 @@ export class BooksController {
    * Returns all books persisted in the `book` table (not user-specific).
    */
   @Get()
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({ summary: 'Get all books' })
   @ApiResponse({ status: 200, description: 'Books retrieved successfully' })
   async getAllBooks(@Query('category') category?: string | string[]) {
@@ -54,6 +56,7 @@ export class BooksController {
    * GET /books/random
    * Returns randoms books persisted in the `book` table (not user-specific).
    */
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
   @Get('random')
   async getRandomBooks(@Query('limit') limit: string = '10') {
     return this.booksService.getRandomBooks(parseInt(limit));
@@ -65,6 +68,7 @@ export class BooksController {
    * Supports pagination with offset and limit query parameters.
    */
   @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('library/:userId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get all books for a user' })
@@ -94,6 +98,7 @@ export class BooksController {
    * Adds a book to the user's list, creating the book and/or list if needed.
    */
   @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post('library/:userId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Add a book to a user library' })
@@ -121,6 +126,7 @@ export class BooksController {
    * Removes the link between a book and the user's list.
    */
   @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Delete('library/:userId/book/:bookId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Remove a book from a user library' })
@@ -148,6 +154,7 @@ export class BooksController {
    * Updates the reading dates (readStart, readEnd) for a book in the user's list.
    * This allows changing the computed status based on dates.
    */
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @UseGuards(AuthGuard)
   @Patch('library/:userId/book/:bookId/status')
   @ApiBearerAuth('JWT')
