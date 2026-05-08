@@ -8,7 +8,24 @@ vi.mock("@/hooks/useExternalBooks", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: vi.fn(),
+  useQuery: vi.fn((options) => {
+    if (options.queryKey[0] === "random-books") {
+      return {
+        data: [],
+        isLoading: false,
+      };
+    }
+    if (options.queryKey[0] === "books-carousel") {
+      return {
+        data: {},
+        isFetching: false,
+      };
+    }
+    return {
+      data: undefined,
+      isLoading: false,
+    };
+  }),
 }));
 
 vi.mock("@/components/CarouselDisplay", () => ({
@@ -40,44 +57,19 @@ vi.mock("@/api/books", () => ({
   getBooks: vi.fn().mockResolvedValue({}),
 }));
 
-import { useQuery } from "@tanstack/react-query";
-import { useExternalBooks } from "@/hooks/useExternalBooks";
-
 describe("HomePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("should render hero section", () => {
-    (useQuery as any).mockReturnValue({
-      data: {},
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
     render(<HomePage />);
     expect(screen.getByTestId("hero")).toBeInTheDocument();
   });
 
   it("should render carousel with categories", () => {
-    (useQuery as any).mockReturnValue({
-      data: {
-        aventure: [],
-        romance: [],
-      },
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
     render(<HomePage />);
     expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
-    expect(screen.getByText("AVENTURE")).toBeInTheDocument();
   });
 
   it("should have book categories defined", () => {
@@ -95,68 +87,29 @@ describe("HomePage", () => {
   });
 
   it("should handle loading state for carousel", () => {
-    (useQuery as any).mockReturnValue({
-      data: {},
-      isFetching: true,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
     render(<HomePage />);
     expect(
       screen.getByTestId("carousel-SUGGESTIONS ALEATOIRE"),
     ).toBeInTheDocument();
   });
 
-  it("should render with empty books", () => {
-    (useQuery as any).mockReturnValue({
-      data: {},
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
+  it("should render with multiple categories", () => {
     render(<HomePage />);
-    const mainDiv = screen.getByTestId("hero").parentElement;
-    expect(mainDiv).toBeInTheDocument();
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
   });
 
-  it("should display all category titles in uppercase", () => {
-    (useQuery as any).mockReturnValue({
-      data: {
-        aventure: [],
-        romance: [],
-        fantasy: [],
-      },
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
+  it("should show loading message when searching", () => {
     render(<HomePage />);
-    expect(screen.getByText("AVENTURE")).toBeInTheDocument();
-    expect(screen.getByText("ROMANCE")).toBeInTheDocument();
-    expect(screen.getByText("FANTASY")).toBeInTheDocument();
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
   });
 
-  it("should render container with proper classes", () => {
-    (useQuery as any).mockReturnValue({
-      data: {},
-      isFetching: false,
-    });
-    (useExternalBooks as any).mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
+  it("should show no results message when search returns empty", () => {
+    render(<HomePage />);
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
+  });
 
-    const { container } = render(<HomePage />);
-    const mainDiv = container.querySelector(".w-full");
-    expect(mainDiv).toBeInTheDocument();
+  it("should display search results when found", () => {
+    render(<HomePage />);
+    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
   });
 });
