@@ -68,7 +68,7 @@ export class BooksController {
    * Supports pagination with offset and limit query parameters.
    */
   @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Get('library/:userId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get all books for a user' })
@@ -126,7 +126,7 @@ export class BooksController {
    * Removes the link between a book and the user's list.
    */
   @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Delete('library/:userId/book/:bookId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Remove a book from a user library' })
