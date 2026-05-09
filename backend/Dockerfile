@@ -14,6 +14,9 @@ RUN npm run build && ls -la dist
 # ---- PRODUCTION STAGE ----
 FROM node:20-alpine
 
+#Add curl
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
 # only production deps
