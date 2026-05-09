@@ -1,4 +1,4 @@
-# ===== BUILD STAGE =====
+# ---- BUILD STAGE ----
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -11,19 +11,20 @@ COPY . .
 RUN npm run build
 
 
-# ===== PRODUCTION STAGE =====
+# ---- PRODUCTION STAGE ----
 FROM node:20-alpine
 
 WORKDIR /app
 
-# install only production dependencies
+# only production deps
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev
 
-# copy compiled app only
+# copy build output
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/start.sh ./start.sh
 
+# copy runtime scripts
+COPY start.sh ./start.sh
 RUN chmod +x ./start.sh
 
 EXPOSE 3000
