@@ -1,3 +1,17 @@
+/**
+ * SWC Configuration for NestJS Development
+ *
+ * SWC (Speedy Web Compiler) is a super-fast TypeScript/JavaScript compiler written in Rust.
+ * It's used by NestJS (via the @nestjs/cli) to compile TypeScript to JavaScript during development
+ * and is significantly faster than the default tsc compiler.
+ *
+ * Why this file was added:
+ * - SWC requires an explicit configuration file (.swcrc) to properly handle TypeScript compilation
+ * - The 'baseUrl' must be set to an absolute or relative path for SWC to resolve module paths correctly
+ * - Without this config, SWC fails when trying to resolve path aliases like '@/auth/types'
+ * - The explicit path aliases configuration ensures consistency across local, Docker, and production environments
+ * - This enables the '@/*' alias to work properly during development watch mode
+ */
 {
   "jsc": {
     "baseUrl": ".",
