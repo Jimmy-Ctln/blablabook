@@ -118,7 +118,7 @@ jobs:
 
       # Local PostgreSQL container URL for CI integration testing
       # NOTE: This is ephemeral and only used for test validation
-      DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}
+      DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
 
     steps:
       # Checkout repository code into GitHub Actions runner
@@ -156,7 +156,7 @@ jobs:
         run: npm run migrate
         working-directory: backend
         env:
-          DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ env.DB_HOST }}:${{ env.DB_PORT }}/${{ secrets.DB_NAME }}
+          DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
 
       # Wait for backend service to become healthy and responsive
       - name: Wait for Backend
