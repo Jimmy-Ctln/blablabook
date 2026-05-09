@@ -163,6 +163,8 @@ jobs:
       # Validates schema changes before applying to production database
       - name: Run local database migrations
         run: |
+          echo "Installing dev dependencies in backend container..."
+          docker exec backend npm install --include=dev
           echo "Running migrations from backend container..."
           docker exec -e DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}" backend npm run migrate
 
