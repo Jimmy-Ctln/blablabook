@@ -153,8 +153,7 @@ jobs:
       # Test database connection before running migrations
       - name: Test database connection
         run: |
-          PGPASSWORD="${{ secrets.DB_PASSWORD }}" psql \
-            -h postgres \
+          docker exec postgres psql \
             -U "${{ secrets.DB_USER }}" \
             -d "${{ secrets.DB_NAME }}" \
             -c "SELECT 1"
@@ -164,11 +163,8 @@ jobs:
       # Validates schema changes before applying to production database
       - name: Run local database migrations
         run: |
-          echo "DATABASE_URL: $DATABASE_URL"
-          npm run migrate -- --verbose
-        working-directory: backend
-        env:
-          DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
+          echo "Running migrations from backend container..."
+          docker exec -e DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}" backend npm run migrate
 
       # Wait for backend service to become healthy and responsive
       - name: Wait for Backend
