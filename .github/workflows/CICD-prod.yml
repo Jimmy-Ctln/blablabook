@@ -147,7 +147,7 @@ jobs:
           fi
 
       - name: Install backend dependencies
-        run: npm ci
+        run: npm ci --include=dev
         working-directory: backend
 
       # Execute database migrations against local container
