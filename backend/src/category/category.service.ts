@@ -5,7 +5,7 @@ import {
   Logger,
   BadRequestException,
 } from '@nestjs/common';
-import * as schema from 'src/db/schema';
+import * as schema from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryResponseDto } from './dto/category-response.dto';

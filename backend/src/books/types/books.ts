@@ -1,4 +1,4 @@
-import { book, listBook } from 'src/db/schema';
+import { book, listBook } from '@/db/schema';
 
 // drizzle generated type for book with schema
 export type BookSelect = typeof book.$inferSelect;

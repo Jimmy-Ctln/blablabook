@@ -1,4 +1,4 @@
-import { refreshToken, user } from 'src/db/schema';
+import { refreshToken, user } from '@/db/schema';
 
 export type JwtPayload = {
   sub: number;

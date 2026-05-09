@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import type { JwtPayload } from 'src/security/token/types';
+import type { JwtPayload } from '@/security/token/types';
 
 export type TokenExtractorData = {
   jwtCookie: string | null;
