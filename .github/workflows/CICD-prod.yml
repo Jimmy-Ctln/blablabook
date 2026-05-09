@@ -149,7 +149,7 @@ jobs:
       # Execute database migrations against local container
       # Validates schema changes before applying to production database
       - name: Run local database migrations
-        run: npx drizzle-kit migrate
+        run: npm run migrate
         working-directory: backend
         env:
           DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ env.DB_HOST }}:${{ env.DB_PORT }}/${{ secrets.DB_NAME }}
