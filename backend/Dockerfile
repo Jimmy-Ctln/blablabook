@@ -19,9 +19,9 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-# only production deps
+# Install all dependencies (prod + dev) for migration support
 COPY package.json package-lock.json* ./
-RUN npm install --omit=dev
+RUN npm install
 
 # copy build output
 COPY --from=builder /app/dist ./dist
