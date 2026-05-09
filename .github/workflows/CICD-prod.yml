@@ -146,6 +146,10 @@ jobs:
             exit 1
           fi
 
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
       # Execute database migrations against local container
       # Validates schema changes before applying to production database
       - name: Run local database migrations
