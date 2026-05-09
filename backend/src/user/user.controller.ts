@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { RequestWithUser } from '@/auth/types';
 import { UserService } from './user.service';
 import { UpdateUserResponseDto } from './dto/update-user.response.dto';
 import { UpdateUserRequestDto } from './dto/update-user.request.dto';
@@ -39,7 +39,7 @@ export class UserController {
     description: 'Current password is incorrect',
   })
   async changePassword(
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
     @Body() body: ChangePasswordRequestDto,
   ) {
     const userId = request['user']?.sub;
@@ -62,7 +62,7 @@ export class UserController {
   @ApiResponse({ status: 403, description: 'Access denied' })
   async findById(
     @Param('id', ParseIntPipe) id: number,
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
   ) {
     const userId = request['user']?.sub;
     if (!userId) {
@@ -84,7 +84,7 @@ export class UserController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateUserRequestDto,
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
   ) {
     const userId = request['user']?.sub;
     if (!userId) {
@@ -108,7 +108,7 @@ export class UserController {
     description: 'Account deleted successfully',
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async deleteAccount(@Req() request: Request) {
+  async deleteAccount(@Req() request: RequestWithUser) {
     const userId = request['user']?.sub;
     if (!userId) {
       throw new BadRequestException('User not found in request');

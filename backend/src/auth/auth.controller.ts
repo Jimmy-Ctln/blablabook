@@ -11,7 +11,8 @@ import {
   Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
+import type { RequestWithUser } from './types';
 import { AuthService } from './auth.service';
 import {
   ApiCreatedResponse,
@@ -102,7 +103,7 @@ export class AuthController {
     description: 'User is logout and token is destroyed',
   })
   async logout(
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
     @Res({ passthrough: true }) response: Response,
   ) {
     const refreshToken = request['refresh_token'] as string;
@@ -125,7 +126,7 @@ export class AuthController {
     description: 'Refresh token is invalid or expired',
   })
   async refresh(
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
     @Res({ passthrough: true }) response: Response,
   ) {
     // Extract refresh token from cookies

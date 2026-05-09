@@ -11,6 +11,7 @@ const config: Config = {
   testEnvironment: 'node',
   // On pointe explicitement src vers le dossier source
   moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
     '^src/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: [

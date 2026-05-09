@@ -1,4 +1,4 @@
-import { user } from 'src/db/schema';
+import { user } from '@/db/schema';
 
 export type UserSelect = typeof user.$inferSelect; // drizzle generated type for user with schema
 export type UserInsert = typeof user.$inferInsert;

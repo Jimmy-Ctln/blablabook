@@ -14,7 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import type { Request } from 'express';
+import type { RequestWithUser } from '@/auth/types';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookStatusDto } from './dto/update-book-status.dto';
@@ -79,7 +79,7 @@ export class BooksController {
   @ApiResponse({ status: 403, description: 'Access denied' })
   async getUserBooks(
     @Param('userId', ParseIntPipe) userId: number,
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
@@ -107,7 +107,7 @@ export class BooksController {
   async addBookToUserList(
     @Param('userId', ParseIntPipe) userId: number,
     @Body() createBookDto: CreateBookDto,
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
   ) {
     const authenticatedUserId = request['user']?.sub;
     if (!authenticatedUserId) {
@@ -135,7 +135,7 @@ export class BooksController {
   async removeBookFromUserList(
     @Param('userId', ParseIntPipe) userId: number,
     @Param('bookId', ParseIntPipe) bookId: number,
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
   ) {
     const authenticatedUserId = request['user']?.sub;
     if (!authenticatedUserId) {
@@ -165,7 +165,7 @@ export class BooksController {
     @Param('userId', ParseIntPipe) userId: number,
     @Param('bookId', ParseIntPipe) bookId: number,
     @Body() updateDatesDto: UpdateBookStatusDto,
-    @Req() request: Request,
+    @Req() request: RequestWithUser,
   ) {
     const authenticatedUserId = request['user']?.sub;
     if (!authenticatedUserId) {

@@ -5,16 +5,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
-import { TokenExtractorData } from './types';
-import { JwtPayload } from 'src/security/token/types';
+import { RequestWithUser, TokenExtractorData } from './types';
+import { JwtPayload } from '@/security/token/types';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
 
     const tokens: TokenExtractorData = this.extractTokenFromCookie(request);
 
@@ -29,8 +28,8 @@ export class AuthGuard implements CanActivate {
         },
       );
 
-      request['user'] = payload;
-      request['refresh_token'] = tokens.refreshTokenCookie;
+      request.user = payload;
+      request.refresh_token = tokens.refreshTokenCookie;
       return true;
     } catch (error) {
       // JWT validation failed (invalid signature or expired)
