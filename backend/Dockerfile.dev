@@ -22,5 +22,4 @@ EXPOSE 3000
 
 # Start the backend in development mode (package.json must contain "start:dev": "nest start --watch")
 # CMD npm run migrate && npm run start:dev
-# CMD ["./start.sh"] # failed but I don't know why 
 CMD [ "sh", "-c", "npm run migrate && npm run start:dev"]
