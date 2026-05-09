@@ -138,17 +138,6 @@ jobs:
             exit 1
           fi
 
-      # Apply database migrations (now that database is ready)
-      - name: Apply database migrations
-        run: |
-          echo "Applying database migrations..."
-          docker exec backend npm run migrate || {
-            echo "Migration failed, checking logs..."
-            docker compose logs backend
-            exit 1
-          }
-          echo "✓ Migrations applied successfully"
-
       # Wait for Backend to be ready
       - name: Wait for Backend
         run: |

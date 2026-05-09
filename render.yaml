@@ -5,7 +5,7 @@ services:
     region: frankfurt
     plan: free
     buildCommand: cd backend && npm install --include=dev && npm run build
-    startCommand: cd backend && npm run migrate && node dist/main.js
+    startCommand: cd backend && node dist/main.js
     envVars:
       - key: NODE_ENV
         value: production
