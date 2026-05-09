@@ -30,31 +30,29 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+
     environment:
-      # Database connection variables
       - PGHOST=${DB_HOST}
       - PGUSER=${DB_USER}
       - PGDATABASE=${DB_NAME}
       - PGPASSWORD=${DB_PASSWORD}
       - PGPORT=${DB_PORT}
-      # url pour drizzle
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL}
-      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
       - NODE_ENV=${NODE_ENV}
+
     ports:
-      # Publish backend port to host for direct access
       - "3000:3000"
+
     healthcheck:
-      # Check if backend API is responding
-      test: ["CMD-SHELL", "curl -f ${VITE_BACKEND_URL}/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
     depends_on:
-      # Ensure Postgres is healthy before starting backend
       postgres:
         condition: service_healthy
 
