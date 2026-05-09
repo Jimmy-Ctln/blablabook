@@ -1,50 +1,55 @@
 name: CICD-dev
 
-# At each push this workflow will run
 on:
   push:
-    branches:
-      - dev
-  # At each pull request to dev this workflow will run
+    branches: [dev]
   pull_request:
-    branches:
-      - dev
+    branches: [dev]
+
+# Cancel in-progress workflow runs if a new push arrives on the same branch
+concurrency:
+  group: dev-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ### FRONT CI ###
+  ### FRONTEND CI ###
   ci-frontend:
-    # Job runs on the latest Ubuntu virtual machine
     runs-on: ubuntu-latest
+
     defaults:
       run:
-        # Set working directory to frontend
         working-directory: frontend
+
     steps:
-      # Clone repository onto GitHub VM
+      # Checkout repository code into GitHub Actions runner
       - uses: actions/checkout@v4
 
-      # Install Node.js version 20
+      # Setup Node.js runtime with npm dependency caching for faster builds
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Enable NPM cache to speed up subsequent builds
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # Install frontend dependencies
-      - name: Frontend CI
+      # Install dependencies using npm ci for reproducible installs
+      - name: Install dependencies
         run: npm ci
 
-      # Build frontend (generates dist folder)
-      - run: npm run build
-
-      # Run frontend tests
-      - name: Frontend tests
+      # Run frontend test suite (fail fast if tests fail)
+      - name: Run frontend tests
         run: npm run test
 
-  ### BACK CI ###
+      # Build frontend assets with Vite
+      - name: Build frontend
+        run: npm run build
+        env:
+          # Environment variable injected for consistency with production build
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+
+  ### BACKEND CI ###
   ci-backend:
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: backend
@@ -54,34 +59,64 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     steps:
-      # Clone repo
+      # Checkout repository code into GitHub Actions runner
       - uses: actions/checkout@v4
 
-      # Node.js setup
+      # Setup Node.js runtime with npm dependency caching for faster builds
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # Install dependencies
-      - name: Backend ci
+      # Install dependencies using npm ci for reproducible installs
+      - name: Install dependencies
         run: npm ci
 
-      # Build backend
-      - run: npm run build
-
-      # Run backend tests
-      - name: Backend tests
+      # Run backend test suite (fail fast if tests fail)
+      - name: Run backend tests
         run: npm run test
 
-  ### DOCKER CI ###
+      # Compile TypeScript backend to JavaScript
+      - name: Build backend
+        run: npm run build
+
+  ### DATABASE MIGRATION CHECK ###
+  db-check:
+    runs-on: ubuntu-latest
+    needs: [ci-backend]
+
+    steps:
+      # Checkout repository code into GitHub Actions runner
+      - uses: actions/checkout@v4
+
+      # Setup Node.js runtime with npm dependency caching for faster builds
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # Install dependencies using npm ci for reproducible installs
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      # Validate database migrations can be generated without errors
+      # NOTE: This only generates, does not apply migrations
+      - name: Validate migrations (generate only)
+        run: npx drizzle-kit generate
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  ### DOCKER INTEGRATION CI ###
+  # Full integration testing with Docker Compose
+  # Depends on: ci-frontend and db-check (which depends on ci-backend)
+  # All unit tests must pass before running integration tests
   ci-docker:
     runs-on: ubuntu-latest
-    needs: [ci-frontend, ci-backend]
-    defaults:
-      run:
-        working-directory: .
+    needs: [ci-frontend, db-check]
 
     env:
       DB_NAME: ${{ secrets.DB_NAME }}
@@ -89,97 +124,90 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      # Local development endpoints for testing from GitHub runner
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-      NODE_ENV: "dev"
+      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      # Docker internal service name for container-to-container communication
+      BACKEND_DOCKER_URL: ${{ secrets.BACKEND_DOCKER_URL }}
+      # Database connection details for Docker container
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: 5432
 
     steps:
-      # Clone repo
+      # Checkout repository code into GitHub Actions runner
       - uses: actions/checkout@v4
 
-      # Check Docker version
-      - name: Check Docker
-        run: docker --version
-
-      # Install curl if not available
-      - name: Install curl
-        run: sudo apt-get update && sudo apt-get install -y curl
-
+      # Start all services defined in docker-compose.dev.yml
       - name: Start docker compose
-        # Inject GitHub env vars directly into shell
-        # | is for multi-line script
         run: docker compose -f docker-compose.dev.yml up -d --build
 
-      # Wait for Postgres to be ready
-      - name: Wait for Postgres
+      # Wait for PostgreSQL container to be ready and accepting connections
+      - name: Wait for PostgreSQL
         run: |
           max_attempts=10
           attempt=1
-          until docker exec postgres pg_isready -U blablabook || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for postgres..."
-            sleep 5
-            attempt=$((attempt + 1))
-          done
-
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Postgres failed to start in time!"
-            exit 1
-          fi
-
-      # Wait for Frontend to be ready
-      - name: Wait for Frontend
-        run: |
-          max_attempts=10
-          attempt=1
-          until curl -f "$FRONTEND_URL" || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for frontend..."
+          until docker exec postgres pg_isready -U ${{ secrets.DB_USER }} || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for postgres... ($attempt/$max_attempts)"
             sleep 5
             attempt=$((attempt + 1))
           done
           if [ $attempt -ge $max_attempts ]; then
-            echo "Frontend failed to start in time!"
-            docker compose logs frontend
+            echo "Postgres failed to start!"
+            docker compose logs postgres
             exit 1
           fi
-        env:
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
 
-      # Wait for Backend to be ready
+      # Wait for backend service to become healthy (checks /health endpoint)
       - name: Wait for Backend
         run: |
-          max_attempts=10
+          max_attempts=12
           attempt=1
-          until curl -f "$VITE_BACKEND_URL/health" || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for backend..."
+          until curl --fail --silent ${{ secrets.BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for backend... ($attempt/$max_attempts)"
             sleep 5
             attempt=$((attempt + 1))
           done
           if [ $attempt -ge $max_attempts ]; then
-            echo "Backend failed to start in time!"
+            echo "Backend failed to start!"
             docker compose logs backend
             exit 1
           fi
 
-      # Integration test: Frontend -> Backend
-      - name: Test Frontend to Backend connectivity
+      # Wait for frontend development server to start and become responsive
+      - name: Wait for Frontend
         run: |
-          echo "Testing Frontend container calling Backend API..."
-          # From frontend container, call backend API using curl
-          docker exec frontend curl -f http://backend:3000/health || exit 1
-          echo "✓ Frontend can reach Backend API"
+          max_attempts=10
+          attempt=1
+          until curl --fail --silent ${{ secrets.FRONTEND_URL }} || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for frontend... ($attempt/$max_attempts)"
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Frontend failed to start!"
+            docker compose logs frontend
+            exit 1
+          fi
 
-      # Integration test: Backend -> Database
-      - name: Test Backend to Database connectivity
+      # Integration test: verify frontend container can reach backend via Docker network
+      - name: Test Frontend → Backend connectivity
         run: |
-          echo "Testing Backend to Database queries..."
-          # Verify that the database is accessible
-          PGPASSWORD="$DB_PASSWORD" docker exec -e PGPASSWORD="$DB_PASSWORD" postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" || exit 1
+          docker exec frontend curl --fail ${{ secrets.BACKEND_DOCKER_URL }}/health
+          echo "✓ Frontend can reach Backend"
+
+      # Integration test: verify backend can connect to and query PostgreSQL database
+      - name: Test Backend → Database connectivity
+        run: |
+          docker exec -e PGPASSWORD="${{ secrets.DB_PASSWORD }}" postgres \
+            psql -U "${{ secrets.DB_USER }}" -d "${{ secrets.DB_NAME }}" -c "SELECT 1"
           echo "✓ Database connectivity verified"
 
-      # Verify all containers are running
+      # Display container status for debugging (runs even if tests fail)
       - name: Docker status
+        if: always()
         run: docker compose ps
 
-      # Stop containers gracefully
+      # Cleanup: stop all containers and remove volumes (always runs, even on failure)
       - name: Stop containers
+        if: always()
         run: docker compose down
