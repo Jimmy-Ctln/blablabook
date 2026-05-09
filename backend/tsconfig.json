@@ -27,7 +27,7 @@
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
 
-    "types": ["jest", "node"]
+    "types": ["node"]
   },
 
   "include": ["src/**/*", "src/types/**/*.d.ts"],
