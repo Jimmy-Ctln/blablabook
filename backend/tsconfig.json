@@ -4,7 +4,11 @@
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
-    "paths": {"src/*": ["src/*"]},
+
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     "isolatedModules": true,
     "declaration": true,
     "removeComments": true,
@@ -13,14 +17,19 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "sourceMap": true,
+
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": "./src",
+
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "strictPropertyInitialization": false,
+
+    "types": ["jest", "node"]
+  },
+
+  "include": ["src/**/*", "src/types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "drizzle.config.ts"]
 }
