@@ -45,7 +45,7 @@ jobs:
       - name: Build frontend
         run: npm run build
         env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
       # Upload build artifacts for debugging and audit purposes
       - name: Upload frontend build artifact
@@ -107,7 +107,7 @@ jobs:
 
       # Local development endpoints for integration testing in CI
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
       # Docker internal service name for container-to-container communication
       BACKEND_DOCKER_URL: ${{ secrets.BACKEND_DOCKER_URL }}
       # Database connection details for Docker container
@@ -160,7 +160,7 @@ jobs:
           max_attempts=15
           attempt=1
 
-          until curl --fail --silent ${{ env.BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
+          until curl --fail --silent ${{ env.VITE_BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for backend... ($attempt/$max_attempts)"
             sleep 5
             attempt=$((attempt + 1))

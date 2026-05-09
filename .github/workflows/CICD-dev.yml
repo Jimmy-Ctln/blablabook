@@ -126,7 +126,7 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       # Local development endpoints for testing from GitHub runner
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
       # Docker internal service name for container-to-container communication
       BACKEND_DOCKER_URL: ${{ secrets.BACKEND_DOCKER_URL }}
       # Database connection details for Docker container
@@ -162,7 +162,7 @@ jobs:
         run: |
           max_attempts=12
           attempt=1
-          until curl --fail --silent ${{ secrets.BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
+          until curl --fail --silent ${{ secrets.VITE_BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
             echo "Waiting for backend... ($attempt/$max_attempts)"
             sleep 5
             attempt=$((attempt + 1))
