@@ -105,8 +105,9 @@ jobs:
         run: docker compose -f docker-compose.yml up -d --build
 
       # =========================
-      # POSTGRES CHECK
+      # BASIC HEALTH CHECKS
       # =========================
+
       - name: Test database connection
         run: |
           docker exec postgres psql \
@@ -114,104 +115,15 @@ jobs:
             -d "${{ secrets.DB_NAME }}" \
             -c "SELECT 1"
 
-          echo "✓ Database connection successful"
-
-      # =========================
-      # DOCKER DEBUG
-      # =========================
       - name: Debug docker compose state
-        run: |
-          echo "=== DOCKER COMPOSE PS ==="
-          docker compose ps
+        run: docker compose ps
 
-          echo "=== NETWORKS ==="
-          docker network ls
-
-      - name: Debug backend container
-        run: docker inspect backend
-
-      # =========================
-      # DNS / NETWORK CHECK
-      # =========================
       - name: Debug backend DNS resolution
         run: docker exec backend getent hosts postgres || true
 
-      - name: Debug backend networking
-        run: docker exec backend ping -c 5 postgres || true
-
-      # =========================
-      # ENV CHECK
-      # =========================
-      - name: Debug DATABASE_URL
-        run: |
-          docker exec \
-            -e DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}" \
-            backend printenv DATABASE_URL
-
-      # =========================
-      # DRIZZLE CHECK
-      # =========================
-      - name: Verify drizzle-kit installation
-        run: docker exec backend npx drizzle-kit --version
-
-      # =========================
-      # DB CLIENT TEST FROM BACKEND
-      # =========================
-      - name: Install postgres client in backend
-        run: |
-          docker exec backend sh -c "apk add --no-cache postgresql-client"
-
-      - name: Test backend -> postgres connectivity
-        run: |
-          docker exec backend sh -c "
-            PGPASSWORD='${{ secrets.DB_PASSWORD }}' \
-            psql \
-            -h postgres \
-            -U '${{ secrets.DB_USER }}' \
-            -d '${{ secrets.DB_NAME }}' \
-            -c 'SELECT 1'
-          "
-
-      # =========================
-      # LOGS BEFORE MIGRATION
-      # =========================
-      - name: Backend logs before migration
-        run: docker logs backend || true
-
-      # =========================
-      # MIGRATIONS (DEBUG MODE)
-      # =========================
-      - name: Run local database migrations (DEBUG)
-        run: |
-          docker exec \
-            -e DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}" \
-            -e DEBUG="drizzle:*" \
-            backend sh -c "
-              echo 'NODE VERSION:' && node -v
-              echo 'NPM VERSION:' && npm -v
-
-              echo 'FILES:' && ls -la
-
-              echo 'DRIZZLE DIR:' && ls -la drizzle || true
-
-              echo 'START MIGRATION'
-              npm run migrate -- --verbose
-            "
-
-      # =========================
-      # FINAL LOGS
-      # =========================
-      - name: PostgreSQL logs
-        if: always()
-        run: docker logs postgres || true
-
-      - name: Backend logs after migration
+      - name: Backend logs
         if: always()
         run: docker logs backend || true
-
-      - name: Docker status
-        if: always()
-        run: docker compose ps
 
       - name: Stop containers
         if: always()
