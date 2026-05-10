@@ -1,37 +1,38 @@
-# Dockerfile for the Node.js backend
+# ---- BUILD STAGE ----
+FROM node:20-alpine AS builder
 
-# Use Node.js 20 Alpine as a lightweight base image
-FROM node:20-alpine
-
-# Install curl for healthchecks or testing purposes, then clean cache
-RUN apk add --update \
-    curl \
-    && rm -rf /var/cache/apk/*
-
-# Set working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if exists) to install dependencies
 COPY package.json package-lock.json* ./
-
-# Install all dependencies (including dev dependencies for building)
 RUN npm install
 
-# Copy the rest of the backend source code into the container
 COPY . .
 
-# Build the application
-RUN npm run build
+RUN npm run build && ls -la dist
 
-# Clean dev dependencies to reduce image size (optional, comment out if you need them)
-RUN npm prune --production
 
-# Expose backend API port
-EXPOSE 3000
+# ---- PRODUCTION STAGE ----
+FROM node:20-alpine
 
-# Copy start.sh script
+#Add curl
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Install all dependencies (prod + dev) for migration support
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# copy build output
+COPY --from=builder /app/dist ./dist
+
+# copy drizzle config
+COPY drizzle.config.ts ./drizzle.config.ts
+
+# copy runtime scripts
 COPY start.sh ./start.sh
 RUN chmod +x ./start.sh
 
-# Start the backend application via start.sh script
+EXPOSE 3000
+
 CMD ["./start.sh"]

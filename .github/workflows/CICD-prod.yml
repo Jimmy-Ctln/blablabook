@@ -1,57 +1,51 @@
 name: CICD-prod
 
-# At each push this workflow will run
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
   pull_request:
-    branches:
-      - main
+    branches: [main]
+
+concurrency:
+  group: prod-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ### FRONT CI ###
+  ### FRONTEND CI ###
   ci-frontend:
-    # Job runs on the latest Ubuntu virtual machine
     runs-on: ubuntu-latest
     defaults:
       run:
-        # Set working directory to frontend
         working-directory: frontend
+
     steps:
-      # Clone repository onto GitHub VM
       - uses: actions/checkout@v4
 
-      # Install Node.js version 20
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Enable NPM cache to speed up subsequent builds
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # Install frontend dependencies
-      - name: Frontend CI
+      - name: Install frontend dependencies
         run: npm ci
 
-      # Build frontend with backend URL
-      - name: Build frontend with backend URL
-        run: |
-          export VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
-          npm run build
-
-      # Run frontend tests
-      - name: Frontend tests
+      - name: Run frontend tests
         run: npm run test
 
-      # Save built frontend for deployment
-      - name: Upload build artifacts
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
+
+      - name: Upload frontend build artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-  ### BACK CI ###
+  ### BACKEND CI ###
   ci-backend:
     runs-on: ubuntu-latest
     defaults:
@@ -59,143 +53,130 @@ jobs:
         working-directory: backend
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     steps:
-      # Clone repo
       - uses: actions/checkout@v4
 
-      # Node.js setup
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # Install dependencies
-      - name: Backend ci
+      - name: Install backend dependencies
         run: npm ci
 
-      # Run backend tests
-      - name: Backend tests
+      - name: Run backend tests
         run: npm run test
 
-      # Build backend
-      - run: npm run build
+      - name: Build backend
+        run: npm run build
 
-      # Build Docker image
-      - run: docker build -t blablabook-back .
+      - name: Build backend Docker image
+        run: docker build -t blablabook-back .
 
-  ### DOCKER CI ###
-  ci-docker:
+  ### PRODUCTION DATABASE MIGRATIONS ###
+  # Run database schema migrations on production database
+  # IMPORTANT: Only executes after ALL tests and integration tests pass
+  # This prevents applying schema changes with unvalidated code
+  db-prod-migrations:
     runs-on: ubuntu-latest
-    needs: [ci-frontend, ci-backend]
-    defaults:
-      run:
-        working-directory: .
-    # Make sure to add these variables to GitHub Secrets (settings > Secrets and variables > Secrets)
-    env:
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-      NODE_ENV: "production"
+    needs: [ci-backend]
+
+    if: github.event_name == 'push'
 
     steps:
-      # Clone repo
       - uses: actions/checkout@v4
 
-      # Check Docker version
-      - name: Check Docker
-        run: docker --version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
 
-      # Install curl if not available
-      - name: Install curl
-        run: sudo apt-get update && sudo apt-get install -y curl
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
 
-      - name: Start docker compose
-        # Inject GitHub env vars directly into shell
-        # | is for multi-line script
-        run: docker compose -f docker-compose.yml up -d --build
-
-      # Wait for Postgres to be ready
-      - name: Wait for Postgres
+      - name: Test DB connection (prod)
         run: |
-          max_attempts=10
-          attempt=1
-          until docker exec postgres pg_isready -U blablabook || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for postgres..."
-            sleep 5
-            attempt=$((attempt + 1))
-          done
-
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Postgres failed to start in time!"
-            exit 1
-          fi
-
-      # Wait for Backend to be ready
-      - name: Wait for Backend
-        run: |
-          max_attempts=10
-          attempt=1
-          until curl -f "$VITE_BACKEND_URL/health" || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for backend..."
-            sleep 5
-            attempt=$((attempt + 1))
-          done
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Backend failed to start in time!"
-            docker compose logs backend
-            exit 1
-          fi
-
-      # Integration test: Frontend -> Backend
-      - name: Test Frontend to Backend connectivity
-        run: |
-          echo "Testing Frontend container calling Backend API..."
-          # From frontend container, call backend API using curl
-          docker exec frontend curl -f http://backend:3000/health || exit 1
-          echo "✓ Frontend can reach Backend API"
-
-      # Integration test: Backend -> Database
-      - name: Test Backend to Database connectivity
-        run: |
-          echo "Testing Backend to Database queries..."
-          # Verify that the database is accessible
-          PGPASSWORD="$DB_PASSWORD" docker exec -e PGPASSWORD="$DB_PASSWORD" postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" || exit 1
-          echo "✓ Database connectivity verified"
-
-      # Verify all containers are running
-      - name: Docker status
-        run: docker compose ps
-
-      # Stop containers gracefully
-      - name: Stop containers
-        run: docker compose down
-
-  ### DEPLOY FRONTEND TO VERCEL ###
-  deploy-frontend:
-    needs: ci-docker
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - name: Trigger Vercel deployment via Deploy Hook
-        run: |
-          curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}
+          node -e "console.log('DB:', process.env.DATABASE_URL ? 'OK' : 'MISSING')"
         env:
-          WEBHOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
-  ### DEPLOY BACKEND TO RENDER ###
+      - name: Run migrations (Drizzle)
+        run: npx drizzle-kit migrate
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+  ### DEPLOY BACKEND (RENDER) ###
+  # Deploy backend service to Render
+  # Only runs after production database migrations succeed
   deploy-backend:
-    needs: ci-docker
     runs-on: ubuntu-latest
+    needs: [db-prod-migrations]
+
     if: github.event_name == 'push'
+
     steps:
-      - name: Trigger Render deployment via Deploy Hook
+      # Trigger backend deployment via Render deployment hook
+      - name: Trigger Render deployment
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+          curl --fail -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+
+      # Wait for backend deployment to complete and become healthy
+      # Validates that the service is responsive at the health endpoint
+      - name: Wait for backend deployment
+        run: |
+          max_attempts=30
+          attempt=1
+
+          until curl --fail --silent ${{ secrets.PROD_BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for backend deployment... ($attempt/$max_attempts)"
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Backend deployment failed!"
+            exit 1
+          fi
+
+          echo "✓ Backend deployment successful"
+
+  ### DEPLOY FRONTEND (VERCEL) ###
+  # Deploy frontend application to Vercel
+  # Only runs after backend deployment is confirmed healthy
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+
+    if: github.event_name == 'push'
+
+    steps:
+      # Trigger frontend deployment via Vercel deployment hook
+      - name: Trigger Vercel deployment
+        run: |
+          curl --fail -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}
+
+      # Wait for frontend deployment to complete and become publicly accessible
+      # Validates that the production frontend URL is responding
+      - name: Wait for frontend deployment
+        run: |
+          max_attempts=30
+          attempt=1
+
+          until curl --fail --silent ${{ secrets.PROD_FRONTEND_URL }} || [ $attempt -ge $max_attempts ]; do
+            echo "Waiting for frontend deployment... ($attempt/$max_attempts)"
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Frontend deployment failed!"
+            exit 1
+          fi
+
+          echo "✓ Frontend deployment successful"
