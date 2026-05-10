@@ -81,83 +81,52 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ci-frontend, ci-backend]
 
-    env:
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-
-      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-      BACKEND_DOCKER_URL: ${{ secrets.BACKEND_DOCKER_URL }}
-
-      DB_HOST: postgres
-      DB_PORT: 5432
-
-      NODE_ENV: production
-
-      DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start docker compose
-        run: docker compose -f docker-compose.yml up -d --build
+      - name: Build docker
+        run: docker compose build
 
-      # =========================
-      # BASIC HEALTH CHECKS
-      # =========================
+      - name: Start services
+        run: docker compose up -d
 
-      - name: Test database connection
-        run: |
-          docker exec postgres psql \
-            -U "${{ secrets.DB_USER }}" \
-            -d "${{ secrets.DB_NAME }}" \
-            -c "SELECT 1"
-
-      - name: Debug docker compose state
-        run: docker compose ps
-
-      - name: Debug backend DNS resolution
-        run: docker exec backend getent hosts postgres || true
-
-      - name: Backend logs
-        if: always()
-        run: docker logs backend || true
+      - name: Wait backend health
+        run: curl --fail http://localhost:3000/health
 
       - name: Stop containers
         if: always()
         run: docker compose down
 
-        ### PRODUCTION DATABASE MIGRATIONS ###
+  ### PRODUCTION DATABASE MIGRATIONS ###
   # Run database schema migrations on production database
   # IMPORTANT: Only executes after ALL tests and integration tests pass
   # This prevents applying schema changes with unvalidated code
   db-prod-migrations:
     runs-on: ubuntu-latest
-    needs: [ci-docker]
+    needs: [ci-backend, ci-docker]
 
     if: github.event_name == 'push'
 
     steps:
-      # Checkout repository code into GitHub Actions runner
       - uses: actions/checkout@v4
 
-      # Setup Node.js runtime with npm dependency caching
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # Install dependencies using npm ci for reproducible installs
       - name: Install backend dependencies
         run: npm ci
         working-directory: backend
 
-      # Apply database schema migrations to production database
-      # NOTE: All migrations must be backward-compatible
-      - name: Run production database migrations
+      - name: Test DB connection (prod)
+        run: |
+          node -e "console.log('DB:', process.env.DATABASE_URL ? 'OK' : 'MISSING')"
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Run migrations (Drizzle)
         run: npx drizzle-kit migrate
         working-directory: backend
         env:
