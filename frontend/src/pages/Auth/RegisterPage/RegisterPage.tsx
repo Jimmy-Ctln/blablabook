@@ -10,6 +10,7 @@ import FormAction from "@/components/Form/FormAction/FormAction";
 import { useState } from "react";
 import FormGlobalError from "@/components/Form/FormGlobalError";
 import type { BackendErrorResponse } from "@/@types/form";
+import { toast } from "sonner";
 
 const schema = z
   .object({
@@ -53,7 +54,7 @@ export default function RegisterPage() {
       return api.post("/auth/register", data);
     },
     onSuccess: () => {
-      // TODO: envoi un message pour indiquer que l'inscription à fonctionner
+      toast.success("Votre compte a bien été créé");
       navigate({ to: "/login" });
     },
     onError: (error) => {
