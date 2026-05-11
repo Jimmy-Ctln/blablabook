@@ -21,22 +21,14 @@ export default function Header() {
       <div className="flex h-16 sm:h-18 md:h-20 items-center justify-between px-4 sm:px-6 md:px-8">
         <div className="flex items-center gap-4">
           {!user || !openMobile ? (
-            <SidebarTrigger className="text-foreground" />
+            <SidebarTrigger className="text-foreground hidden sm:block" />
           ) : null}
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg shrink-0"
-          >
-            <img
-              src="/livre.png"
-              alt="Blablabook"
-              className="w-5 h-5 sm:w-6 sm:h-6"
-            />
-            <span className="hidden sm:inline">Blablabook</span>
-          </Link>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          {!user || !openMobile ? (
+            <SidebarTrigger className="text-foreground sm:hidden" />
+          ) : null}
           {user ? (
             <>
               <DropdownMenu>
