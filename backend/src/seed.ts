@@ -162,13 +162,13 @@ const BOOKS_BY_CATEGORY: Record<
       publishedAt: new Date('2014-01-01T00:00:00.000Z'),
     },
     {
-      name: "L'île des Trois Soeurs - 1 : Nell",
-      author: 'Nora Roberts',
+      name: 'La Romance de ténébreuse : La Matrice fantôme',
+      author: 'Marion Zimmer Bradley',
+      publishingHouse: 'Pocket',
+      publishedAt: new Date('2002-01-10'),
+      isbn: '9782266085366',
       description:
-        'Nell, en fuite après une vie violente, tente de se reconstruire sur une île mystérieuse où elle découvre l’amour, le danger et une ancienne malédiction.',
-      isbn: '9782744187305',
-      publishingHouse: 'Editions France Loisirs',
-      publishedAt: new Date('2005-10-01T00:00:00.000Z'),
+        "After spending her youth in the Terran Empire, Margaret Alton returns to Darkover, the planet of her birth. There she discovers she has the Alton Gift--forced rapport and compulsion--one of the strongest and most dangerous of the inherited 'Laran' gifts of the telepathic Comyn--the ruling families of Darkover. And even as she struggles to control her newfound powers, Margaret finds herself falling in love with the Regent to the royal Elhalyn Domain, a man she has been forbidden to marry, for their alliance would irrevocably alter the power balance of their planet!",
     },
     {
       name: 'La promesse de Noël',
@@ -181,6 +181,15 @@ const BOOKS_BY_CATEGORY: Record<
     },
   ],
   aventure: [
+    {
+      name: 'Pokemon, la grande aventure, tome 2',
+      author: '日下秀憲',
+      publishingHouse: 'Glénat',
+      publishedAt: new Date('2001-11-13'),
+      isbn: '9782723436304',
+      description:
+        "Red's Pokémon training journey is full of exciting challenges-- Join Red as he competes with his rival Blue, travels through the dangerous Safari Zone, battles gym leaders for badges, and discovers the secret of a mysterious Eevee!",
+    },
     {
       name: "Peter et la poussière d'étoiles",
       author: 'Dave Barry, Ridley Pearson, Jim Dale',
@@ -337,6 +346,15 @@ const BOOKS_BY_CATEGORY: Record<
       isbn: '9782811215729',
       description:
         'Un astronaute américain se retrouve seul sur Mars et doit improviser pour survivre après avoir été laissé pour mort.',
+    },
+    {
+      name: "Star wars. L'empire contre-attaque",
+      author: 'Donald F. Glut',
+      publishingHouse: 'Fleuve noir',
+      publishedAt: new Date('2002-05-02'),
+      isbn: '9782265074095',
+      description:
+        'The further adventures of Luke Skywalker and his friends in their continuing battle against Darth Vader and the evil side of the Force.',
     },
     {
       name: 'Dune 1',
