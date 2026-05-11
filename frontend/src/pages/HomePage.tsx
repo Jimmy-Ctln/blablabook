@@ -36,7 +36,7 @@ export default function HomePage() {
       <CarouselDisplay
         title={"SUGGESTIONS ALEATOIRE"}
         books={randomBooksArray.map(mapBookRowToDisplay)}
-        isLoading={isLoadingRandom}
+        isLoading={isLoadingRandom || randomBooksArray.length === 0}
       />
 
       {categories.map((categoryTitle) => {
