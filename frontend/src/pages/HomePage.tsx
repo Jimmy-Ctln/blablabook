@@ -16,10 +16,10 @@ import { Loader } from "@/components/Loader";
 export default function HomePage() {
   const [searchText, setSearchText] = useState<string>("");
   const categories = [
+    "science-fiction",
+    "fantasy",
     "aventure",
     "romance",
-    "fantasy",
-    "science-fiction",
     "horreur",
   ];
 

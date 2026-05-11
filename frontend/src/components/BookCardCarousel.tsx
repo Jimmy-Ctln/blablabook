@@ -51,11 +51,20 @@ export default function BookCardCarousel({
               {book.author || "Auteur inconnu"}
             </p>
           </div>
-          {book.publisher && (
-            <p className="text-xs text-muted-foreground/70 mt-2 line-clamp-1">
-              {book.publisher}
-            </p>
-          )}
+
+          {/* Footer: Publisher + Category Tag */}
+          <div className="flex items-center justify-between gap-2 mt-2">
+            {book.publisher && (
+              <p className="text-xs text-muted-foreground/70 line-clamp-1">
+                {book.publisher}
+              </p>
+            )}
+            {book.categories && book.categories.length > 0 && (
+              <span className="inline-block px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-md capitalize whitespace-nowrap">
+                {book.categories[0]}
+              </span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
