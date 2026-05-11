@@ -1,5 +1,5 @@
 import * as React from "react";
-import { BookOpen, Home, Book, LogIn, Loader2 } from "lucide-react";
+import { Home, Book, LogIn, Loader2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -93,10 +93,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="mt-4 sm:mt-6 gap-4">
         <div
           onClick={closeMobileSidebar}
-          className="flex items-center gap-2 text-foreground font-bold hover:opacity-80 transition-opacity cursor-pointer"
+          className="items-center gap-2 text-foreground font-bold hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex"
         >
           <Logo />
-          <span className="sm:hidden">Blablabook</span>
         </div>
       </SidebarHeader>
 

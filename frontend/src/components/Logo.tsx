@@ -1,17 +1,17 @@
 import { Link } from "@tanstack/react-router";
 
-export default function Logo() {
+export default function Logo({ className = "" }: { className?: string }) {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg shrink-0"
+      className={`flex items-center gap-2 text-foreground font-bold text-base sm:text-lg shrink-0 ${className}`}
     >
       <img
         src="/livre.png"
         alt="Blablabook"
         className="w-5 h-5 sm:w-6 sm:h-6"
       />
-      <span className="hidden sm:inline">Blablabook</span>
+      <span>Blablabook</span>
     </Link>
   );
 }

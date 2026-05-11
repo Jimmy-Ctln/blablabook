@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { SidebarTrigger, useSidebar } from "./ui/sidebar";
+import Logo from "./Logo";
 export default function Header() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
@@ -23,6 +24,7 @@ export default function Header() {
           {!user || !openMobile ? (
             <SidebarTrigger className="text-foreground hidden sm:block" />
           ) : null}
+          <Logo className="sm:hidden" />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
