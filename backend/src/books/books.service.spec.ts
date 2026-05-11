@@ -201,12 +201,35 @@ describe('BooksService', () => {
 
   it('should get random books with limit', async () => {
     const mockBooks = [
-      { id: 1, name: 'Random Book 1', author: 'Author 1' },
-      { id: 2, name: 'Random Book 2', author: 'Author 2' },
+      {
+        id: 1,
+        name: 'Random Book 1',
+        author: 'Author 1',
+        cover_url: 'cover1.jpg',
+        description: 'Desc 1',
+        isbn: '123',
+        publishingHouse: 'House 1',
+        publishedAt: '2020-01-01',
+        categoryId: 1,
+        categoryName: 'aventure',
+      },
+      {
+        id: 2,
+        name: 'Random Book 2',
+        author: 'Author 2',
+        cover_url: 'cover2.jpg',
+        description: 'Desc 2',
+        isbn: '456',
+        publishingHouse: 'House 2',
+        publishedAt: '2021-01-01',
+        categoryId: 2,
+        categoryName: 'romance',
+      },
     ];
 
     const selectChain = {
       from: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       limit: jest.fn().mockResolvedValue(mockBooks),
     };
@@ -217,6 +240,7 @@ describe('BooksService', () => {
 
     expect(result).toHaveLength(2);
     expect(selectChain.limit).toHaveBeenCalledWith(2);
+    expect(selectChain.innerJoin).toHaveBeenCalled();
   });
 
   it('should update book status with reading dates', async () => {
