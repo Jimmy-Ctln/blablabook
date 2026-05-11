@@ -102,6 +102,8 @@ export const searchExternalBooks = async (
       q,
       limit: 20,
       fields: "key,title,author_name,edition_key,subject",
+      language: "fre",
+      has_fulltext_only: true,
     },
   });
 

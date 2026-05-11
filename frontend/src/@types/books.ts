@@ -18,7 +18,6 @@ export const CATEGORY_NAMES = [
   "fantasy",
   "science-fiction",
   "mystere",
-  "thriller",
   "unknown",
 ] as const;
 

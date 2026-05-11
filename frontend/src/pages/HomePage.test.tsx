@@ -4,7 +4,11 @@ import HomePage from "./HomePage";
 
 // Mock dependencies
 vi.mock("@/hooks/useExternalBooks", () => ({
-  useExternalBooks: vi.fn(),
+  useExternalBooks: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  })),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -52,6 +56,16 @@ vi.mock("@/components/Hero", () => ({
   default: () => <div data-testid="hero">Hero Section</div>,
 }));
 
+vi.mock("@/components/Loader", () => ({
+  Loader: ({ text }: { text?: string }) => (
+    <div data-testid="loader">{text || "Chargement..."}</div>
+  ),
+}));
+
+vi.mock("@/components/ui/input", () => ({
+  Input: (props: any) => <input data-testid="search-input" {...props} />,
+}));
+
 vi.mock("@/api/books", () => ({
   getRandomBooks: vi.fn().mockResolvedValue([]),
   getBooks: vi.fn().mockResolvedValue({}),
@@ -67,6 +81,11 @@ describe("HomePage", () => {
     expect(screen.getByTestId("hero")).toBeInTheDocument();
   });
 
+  it("should render search input", () => {
+    render(<HomePage />);
+    expect(screen.getByTestId("search-input")).toBeInTheDocument();
+  });
+
   it("should render carousel with categories", () => {
     render(<HomePage />);
     expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
@@ -79,11 +98,9 @@ describe("HomePage", () => {
       "fantasy",
       "science-fiction",
       "horreur",
-      "mystère",
-      "thriller",
     ];
     expect(categories).toContain("aventure");
-    expect(categories.length).toBe(7);
+    expect(categories.length).toBe(5);
   });
 
   it("should handle loading state for carousel", () => {
@@ -94,21 +111,6 @@ describe("HomePage", () => {
   });
 
   it("should render with multiple categories", () => {
-    render(<HomePage />);
-    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
-  });
-
-  it("should show loading message when searching", () => {
-    render(<HomePage />);
-    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
-  });
-
-  it("should show no results message when search returns empty", () => {
-    render(<HomePage />);
-    expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
-  });
-
-  it("should display search results when found", () => {
     render(<HomePage />);
     expect(screen.getByText("SUGGESTIONS ALEATOIRE")).toBeInTheDocument();
   });
