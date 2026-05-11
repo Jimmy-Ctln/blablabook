@@ -41,7 +41,7 @@ export default function Hero() {
           ) : (
             <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
               Lisez.{" "}
-              <span className="bg-linear-to-r from-primary to-blue-300">
+              <span className="bg-linear-to-r rounded-xl px-2 from-primary to-blue-300">
                 Collectionnez.
               </span>
               <br />

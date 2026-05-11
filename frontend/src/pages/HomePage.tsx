@@ -21,6 +21,8 @@ export default function HomePage() {
   >({
     queryKey: ["random-books"],
     queryFn: () => getRandomBooks(20),
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: books = {}, isFetching } = useQuery<BooksByCategory>({
