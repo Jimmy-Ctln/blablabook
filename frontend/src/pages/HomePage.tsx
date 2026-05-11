@@ -21,6 +21,8 @@ export default function HomePage() {
   >({
     queryKey: ["random-books"],
     queryFn: () => getRandomBooks(20),
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: books = {}, isFetching } = useQuery<BooksByCategory>({
@@ -28,12 +30,15 @@ export default function HomePage() {
     queryFn: () => getBooks(categories),
   });
 
+  // Ensure randomBooks is always an array
+  const randomBooksArray = Array.isArray(randomBooks) ? randomBooks : [];
+
   const content = (
     <>
       <CarouselDisplay
         title={"SUGGESTIONS ALEATOIRE"}
-        books={randomBooks.map(mapBookRowToDisplay)}
-        isLoading={isLoadingRandom}
+        books={randomBooksArray.map(mapBookRowToDisplay)}
+        isLoading={isLoadingRandom || randomBooksArray.length === 0}
       />
 
       {categories.map((categoryTitle) => {

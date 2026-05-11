@@ -63,7 +63,7 @@ export const getUserBooks = async (
  */
 export const getRandomBooks = async (limit: number): Promise<BookRow[]> => {
   const response = await api.get<BookRow[]>(`/books/random?limit=${limit}`);
-  return response.data;
+  return response.data || [];
 };
 
 /**

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@tanstack/react-router";
 
 interface CookieConsent {
@@ -13,6 +14,16 @@ interface CookieConsent {
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [marketingEnabled, setMarketingEnabled] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+
+  const handleMarketingChange = (checked: unknown) => {
+    setMarketingEnabled(checked as boolean);
+  };
+
+  const handleAnalyticsChange = (checked: unknown) => {
+    setAnalyticsEnabled(checked as boolean);
+  };
 
   // 13 months in milliseconds (CNIL 2020-062 directive)
   const CONSENT_EXPIRATION_MS = 13 * 30 * 24 * 60 * 60 * 1000;
@@ -71,17 +82,10 @@ export default function CookieConsent() {
   };
 
   const handleSavePreferences = () => {
-    const acceptMarketing = (
-      document.getElementById("marketing-checkbox") as HTMLInputElement
-    )?.checked;
-    const acceptAnalytics = (
-      document.getElementById("analytics-checkbox") as HTMLInputElement
-    )?.checked;
-
     const consent: CookieConsent = {
       essential: true,
-      marketing: acceptMarketing,
-      analytics: acceptAnalytics,
+      marketing: marketingEnabled,
+      analytics: analyticsEnabled,
       timestamp: Date.now(),
     };
     localStorage.setItem("cookieConsent", JSON.stringify(consent));
@@ -97,13 +101,15 @@ export default function CookieConsent() {
         {!isExpanded && (
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className="font-bold mb-2">Préférences de Cookies</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="font-bold mb-2 text-foreground">
+                Préférences de Cookies
+              </h3>
+              <p className="text-base text-muted-foreground mb-4">
                 Nous utilisons des cookies pour améliorer votre expérience. Vous
                 pouvez accepter tous les cookies ou{" "}
                 <button
                   onClick={() => setIsExpanded(true)}
-                  className="text-primary hover:underline font-bold"
+                  className="text-primary hover:underline font-bold cursor-pointer"
                 >
                   personnaliser
                 </button>{" "}
@@ -124,7 +130,7 @@ export default function CookieConsent() {
         {isExpanded && (
           <div>
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h3 className="font-bold text-lg">
+              <h3 className="font-bold text-lg text-foreground">
                 Gérer vos préférences de cookies
               </h3>
               <button
@@ -139,21 +145,15 @@ export default function CookieConsent() {
               {/* Essential Cookies */}
               <div className="border rounded-lg p-3">
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="essential-checkbox"
-                    checked={true}
-                    disabled
-                    className="w-4 h-4"
-                  />
+                  <Checkbox id="essential-checkbox" checked={true} disabled />
                   <div>
                     <label
                       htmlFor="essential-checkbox"
-                      className="font-bold block"
+                      className="font-bold block text-foreground"
                     >
                       Cookies Essentiels
                     </label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Nécessaires pour le fonctionnement du site
                       (authentification, sessions)
                     </p>
@@ -164,20 +164,19 @@ export default function CookieConsent() {
               {/* Marketing Cookies */}
               <div className="border rounded-lg p-3">
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="marketing-checkbox"
-                    defaultChecked={false}
-                    className="w-4 h-4"
+                    checked={marketingEnabled}
+                    onCheckedChange={handleMarketingChange}
                   />
                   <div className="flex-1">
                     <label
                       htmlFor="marketing-checkbox"
-                      className="font-bold block"
+                      className="font-bold block text-foreground"
                     >
                       Cookies Marketing
                     </label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Nous aident à vous montrer des contenus pertinents
                       (optionnel)
                     </p>
@@ -188,20 +187,19 @@ export default function CookieConsent() {
               {/* Analytics Cookies */}
               <div className="border rounded-lg p-3">
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="analytics-checkbox"
-                    defaultChecked={false}
-                    className="w-4 h-4"
+                    checked={analyticsEnabled}
+                    onCheckedChange={handleAnalyticsChange}
                   />
                   <div className="flex-1">
                     <label
                       htmlFor="analytics-checkbox"
-                      className="font-bold block"
+                      className="font-bold block text-foreground"
                     >
                       Cookies Analytics
                     </label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Nous permettent de comprendre comment vous utilisez
                       Blablabook (optionnel)
                     </p>
@@ -221,13 +219,13 @@ export default function CookieConsent() {
         )}
 
         {/* Buttons */}
-        <div className="flex gap-2 flex-wrap mt-4">
+        <div className="flex gap-2 flex-wrap mt-2">
           {!isExpanded ? (
             <>
               <Button
                 onClick={handleAcceptAll}
                 size="sm"
-                className="flex-1 sm:flex-none"
+                className="flex-1 sm:flex-none text-foreground"
               >
                 Accepter tout
               </Button>
@@ -235,7 +233,7 @@ export default function CookieConsent() {
                 onClick={handleRejectAll}
                 variant="outline"
                 size="sm"
-                className="flex-1 sm:flex-none"
+                className="flex-1 sm:flex-none text-foreground"
               >
                 Refuser
               </Button>
@@ -245,7 +243,7 @@ export default function CookieConsent() {
               <Button
                 onClick={handleSavePreferences}
                 size="sm"
-                className="flex-1 sm:flex-none"
+                className="flex-1 sm:flex-none text-foreground"
               >
                 Enregistrer les préférences
               </Button>
@@ -253,7 +251,7 @@ export default function CookieConsent() {
                 onClick={handleAcceptAll}
                 variant="outline"
                 size="sm"
-                className="flex-1 sm:flex-none"
+                className="flex-1 sm:flex-none text-foreground"
               >
                 Accepter tout
               </Button>

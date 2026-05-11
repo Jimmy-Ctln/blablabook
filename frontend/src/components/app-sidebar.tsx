@@ -1,5 +1,5 @@
 import * as React from "react";
-import { BookOpen, Home, Book, LogIn, Loader2 } from "lucide-react";
+import { Home, Book, LogIn, Loader2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +12,7 @@ import {
 import { NavMain } from "./nav-main";
 import { Link, useNavigate } from "@tanstack/react-router";
 import UserCard from "./user-card";
+import Logo from "./Logo";
 import { useUserBooks } from "@/hooks/useUserBooks";
 import type { BookStatus } from "@/@types/books";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -90,17 +91,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="mt-4 sm:mt-6 gap-4">
-        <Link
-          to="/"
+        <div
           onClick={closeMobileSidebar}
-          className="text-lg sm:text-2xl cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity"
+          className="items-center gap-2 text-foreground font-bold hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex"
         >
-          <div className="flex items-center gap-2 text-foreground font-bold">
-            <BookOpen className="h-6 w-6" />
-            <span className="hidden sm:inline">Blablabook</span>
-            <span className="sm:hidden">BB</span>
-          </div>
-        </Link>
+          <Logo />
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="mt-4 sm:mt-6 flex flex-col gap-6">

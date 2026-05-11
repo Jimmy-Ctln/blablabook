@@ -9,7 +9,7 @@ export default function Hero() {
   const username = currentUser.data?.username;
 
   return (
-    <section className="relative flex min-h-[70vh] items-start justify-start pt-16 sm:pt-20 md:pt-24 overflow-hidden">
+    <section className="relative flex min-h-[60vh] sm:min-h-[70vh] items-center justify-center sm:items-start sm:justify-start pt-12 sm:pt-20 md:pt-24 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={background}
@@ -21,8 +21,8 @@ export default function Hero() {
       </div>
 
       <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 pb-16 sm:pb-20">
-        <div className="max-w-3xl">
-          <div className="mb-6 sm:mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs sm:text-sm text-primary">
+        <div className="max-w-3xl mx-auto sm:mx-0 text-center sm:text-left">
+          <div className="mb-8 sm:mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs sm:text-sm text-primary justify-center w-full sm:w-auto">
             <Sparkles className="h-4 w-4 shrink-0" />
             <span className="font-medium">
               {isAuthenticated
@@ -32,16 +32,16 @@ export default function Hero() {
           </div>
 
           {isAuthenticated ? (
-            <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-xl sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
               Bonjour,{" "}
               <span className="text-primary to-blue-300">{username}</span>
               <br />
               Que lit-on aujourd'hui ?
             </h1>
           ) : (
-            <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
               Lisez.{" "}
-              <span className="bg-linear-to-r from-primary to-blue-300">
+              <span className="bg-linear-to-r rounded-xl px-2 from-primary to-blue-300">
                 Collectionnez.
               </span>
               <br />
@@ -49,13 +49,13 @@ export default function Hero() {
             </h1>
           )}
 
-          <p className="mt-4 sm:mt-6 max-w-lg text-balance text-sm sm:text-base md:text-lg leading-relaxed text-white/70">
+          <p className="mt-8 sm:mt-6 max-w-lg mx-auto sm:mx-0 text-balance text-sm sm:text-base md:text-lg leading-relaxed text-white/70">
             {isAuthenticated
               ? "Retrouvez votre bibliothèque, suivez vos lectures en cours et découvrez de nouvelles aventures littéraires."
               : "Blablabook est votre bibliothèque personnelle en ligne. Découvrez des livres, suivez vos lectures et explorez les collections de la communauté."}
           </p>
 
-          <div className="mt-8 sm:mt-10 flex flex-col gap-3 sm:gap-4 sm:flex-row">
+          <div className="mt-8 sm:mt-10 flex flex-col items-center gap-4 sm:items-start sm:gap-4 sm:flex-row">
             {isAuthenticated ? (
               <Link
                 to="/library"
