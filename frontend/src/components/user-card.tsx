@@ -34,7 +34,7 @@ export default function UserCardButton(
                   alt={`Avatar de ${user.username ?? "X"}`}
                 />
               ) : (
-                <AvatarFallback className="bg-primary/20 text-foreground font-bold">
+                <AvatarFallback className="bg-primary text-foreground font-bold">
                   {user.username?.[0]?.toUpperCase() ?? ""}
                 </AvatarFallback>
               )}

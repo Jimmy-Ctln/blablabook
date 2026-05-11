@@ -90,12 +90,24 @@ export class BooksService {
 
   /**
    * Get randoms Books from the `book` table with limit.
-   * @returns Array of persisted book records
+   * @returns Array of persisted book records with category name
    */
   async getRandomBooks(limit: number = 10) {
     return await this.db
-      .select()
+      .select({
+        id: book.id,
+        name: book.name,
+        author: book.author,
+        cover_url: book.cover_url,
+        description: book.description,
+        isbn: book.isbn,
+        publishingHouse: book.publishingHouse,
+        publishedAt: book.publishedAt,
+        categoryId: book.categoryId,
+        categoryName: category.name,
+      })
       .from(book)
+      .innerJoin(category, eq(book.categoryId, category.id))
       .orderBy(sql`RANDOM()`)
       .limit(limit);
   }

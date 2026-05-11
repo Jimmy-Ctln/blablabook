@@ -18,7 +18,6 @@ export function getRandomQuery() {
     "History",
     "Children",
     "Young adult",
-    "Thriller",
     "Cooking",
     "Music",
     "Technology",
