@@ -28,11 +28,14 @@ export default function HomePage() {
     queryFn: () => getBooks(categories),
   });
 
+  // Ensure randomBooks is always an array
+  const randomBooksArray = Array.isArray(randomBooks) ? randomBooks : [];
+
   const content = (
     <>
       <CarouselDisplay
         title={"SUGGESTIONS ALEATOIRE"}
-        books={randomBooks.map(mapBookRowToDisplay)}
+        books={randomBooksArray.map(mapBookRowToDisplay)}
         isLoading={isLoadingRandom}
       />
 
