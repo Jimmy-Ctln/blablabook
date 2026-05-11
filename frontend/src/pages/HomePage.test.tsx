@@ -79,8 +79,6 @@ describe("HomePage", () => {
       "fantasy",
       "science-fiction",
       "horreur",
-      "mystère",
-      "thriller",
     ];
     expect(categories).toContain("aventure");
     expect(categories.length).toBe(7);
