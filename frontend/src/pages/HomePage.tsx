@@ -161,7 +161,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <Hero />
-      <div className="relative z-20 -mt-20 md:-mt-16 lg:-mt-20 container mx-auto px-4 sm:px-6 md:px-8">
+      <div className="relative z-20 -mt-32 md:-mt-28 lg:-mt-32 container mx-auto px-4 sm:px-6 md:px-8">
         {/* Search Bar */}
         <div className="mb-8 flex justify-center">
           <SearchBar

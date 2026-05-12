@@ -1,78 +1,52 @@
 import { useAuthStore } from "@/stores/authStore";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "./ui/button";
 import { SidebarTrigger, useSidebar } from "./ui/sidebar";
 import Logo from "./Logo";
+import { Moon, Sun } from "lucide-react";
+import { useThemeStore } from "@/stores/themeStore";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
+
 export default function Header() {
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   const { openMobile } = useSidebar();
-
-  const navigate = useNavigate();
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <header className="w-full bg-secondary border-b border-border">
       <div className="flex h-16 sm:h-18 md:h-20 items-center justify-between px-4 sm:px-6 md:px-8">
         <div className="flex items-center gap-4">
           {!user || !openMobile ? (
-            <SidebarTrigger className="text-foreground hidden sm:block" />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarTrigger className="text-foreground hidden sm:block" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Ouvrir le menu</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : null}
           <Logo className="sm:hidden" />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
+            className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-accent transition-colors"
+          >
+            {theme === "dark" ? (
+              <Moon className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
+            ) : (
+              <Sun className="h-5 w-5 sm:h-7 sm:w-7" />
+            )}
+          </button>
           {!user || !openMobile ? (
             <SidebarTrigger className="text-foreground sm:hidden" />
           ) : null}
-          {user ? (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className="hidden sm:flex cursor-pointer"
-                  asChild
-                >
-                  <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-transparent hover:border-primary transition-all">
-                    <AvatarImage
-                      key={user.avatar_url}
-                      src={user.avatar_url ? `${user.avatar_url}` : undefined}
-                      alt={`Avatar de ${user.username || "X"}`}
-                    />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm font-semibold">
-                      {user.username ? user.username[0].toUpperCase() : "X"}
-                    </AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => navigate({ to: "/profile" })}
-                  >
-                    Mon profil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-500 font-semibold cursor-pointer"
-                    onClick={() => {
-                      logout();
-                      navigate({ to: "/" });
-                    }}
-                  >
-                    Déconnexion
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <Link to="/login" className="hidden sm:block">
-              <Button size="sm">Se connecter</Button>
-            </Link>
-          )}
         </div>
       </div>
     </header>

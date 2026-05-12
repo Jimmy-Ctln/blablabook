@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="fr">
   <head>
+    <!-- Prevent flash of wrong theme before React loads -->
+    <script>(function(){try{var s=localStorage.getItem('theme_storage');if(s&&JSON.parse(s).state.theme==='light')document.documentElement.classList.add('light')}catch(e){}})()</script>
     <!-- Character encoding and viewport settings -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
