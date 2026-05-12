@@ -1,8 +1,9 @@
 import type { FormInputProps } from "@/@types/form";
 import { Input } from "@/components/ui/input";
 
-
 export default function FormInput({ field, type, placeholder }: FormInputProps) {
+  const hasError = field.state.meta.isTouched && !field.state.meta.isValid;
+
   return (
     <Input
       type={type}
@@ -12,7 +13,8 @@ export default function FormInput({ field, type, placeholder }: FormInputProps) 
       onBlur={field.handleBlur}
       onChange={(e) => field.handleChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full"
+      aria-invalid={hasError}
+      className={`w-full${hasError ? " border-destructive focus-visible:ring-destructive" : ""}`}
     />
-  )
+  );
 }
