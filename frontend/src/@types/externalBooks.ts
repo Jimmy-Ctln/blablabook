@@ -3,12 +3,13 @@ export type ExternalBook = {
   title: string;
   author: string;
   isbn: string;
-  language?: Array<{ key: string }>;
   publishDate?: string;
   cover?: string;
   description?: string;
   publisher?: string;
   categories: string[];
+  workKey?: string;
+  editionCount?: number;
 };
 
 export type UseExternalBooksOptions = {
@@ -17,35 +18,46 @@ export type UseExternalBooksOptions = {
   enabled?: boolean;
 };
 
-export interface EditionData {
-  key: string;
+export interface EditionInSearch {
+  key?: string;
   title: string;
-  authors?: Array<{ name?: string }>;
-  isbn_13?: string[];
-  languages?: Array<{ key: string }>;
-  publish_date?: string;
+  isbn?: string[];
   covers?: number[];
-  works?: Array<{ key: string }>;
-  publishers?: string[];
+}
+
+export interface EditionsResponse {
+  docs?: EditionInSearch[];
+  numFound?: number;
 }
 
 export interface WorkSearchDoc {
+  key: string;
   title: string;
   author_name?: string[];
-  edition_key?: string[];
   subject?: string[];
+  first_publish_year?: number;
+  cover_i?: number;
+  editions?: EditionsResponse;
 }
 
 export type GetExternalBooksParams = {
   type: "random" | "searchText" | "category";
   searchText?: string;
   categoryName?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type SearchBooksResponse = {
+  books: ExternalBook[];
+  numFound: number;
+  offset: number;
 };
 
 export type ExternalBookDisplayData = {
   title: string;
   authors: string[];
-  cover: string;
+  cover?: string;
   description: string;
   isbn: string;
   publisher: string;
@@ -56,7 +68,7 @@ export type ExternalBookDisplayData = {
 };
 
 export type ExternalApiIsbnResponse = {
-  title: string;
+  title?: string;
   covers?: number[];
   authors?: Array<{ key: string }>;
   works?: Array<{ key: string }>;

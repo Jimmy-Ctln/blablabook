@@ -57,7 +57,7 @@ const BookDetails = () => {
       if (!currentUser?.id) throw new Error("User not logged in");
       const payload = {
         name: bookData.title,
-        coverUrl: bookData.cover,
+        coverUrl: bookData.cover ?? "",
         author: bookData.authors[0],
         description: bookData.description || "No description provided",
         isbn: bookData.isbn,

@@ -9,7 +9,7 @@ export default function RootLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex flex-col">
+      <SidebarInset className="flex flex-col min-w-0 overflow-x-hidden">
         <Header />
         <main className="flex-1">
           <Outlet />

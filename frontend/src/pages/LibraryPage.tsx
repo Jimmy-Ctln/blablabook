@@ -117,7 +117,7 @@ export default function LibraryPage() {
         </div>
 
         {/* Statistiques - Stats cards */}
-        <div className="flex gap-2 sm:gap-3 mb-8 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             const isActive = activeFilter === stat.status;
@@ -125,7 +125,7 @@ export default function LibraryPage() {
               <button
                 key={stat.status}
                 onClick={() => setActiveFilter(stat.status)}
-                className={`flex flex-col items-center justify-center rounded-lg transition-all duration-200 h-20 w-20 sm:h-24 sm:w-24 ${
+                className={`flex flex-col items-center justify-center rounded-lg transition-all duration-200 h-20 w-full sm:h-24 sm:w-24 ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-md"
                     : "bg-secondary/50 text-foreground border border-border/50 hover:bg-secondary hover:border-primary/30"

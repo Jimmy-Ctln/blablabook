@@ -6,87 +6,54 @@ import type {
   ExternalApiAuthorResponse,
   GetExternalBooksParams,
   WorkSearchDoc,
-  EditionData,
+  SearchBooksResponse,
 } from "../@types/externalBooks";
 import externalApi from "./axiosExternal";
 import { getRandomQuery } from "../lib/utils";
 
-// -----------------------------
-// CONSTANTS
-// -----------------------------
+// Builds an OpenLibrary cover URL for a given cover ID. Size: S=small, M=medium, L=large.
+const buildCoverUrl = (
+  coverId: number | undefined,
+  size: "S" | "M" | "L" = "M",
+): string | undefined =>
+  coverId
+    ? `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`
+    : undefined;
 
-const DEFAULT_COVER = "/livre.png";
-
-// -----------------------------
-// HELPERS
-// -----------------------------
-
+// OpenLibrary's description field can be either a plain string or an object
+// { value: string } depending on the endpoint version — normalize both forms.
 const parseDescription = (desc: unknown): string => {
   if (!desc) return "";
   if (typeof desc === "string") return desc;
-
   if (typeof desc === "object" && desc !== null && "value" in desc) {
     const obj = desc as { value: unknown };
-    if (typeof obj.value === "string") {
-      return obj.value;
-    }
+    if (typeof obj.value === "string") return obj.value;
   }
-
   return "";
 };
 
-const buildCoverUrl = (edition: EditionData): string => {
-  const coverId = edition.covers?.[0];
-  return coverId
-    ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
-    : DEFAULT_COVER;
+// ISBN-13 is exactly 13 characters; ISBN-10 is 10.
+// We only store ISBN-13 to avoid duplicates in the database.
+const getISBN13 = (isbns: string[] | undefined): string | undefined => {
+  if (!isbns || isbns.length === 0) return undefined;
+  return isbns.find((isbn) => isbn.length === 13);
 };
 
-const createExternalBook = (
-  edition: EditionData,
-  work: WorkSearchDoc,
-  isbn: string,
-  coverUrl: string,
-  description: string,
-  categories?: string[],
-): ExternalBook => {
-  return {
-    key: edition.key,
-    title: edition.title,
-    author:
-      work.author_name?.[0] || edition.authors?.[0]?.name || "Auteur inconnu",
-    isbn,
-    language: edition.languages,
-    publishDate: edition.publish_date,
-    cover: coverUrl,
-    description: description || undefined,
-    publisher: edition.publishers?.[0],
-    categories: categories || [],
-  };
-};
-
-// Filter work results early to avoid unnecessary API calls
-const filterSearchResults = (
-  works: WorkSearchDoc[],
-  searchText: string,
-): WorkSearchDoc[] => {
-  const searchLower = searchText.toLowerCase();
-  return works.filter((work) => {
-    const title = (work.title || "").toLowerCase();
-    const author = (work.author_name?.[0] || "").toLowerCase();
-    return title.includes(searchLower) || author.includes(searchLower);
-  });
-};
-
-// -----------------------------
-// SEARCH EXTERNAL BOOK WITH SEARCH BY TITLE OR AUTHOR, RANDOM OR BY CATEGORY)
-// -----------------------------
-
+// Searches OpenLibrary for books by text query, random subject, or category.
+// Results are restricted to French editions via the `language=fre` param.
+//
+// Key optimization: the `fields` param embeds edition data directly in the
+// search response, so we never need a separate /books/{key} round-trip per result.
+//
+// Step 1 — Build the search query string from the requested mode.
+// Step 2 — Fetch up to 30 works from /search.json with embedded French editions.
+// Step 3 — Walk each work's editions; pick the first one with an ISBN-13.
+//           Stop as soon as `limit` valid books have been collected.
 export const searchExternalBooks = async (
   params: GetExternalBooksParams,
-): Promise<ExternalBook[]> => {
+): Promise<SearchBooksResponse> => {
+  // Step 1: resolve the query string.
   let q = "";
-
   if (params.type === "random") {
     q = getRandomQuery();
   } else if (params.type === "searchText") {
@@ -97,67 +64,68 @@ export const searchExternalBooks = async (
     q = params.categoryName;
   }
 
+  const limit = params.limit ?? 10;
+  const offset = params.offset ?? 0;
+
+  // Step 2: fetch works with embedded French editions.
+  // 30 candidates is enough to reliably fill `limit` results — French books
+  // have good ISBN-13 coverage so the hit rate is high.
   const response = await externalApi.get("/search.json", {
     params: {
       q,
-      limit: 20,
-      fields: "key,title,author_name,edition_key,subject",
+      limit: 30,
+      offset,
       language: "fre",
-      has_fulltext_only: true,
+      fields:
+        "key,title,author_name,first_publish_year,cover_i,subject,editions,editions.key,editions.title,editions.isbn,editions.covers",
     },
   });
 
   const docs: WorkSearchDoc[] = response.data.docs || [];
+  const numFound: number = response.data.numFound || 0;
 
-  let searchText = "";
-  if (params.type === "searchText") {
-    searchText = params.searchText || "";
+  // Step 3: for each work, find its first edition with an ISBN-13 and build
+  // an ExternalBook. Stop early once we have `limit` results.
+  const results: ExternalBook[] = [];
+
+  for (const work of docs) {
+    if (results.length >= limit) break;
+
+    const editions = work.editions?.docs || [];
+    if (editions.length === 0) continue;
+
+    let book: ExternalBook | undefined;
+    for (const edition of editions) {
+      const isbn = getISBN13(edition.isbn);
+      if (!isbn) continue;
+
+      // Prefer the edition's own cover; fall back to the work-level cover.
+      const coverId = edition.covers?.[0] ?? work.cover_i;
+      const coverUrl = buildCoverUrl(coverId);
+
+      book = {
+        key: edition.key || "",
+        title: edition.title || work.title,
+        author: work.author_name?.[0] || "Auteur inconnu",
+        isbn,
+        publishDate: work.first_publish_year?.toString(),
+        cover: coverUrl,
+        description: undefined,
+        publisher: undefined,
+        categories: work.subject || [],
+        workKey: work.key,
+        editionCount: work.editions?.numFound || 1,
+      };
+      break;
+    }
+
+    if (book) results.push(book);
   }
 
-  // Filter early on search results before fetching editions
-  const filteredDocs = filterSearchResults(docs, searchText);
-
-  const results = await Promise.all(
-    filteredDocs.map(async (work) => {
-      if (!work.edition_key || work.edition_key.length === 0) return undefined;
-
-      const editionKey = work.edition_key[0];
-      try {
-        const editionResponse = await externalApi.get<EditionData>(
-          `/books/${editionKey}.json`,
-        );
-        const edition = editionResponse.data;
-
-        const isbn = edition.isbn_13?.[0];
-        if (!isbn) return undefined;
-
-        const coverUrl = buildCoverUrl(edition);
-        const categories = work.subject || [];
-
-        return createExternalBook(
-          edition,
-          work,
-          isbn,
-          coverUrl,
-          "",
-          categories,
-        );
-      } catch (err) {
-        console.warn(`Failed to fetch edition ${editionKey}:`, err);
-        return undefined;
-      }
-    }),
-  );
-
-  // Filter out undefined values
-  return results.filter((book): book is ExternalBook => book !== undefined);
+  return { books: results, numFound, offset };
 };
 
-// -----------------------------
-// API functions
-// -----------------------------
-
-// GET Book ISBN Data
+// Fetches the full edition record for a given ISBN-13.
 export const getOpenLibIsbnData = async (
   isbn: string,
 ): Promise<ExternalApiIsbnResponse> => {
@@ -167,7 +135,7 @@ export const getOpenLibIsbnData = async (
   return response.data;
 };
 
-// GET Book Work Data
+// Fetches the work record (description, subjects, covers) for a given work key.
 export const getOpenLibWorkData = async (
   workKey: string,
 ): Promise<ExternalApiWorkResponse> => {
@@ -177,7 +145,7 @@ export const getOpenLibWorkData = async (
   return response.data;
 };
 
-// GET Book Author Data
+// Fetches the author record (name) for a given author key.
 export const getOpenLibAuthorData = async (
   authorKey: string,
 ): Promise<ExternalApiAuthorResponse> => {
@@ -187,17 +155,22 @@ export const getOpenLibAuthorData = async (
   return response.data;
 };
 
-// -----------------------------
-// PRINCIPAL FUNCTION FOR BOOK DETAILS
-// -----------------------------
-
+// Builds a complete book display object by merging data from three endpoints.
+//
+// Step 1 — Fetch the edition by ISBN: gives title, cover IDs, publisher,
+//           page count, language, and the work/author keys needed for step 2.
+// Step 2 — Fetch work + author in parallel using those keys: gives description
+//           and subjects (work) and the author's display name.
+// Step 3 — Merge everything; prefer edition-level data, fall back to work-level.
 export const getFullExternalBook = async (
   isbn: string,
 ): Promise<ExternalBookDisplayData> => {
-  // MAPPING DATA FROM MULTIPLE CALLS
+  // Step 1: edition data.
   const dataIsbn = await getOpenLibIsbnData(isbn);
   const workKey = dataIsbn.works?.[0]?.key;
   const authorKey = dataIsbn.authors?.[0]?.key;
+
+  // Step 2: work and author fetched in parallel to minimise latency.
   const [dataWork, dataAuthor] = await Promise.all([
     workKey
       ? getOpenLibWorkData(workKey)
@@ -208,14 +181,14 @@ export const getFullExternalBook = async (
           name: "Auteur inconnu",
         } as ExternalApiAuthorResponse),
   ]);
+
+  // Step 3: merge. Use -L suffix for the detail page cover (larger than search's -M).
   const coverId = dataIsbn.covers?.[0] || dataWork.covers?.[0];
-  const coverUrl = coverId
-    ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
-    : DEFAULT_COVER;
+  const coverUrl = buildCoverUrl(coverId, "L");
 
   return {
-    isbn: isbn,
-    title: dataIsbn.title,
+    isbn,
+    title: dataIsbn.title || "",
     authors: [dataAuthor.name || "Inconnu"],
     cover: coverUrl,
     description: parseDescription(dataWork.description),
