@@ -7,21 +7,28 @@ import { useForm } from "@tanstack/react-form";
 import FormTitle from "@/components/Form/FormTitle";
 import FormField from "@/components/Form/FormFields/FormField";
 import FormAction from "@/components/Form/FormAction/FormAction";
-import { useState } from "react";
-import FormGlobalError from "@/components/Form/FormGlobalError";
 import type { BackendErrorResponse } from "@/@types/form";
 import { toast } from "sonner";
 
+const REGISTER_ERRORS: Record<string, string> = {
+  "email is already in use": "Cette adresse email est déjà utilisée",
+  "username is already in use": "Ce nom d'utilisateur est déjà pris",
+  "password is not confirmed": "Les mots de passe ne correspondent pas",
+  "failed to create new user":
+    "Une erreur est survenue lors de la création du compte",
+};
+
 const schema = z
   .object({
-    email: z.email("Email invalide").trim(),
-    username: z
-      .string()
-      .min(2, "Le nom d'utilisateur doit contenir au moins 2 caractères")
-      .trim(),
+    email: z.email("Format d'email invalide (ex : nom@domaine.com)").trim(),
+    username: z.string().min(3, "Au moins 3 caractères requis").trim(),
     password: z
       .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+      .min(8, "Au moins 8 caractères requis")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/,
+        "Doit contenir une majuscule, une minuscule, un chiffre et un caractère spécial",
+      )
       .trim(),
     confirmPassword: z
       .string()
@@ -29,7 +36,7 @@ const schema = z
       .trim(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "La confirmation du mot de passe a échouée",
+    message: "Les mots de passe ne correspondent pas",
     path: ["confirmPassword"],
   });
 
@@ -42,7 +49,6 @@ type RegisterFormData = {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const mutation = useMutation<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,9 +63,6 @@ export default function RegisterPage() {
       toast.success("Votre compte a bien été créé");
       navigate({ to: "/login" });
     },
-    onError: (error) => {
-      console.error("Erreur serveur: ", error.message);
-    },
   });
 
   const defaultValues = {
@@ -72,27 +75,28 @@ export default function RegisterPage() {
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
-      setGlobalError(null);
-      mutation.mutate(value, {
-        onError: (error) => {
-          const errorMessage =
-            error.response?.data.message || "Une erreur est survenue";
-          setGlobalError(errorMessage);
+      try {
+        await mutation.mutateAsync(value);
+      } catch (error) {
+        const axiosError = error as AxiosError<BackendErrorResponse>;
+        const backendMessage = axiosError.response?.data?.message ?? "";
+        toast.error(
+          REGISTER_ERRORS[backendMessage] ?? "Une erreur est survenue",
+        );
 
-          form.setFieldValue("password", "");
-          form.setFieldValue("confirmPassword", "");
+        form.setFieldValue("password", "");
+        form.setFieldValue("confirmPassword", "");
 
-          form.setFieldMeta("password", (prev) => ({
-            ...prev,
-            isTouched: false,
-          }));
+        form.setFieldMeta("password", (prev) => ({
+          ...prev,
+          isTouched: false,
+        }));
 
-          form.setFieldMeta("confirmPassword", (prev) => ({
-            ...prev,
-            isTouched: false,
-          }));
-        },
-      });
+        form.setFieldMeta("confirmPassword", (prev) => ({
+          ...prev,
+          isTouched: false,
+        }));
+      }
     },
     validators: {
       onChange: schema,
@@ -109,12 +113,6 @@ export default function RegisterPage() {
       }}
     >
       <FormTitle title="Inscription" />
-
-      {globalError && (
-        <div role="alert" aria-live="assertive">
-          <FormGlobalError message={globalError} />
-        </div>
-      )}
 
       <form.Field name="email">
         {(field) => {
