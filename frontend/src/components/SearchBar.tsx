@@ -25,7 +25,7 @@ export default function SearchBar({
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-2xl">
       <CustomInput
         type="text"
         placeholder={placeholder}
