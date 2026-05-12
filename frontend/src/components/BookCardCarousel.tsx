@@ -1,6 +1,7 @@
 import type { BookDisplay } from "@/@types/books";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "@tanstack/react-router";
+import { BookCoverImage } from "@/components/BookCoverImage";
 
 export default function BookCardCarousel({
   book,
@@ -22,23 +23,12 @@ export default function BookCardCarousel({
       role="article"
     >
       <CardContent className="w-full p-0 flex flex-col h-full">
-        {/* Image Container */}
         <div className="relative w-full aspect-3/4 overflow-hidden bg-muted">
-          <img
+          <BookCoverImage
             src={book.cover_url || book.cover}
             alt={`Couverture de ${book.name}`}
-            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            imgClassName="group-hover:scale-105 transition-transform duration-300"
           />
-          {/* Fallback if no image */}
-          {!book.cover_url && !book.cover && (
-            <div className="absolute inset-0 flex items-center justify-center bg-secondary">
-              <div className="text-center px-2">
-                <p className="text-xs text-muted-foreground font-medium">
-                  {book.name}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Book Info */}

@@ -98,29 +98,21 @@ export default function SearchResultsPage() {
               ))}
             </div>
 
-            {/* Skeleton Loaders while fetching */}
+            {/* Loader while fetching the next page */}
             {isSearchFetching && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={`skeleton-${i}`}
-                    className="aspect-3/4 bg-muted animate-pulse rounded-lg"
-                  />
-                ))}
+              <div className="flex justify-center py-8">
+                <Loader text="Chargement des résultats suivants..." />
               </div>
             )}
 
-            {/* Load More Button */}
-            {hasMore && (
+            {/* Load More Button — hidden during fetch, shown only when ready */}
+            {hasMore && !isSearchFetching && (
               <div className="flex justify-center pt-8">
                 <Button
                   onClick={handleLoadMore}
-                  disabled={isSearchFetching}
-                  className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
                 >
-                  {isSearchFetching
-                    ? "Chargement..."
-                    : "Charger plus de résultats"}
+                  Charger plus de résultats
                 </Button>
               </div>
             )}
