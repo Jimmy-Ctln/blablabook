@@ -29,10 +29,46 @@ import { useUpdateUser } from "./mutation/updateUser.mutation";
 import { useAuthStore } from "@/stores/authStore";
 import { useChangePassword } from "./mutation/changePassword.mutation";
 import { useDeleteAccount } from "./mutation/deleteAccount.mutation";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
+import FormFieldInfo from "@/components/Form/FormFields/FormFieldInfo";
+import type { SelectedAvatar } from "@/@types/user";
+
+const userInfoSchema = z.object({
+  username: z.string().min(3, "Au moins 3 caractères requis").trim(),
+  email: z.email("Format d'email invalide (ex : nom@domaine.com)").trim(),
+});
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Le mot de passe actuel est requis"),
+    newPassword: z
+      .string()
+      .min(8, "Au moins 8 caractères requis")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/,
+        "Doit contenir une majuscule, une minuscule, un chiffre et un caractère spécial",
+      ),
+    confirmPassword: z.string().min(1, "Veuillez confirmer votre mot de passe"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Les mots de passe ne correspondent pas",
+    path: ["confirmPassword"],
+  });
+
+const UPDATE_USER_ERRORS: Record<string, string> = {
+  "Email already in use": "Cette adresse email est déjà utilisée",
+  "username is already in use": "Ce nom d'utilisateur est déjà pris",
+};
+
+const CHANGE_PASSWORD_ERRORS: Record<string, string> = {
+  "Current password is incorrect": "Le mot de passe actuel est incorrect",
+};
 
 export default function ProfilePage() {
   const { data: user, isLoading, isError } = useCurrentUser();
   const { logout } = useAuthStore();
+
   const [editMode, setEditMode] = useState<"Enregistrer" | "Modifier">(
     "Modifier",
   );
@@ -40,57 +76,37 @@ export default function ProfilePage() {
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selected, setSelected] = useState<SelectedAvatar>();
-  const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [userName, setUserName] = useState(user?.username);
-  const [userEmail, setUserEmail] = useState(user?.email);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
 
-  if (!user) {
-    return;
-  }
-  const userId = user.id;
-
-  useEffect(() => {
-    if (userName !== user.username || userEmail !== user.email) {
-      setHasChanges(true);
-    } else {
-      setHasChanges(false);
-    }
-  }, [userName, userEmail]);
-
-  useEffect(() => {
-    setUserName(user?.username);
-    setUserEmail(user?.email);
-  }, [user]);
+  const userId = user?.id ?? 0;
 
   const updateUserMutation = useUpdateUser(userId, {
     onSuccess: () => {
       handleCloseAvatarDialog();
       toast.success("Informations mises à jour avec succès!");
     },
-    onError: () => {
-      toast.error("Erreur lors de la mise à jour des informations");
+    onError: (error) => {
+      const message = error?.response?.data?.message ?? "";
+      toast.error(
+        UPDATE_USER_ERRORS[message] ??
+          "Erreur lors de la mise à jour des informations",
+      );
     },
   });
 
   const changePasswordMutation = useChangePassword({
     onSuccess: () => {
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      passwordForm.reset();
       setOpenPasswordDialog(false);
       toast.success("Mot de passe modifié avec succès");
     },
-    onError: () => {
-      toast.error("Erreur lors de la modification du mot de passe");
+    onError: (error) => {
+      const message = (error as any)?.response?.data?.message ?? "";
+      toast.error(
+        CHANGE_PASSWORD_ERRORS[message] ??
+          "Erreur lors de la modification du mot de passe",
+      );
     },
   });
 
@@ -104,39 +120,73 @@ export default function ProfilePage() {
     },
   });
 
-  type SelectedAvatar = {
-    id: string;
-    sexe: string;
-    source: string;
-  };
+  const userInfoForm = useForm({
+    defaultValues: {
+      username: user?.username ?? "",
+      email: user?.email ?? "",
+    },
+    validators: {
+      onChange: userInfoSchema,
+    },
+    onSubmit: async ({ value }) => {
+      const updateData: Partial<{ username: string; email: string }> = {};
+      if (value.username !== user?.username)
+        updateData.username = value.username;
+      if (value.email !== user?.email) updateData.email = value.email;
 
-  function handleCloseAvatarDialog() {
-    setOpenAvatarDialog(false);
-    setSelected(undefined);
-  }
+      if (Object.keys(updateData).length === 0) {
+        setEditMode("Modifier");
+        return;
+      }
 
-  const avatars: SelectedAvatar[] = [
-    {
-      id: "1",
-      sexe: "Masculin",
-      source: "/avatars/masculin-1.svg",
+      try {
+        await updateUserMutation.mutateAsync(updateData);
+        setEditMode("Modifier");
+      } catch {
+        // Toast shown by mutation's onError
+      }
     },
-    {
-      id: "2",
-      sexe: "Masculin",
-      source: "/avatars/masculin-2.svg",
+  });
+
+  const passwordForm = useForm({
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
-    {
-      id: "3",
-      sexe: "feminin",
-      source: "/avatars/feminin-1.svg",
+    validators: {
+      onChange: passwordSchema,
     },
-    {
-      id: "4",
-      sexe: "feminin",
-      source: "/avatars/feminin-2.svg",
+    onSubmit: async ({ value }) => {
+      try {
+        await changePasswordMutation.mutateAsync({
+          currentPassword: value.currentPassword,
+          newPassword: value.newPassword,
+        });
+      } catch {
+        // Toast shown by mutation's onError
+      }
     },
-  ];
+  });
+
+  // Sync form values when user data updates after a successful mutation
+  useEffect(() => {
+    if (user) {
+      userInfoForm.reset({
+        username: user.username ?? "",
+        email: user.email ?? "",
+      });
+    }
+  }, [user]);
+
+  // Reset password form and visibility toggles when dialog closes
+  useEffect(() => {
+    if (!openPasswordDialog) {
+      passwordForm.reset();
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+    }
+  }, [openPasswordDialog]);
 
   if (isLoading)
     return <div className="p-8 text-center">Chargement du profil...</div>;
@@ -147,6 +197,18 @@ export default function ProfilePage() {
       </div>
     );
 
+  function handleCloseAvatarDialog() {
+    setOpenAvatarDialog(false);
+    setSelected(undefined);
+  }
+
+  const avatars: SelectedAvatar[] = [
+    { id: "1", sexe: "Masculin", source: "/avatars/masculin-1.svg" },
+    { id: "2", sexe: "Masculin", source: "/avatars/masculin-2.svg" },
+    { id: "3", sexe: "feminin", source: "/avatars/feminin-1.svg" },
+    { id: "4", sexe: "feminin", source: "/avatars/feminin-2.svg" },
+  ];
+
   const userAvatar = (editingMode: boolean): ReactNode => (
     <Avatar
       onClick={() => !editingMode && setOpenAvatarDialog(true)}
@@ -156,7 +218,7 @@ export default function ProfilePage() {
     >
       {user.avatar_url ? (
         <AvatarImage
-          className={`z-0`}
+          className="z-0"
           src={user.avatar_url ? `${user.avatar_url}` : undefined}
           alt={`Avatar de ${user.username}`}
         />
@@ -175,45 +237,6 @@ export default function ProfilePage() {
       )}
     </Avatar>
   );
-
-  const handleUserInfoChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!hasChanges) {
-      setEditMode("Modifier");
-      return;
-    }
-
-    if (userEmail && !userEmail.includes("@")) {
-      toast.error("Email invalide");
-      return;
-    }
-
-    const updateData: any = {};
-    if (userName !== user.username) updateData.username = userName;
-    if (userEmail !== user.email) updateData.email = userEmail;
-
-    if (Object.keys(updateData).length > 0) {
-      updateUserMutation.mutate(updateData);
-      setEditMode("Modifier");
-    }
-  };
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-    changePasswordMutation.mutate({
-      currentPassword: passwordData.currentPassword,
-      newPassword: passwordData.newPassword,
-    });
-  };
-
-  const handleDeleteAccount = async () => {
-    deleteAccountMutation.mutate();
-  };
 
   return (
     <div className="w-full min-h-screen bg-background">
@@ -246,7 +269,11 @@ export default function ProfilePage() {
             <Card className="p-6 rounded-2xl">
               <form
                 id="user-info-form"
-                onSubmit={handleUserInfoChange}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  userInfoForm.handleSubmit();
+                }}
                 className="space-y-4"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -257,77 +284,126 @@ export default function ProfilePage() {
                     {editMode === "Enregistrer" && (
                       <Button
                         size="sm"
-                        variant={"secondary"}
+                        variant="secondary"
                         type="button"
-                        onClick={() => setEditMode("Modifier")}
+                        onClick={() => {
+                          setEditMode("Modifier");
+                          userInfoForm.reset();
+                        }}
                       >
                         Annuler
                       </Button>
                     )}
-                    <Button
-                      variant={editMode === "Modifier" ? "outline" : "default"}
-                      size="sm"
-                      type={editMode === "Enregistrer" ? "submit" : "button"}
-                      disabled={
-                        updateUserMutation.isPending ||
-                        (editMode === "Enregistrer" && !hasChanges)
-                      }
-                      onClick={() => {
-                        if (editMode === "Modifier") {
-                          setEditMode("Enregistrer");
-                        }
-                      }}
+                    <userInfoForm.Subscribe
+                      selector={(state) => ({
+                        isDirty: state.isDirty,
+                        isSubmitting: state.isSubmitting,
+                        canSubmit: state.canSubmit,
+                      })}
                     >
-                      {updateUserMutation.isPending ? (
-                        <>
-                          <span className="animate-spin mr-2">⏳</span>
-                          Enregistrement...
-                        </>
-                      ) : (
-                        editMode
+                      {({ isDirty, isSubmitting, canSubmit }) => (
+                        <Button
+                          variant={
+                            editMode === "Modifier" ? "outline" : "default"
+                          }
+                          size="sm"
+                          type={
+                            editMode === "Enregistrer" ? "submit" : "button"
+                          }
+                          disabled={
+                            isSubmitting ||
+                            (editMode === "Enregistrer" &&
+                              (!isDirty || !canSubmit))
+                          }
+                          onClick={() => {
+                            if (editMode === "Modifier") {
+                              setEditMode("Enregistrer");
+                            }
+                          }}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <span className="animate-spin mr-2">⏳</span>
+                              Enregistrement...
+                            </>
+                          ) : (
+                            editMode
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                    </userInfoForm.Subscribe>
                   </div>
                 </div>
                 <Separator className="mb-4" />
 
                 <div className="space-y-4">
-                  <div>
-                    <FieldLabel
-                      htmlFor="username"
-                      className="mb-2 flex items-center gap-2"
-                    >
-                      <User2 className="h-4 w-4" />
-                      Nom complet
-                    </FieldLabel>
-                    <Input
-                      id="username"
-                      type="text"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      disabled={editMode === "Modifier"}
-                      placeholder="Votre profil"
-                      className="rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel
-                      htmlFor="email"
-                      className="mb-2 flex items-center gap-2"
-                    >
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </FieldLabel>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      disabled={editMode === "Modifier"}
-                      placeholder="votre@email.com"
-                      className="rounded-lg"
-                    />
-                  </div>
+                  <userInfoForm.Field name="username">
+                    {(field) => (
+                      <div>
+                        <FieldLabel
+                          htmlFor={field.name}
+                          className="mb-2 flex items-center gap-2"
+                        >
+                          <User2 className="h-4 w-4" />
+                          Nom d'utilisateur
+                        </FieldLabel>
+                        <Input
+                          id={field.name}
+                          type="text"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          disabled={editMode === "Modifier"}
+                          placeholder="Votre profil"
+                          aria-invalid={
+                            field.state.meta.isTouched &&
+                            !field.state.meta.isValid
+                          }
+                          className={`rounded-lg${
+                            field.state.meta.isTouched &&
+                            !field.state.meta.isValid
+                              ? " border-destructive focus-visible:ring-destructive"
+                              : ""
+                          }`}
+                        />
+                        <FormFieldInfo field={field} />
+                      </div>
+                    )}
+                  </userInfoForm.Field>
+
+                  <userInfoForm.Field name="email">
+                    {(field) => (
+                      <div>
+                        <FieldLabel
+                          htmlFor={field.name}
+                          className="mb-2 flex items-center gap-2"
+                        >
+                          <Mail className="h-4 w-4" />
+                          Email
+                        </FieldLabel>
+                        <Input
+                          id={field.name}
+                          type="email"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          disabled={editMode === "Modifier"}
+                          placeholder="votre@email.com"
+                          aria-invalid={
+                            field.state.meta.isTouched &&
+                            !field.state.meta.isValid
+                          }
+                          className={`rounded-lg${
+                            field.state.meta.isTouched &&
+                            !field.state.meta.isValid
+                              ? " border-destructive focus-visible:ring-destructive"
+                              : ""
+                          }`}
+                        />
+                        <FormFieldInfo field={field} />
+                      </div>
+                    )}
+                  </userInfoForm.Field>
                 </div>
               </form>
             </Card>
@@ -346,6 +422,7 @@ export default function ProfilePage() {
               >
                 Modifier le mot de passe
               </Button>
+
               <Dialog
                 open={openPasswordDialog}
                 onOpenChange={setOpenPasswordDialog}
@@ -362,91 +439,133 @@ export default function ProfilePage() {
                   </DialogHeader>
 
                   <form
-                    onSubmit={handlePasswordChange}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      passwordForm.handleSubmit();
+                    }}
                     className="space-y-4 text-foreground"
                   >
-                    <div>
-                      <FieldLabel htmlFor="current-password" className="mb-2">
-                        Mot de passe actuel
-                      </FieldLabel>
-                      <div className="relative">
-                        <Input
-                          id="current-password"
-                          type={showPassword ? "text" : "password"}
-                          value={passwordData.currentPassword}
-                          onChange={(e) =>
-                            setPasswordData({
-                              ...passwordData,
-                              currentPassword: e.target.value,
-                            })
-                          }
-                          placeholder="••••••••"
-                          className="pr-10 rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    <passwordForm.Field name="currentPassword">
+                      {(field) => (
+                        <div>
+                          <FieldLabel htmlFor={field.name} className="mb-2">
+                            Mot de passe actuel
+                          </FieldLabel>
+                          <div className="relative">
+                            <Input
+                              id={field.name}
+                              type={showCurrentPassword ? "text" : "password"}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(e) =>
+                                field.handleChange(e.target.value)
+                              }
+                              placeholder="••••••••"
+                              aria-invalid={
+                                field.state.meta.isTouched &&
+                                !field.state.meta.isValid
+                              }
+                              className={`pr-10 rounded-lg${
+                                field.state.meta.isTouched &&
+                                !field.state.meta.isValid
+                                  ? " border-destructive focus-visible:ring-destructive"
+                                  : ""
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-3 top-1/2 -translate-y-1/2"
+                              onClick={() =>
+                                setShowCurrentPassword(!showCurrentPassword)
+                              }
+                            >
+                              {showCurrentPassword ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          </div>
+                          <FormFieldInfo field={field} />
+                        </div>
+                      )}
+                    </passwordForm.Field>
 
-                    <div>
-                      <FieldLabel htmlFor="new-password" className="mb-2">
-                        Nouveau mot de passe
-                      </FieldLabel>
-                      <div className="relative">
-                        <Input
-                          id="new-password"
-                          type={showNewPassword ? "text" : "password"}
-                          value={passwordData.newPassword}
-                          onChange={(e) =>
-                            setPasswordData({
-                              ...passwordData,
-                              newPassword: e.target.value,
-                            })
-                          }
-                          placeholder="••••••••"
-                          className="pr-10 rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    <passwordForm.Field name="newPassword">
+                      {(field) => (
+                        <div>
+                          <FieldLabel htmlFor={field.name} className="mb-2">
+                            Nouveau mot de passe
+                          </FieldLabel>
+                          <div className="relative">
+                            <Input
+                              id={field.name}
+                              type={showNewPassword ? "text" : "password"}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(e) =>
+                                field.handleChange(e.target.value)
+                              }
+                              placeholder="••••••••"
+                              aria-invalid={
+                                field.state.meta.isTouched &&
+                                !field.state.meta.isValid
+                              }
+                              className={`pr-10 rounded-lg${
+                                field.state.meta.isTouched &&
+                                !field.state.meta.isValid
+                                  ? " border-destructive focus-visible:ring-destructive"
+                                  : ""
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-3 top-1/2 -translate-y-1/2"
+                              onClick={() =>
+                                setShowNewPassword(!showNewPassword)
+                              }
+                            >
+                              {showNewPassword ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          </div>
+                          <FormFieldInfo field={field} />
+                        </div>
+                      )}
+                    </passwordForm.Field>
 
-                    <div>
-                      <FieldLabel htmlFor="confirm-password" className="mb-2">
-                        Confirmer le mot de passe
-                      </FieldLabel>
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                        placeholder="••••••••"
-                        className="rounded-lg"
-                      />
-                    </div>
+                    <passwordForm.Field name="confirmPassword">
+                      {(field) => (
+                        <div>
+                          <FieldLabel htmlFor={field.name} className="mb-2">
+                            Confirmer le mot de passe
+                          </FieldLabel>
+                          <Input
+                            id={field.name}
+                            type="password"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="••••••••"
+                            aria-invalid={
+                              field.state.meta.isTouched &&
+                              !field.state.meta.isValid
+                            }
+                            className={`rounded-lg${
+                              field.state.meta.isTouched &&
+                              !field.state.meta.isValid
+                                ? " border-destructive focus-visible:ring-destructive"
+                                : ""
+                            }`}
+                          />
+                          <FormFieldInfo field={field} />
+                        </div>
+                      )}
+                    </passwordForm.Field>
 
                     <DialogFooter className="gap-2 pt-4">
                       <DialogClose asChild>
@@ -458,9 +577,22 @@ export default function ProfilePage() {
                           Annuler
                         </Button>
                       </DialogClose>
-                      <Button type="submit" className="rounded-lg">
-                        Mettre à jour
-                      </Button>
+                      <passwordForm.Subscribe
+                        selector={(state) => ({
+                          canSubmit: state.canSubmit,
+                          isSubmitting: state.isSubmitting,
+                        })}
+                      >
+                        {({ canSubmit, isSubmitting }) => (
+                          <Button
+                            type="submit"
+                            className="rounded-lg"
+                            disabled={!canSubmit || isSubmitting}
+                          >
+                            {isSubmitting ? "Mise à jour..." : "Mettre à jour"}
+                          </Button>
+                        )}
+                      </passwordForm.Subscribe>
                     </DialogFooter>
                   </form>
                 </DialogContent>
@@ -516,7 +648,7 @@ export default function ProfilePage() {
                     </DialogClose>
                     <Button
                       variant="destructive"
-                      onClick={handleDeleteAccount}
+                      onClick={() => deleteAccountMutation.mutate()}
                       className="rounded-lg"
                     >
                       Supprimer définitivement
@@ -567,9 +699,7 @@ export default function ProfilePage() {
                         ? "border-primary bg-primary/10"
                         : "border-transparent hover:border-primary/50"
                     }`}
-                    onClick={() => {
-                      setSelected(avatar);
-                    }}
+                    onClick={() => setSelected(avatar)}
                   >
                     <img
                       src={avatar.source}
