@@ -111,6 +111,7 @@ html {
   scroll-behavior: smooth;
   overscroll-behavior: none;
   background-color: hsl(225 15% 6%);
+  overflow-x: clip;
 }
 
 body {
