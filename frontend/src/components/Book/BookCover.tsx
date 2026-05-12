@@ -2,7 +2,7 @@ import React from "react";
 import { BookCoverImage } from "@/components/BookCoverImage";
 
 interface BookCoverProps {
-  src: string;
+  src?: string;
   alt: string;
   className?: string;
 }
