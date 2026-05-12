@@ -69,13 +69,22 @@ export default function ProfilePage() {
     setUserEmail(user?.email);
   }, [user]);
 
+  const UPDATE_USER_ERRORS: Record<string, string> = {
+    "Email already in use": "Cette adresse email est déjà utilisée",
+    "username is already in use": "Ce nom d'utilisateur est déjà pris",
+  };
+
   const updateUserMutation = useUpdateUser(userId, {
     onSuccess: () => {
       handleCloseAvatarDialog();
       toast.success("Informations mises à jour avec succès!");
     },
-    onError: () => {
-      toast.error("Erreur lors de la mise à jour des informations");
+    onError: (error) => {
+      const message = error?.response?.data?.message ?? "";
+      toast.error(
+        UPDATE_USER_ERRORS[message] ??
+          "Erreur lors de la mise à jour des informations",
+      );
     },
   });
 
@@ -181,6 +190,11 @@ export default function ProfilePage() {
 
     if (!hasChanges) {
       setEditMode("Modifier");
+      return;
+    }
+
+    if (userName && userName.trim().length < 3) {
+      toast.error("Le nom d'utilisateur doit faire au moins 3 caractères");
       return;
     }
 
@@ -298,7 +312,7 @@ export default function ProfilePage() {
                       className="mb-2 flex items-center gap-2"
                     >
                       <User2 className="h-4 w-4" />
-                      Nom complet
+                      Nom d'utilisateur
                     </FieldLabel>
                     <Input
                       id="username"
