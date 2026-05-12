@@ -11,7 +11,7 @@ import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getBooks } from "@/api/books";
 import type { BooksByCategory } from "@/@types/books";
-import type { ExternalBook } from "@/@types/externalBooks";
+import type { SearchBooksResponse } from "@/@types/externalBooks";
 import { searchExternalBooks } from "@/api/externalBooks";
 import SearchBar from "./SearchBar";
 import { Button } from "./ui/button";
@@ -46,15 +46,17 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   };
   // TanStack Query to look external books
   const {
-    data: externalBookResult = [],
+    data: externalBooksResponse,
     isFetching,
     refetch: refetchExternalBooks,
-  } = useQuery<ExternalBook[]>({
+  } = useQuery<SearchBooksResponse>({
     enabled: false, // don't fetch on mount
     queryKey: ["externalBooks", query],
     queryFn: () =>
       searchExternalBooks({ type: "searchText", searchText: query }),
   });
+
+  const externalBookResult = externalBooksResponse?.books ?? [];
 
   useEffect(() => {
     if (query.trim().length >= 2) {
