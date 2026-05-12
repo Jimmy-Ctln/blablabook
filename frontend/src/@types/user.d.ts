@@ -7,3 +7,9 @@ export interface UserProps {
 }
 
 export type User = UserProps;
+
+export type SelectedAvatar = {
+  id: string;
+  sexe: string;
+  source: string;
+};
