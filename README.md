@@ -147,17 +147,17 @@ This project uses GitHub Actions for automated testing and deployment. The CI/CD
 
 Create these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
 
-| Secret               | Example Value                                                 | Purpose                   |
-| -------------------- | ------------------------------------------------------------- | ------------------------- |
-| `DATABASE_URL`       | `postgresql://username:password@localhost:5432/database_name` | Test database URL         |
-| `JWT_SECRET`         | `your-secret-key-for-jwt-signing`                             | JWT signing key           |
-| `DB_NAME`            | `your_database_name`                                          | Database name             |
-| `DB_USER`            | `your_database_user`                                          | Database user             |
-| `DB_PASSWORD`        | `your_secure_database_password`                               | Database password         |
-| `VITE_BACKEND_URL`   | `https://your-backend-url.onrender.com`                       | Production backend URL    |
-| `FRONTEND_URL`  | `https://your-frontend-url.vercel.app`                        | Frontend URL for CORS     |
-| `RENDER_DEPLOY_HOOK` | `https://api.render.com/deploy/srv-xxxxx/...`                 | Render deployment webhook |
-| `VERCEL_DEPLOY_HOOK` | `https://api.vercel.com/v1/integrations/deploy/...`           | Vercel deployment webhook |
+| Secret               | Example Value                                                 | Purpose                                                      |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| `DATABASE_URL`       | `postgresql://username:password@localhost:5432/database_name` | Test database URL                                            |
+| `JWT_SECRET`         | `your-secret-key-for-jwt-signing`                             | JWT signing key                                              |
+| `DB_NAME`            | `your_database_name`                                          | Database name                                                |
+| `DB_USER`            | `your_database_user`                                          | Database user                                                |
+| `DB_PASSWORD`        | `your_secure_database_password`                               | Database password                                            |
+| `VITE_BACKEND_URL`   | `/api`                                                        | Production backend URL (proxied via Vercel — see note below) |
+| `FRONTEND_URL`       | `https://your-frontend-url.vercel.app`                        | Frontend URL for CORS                                        |
+| `RENDER_DEPLOY_HOOK` | `https://api.render.com/deploy/srv-xxxxx/...`                 | Render deployment webhook                                    |
+| `VERCEL_DEPLOY_HOOK` | `https://api.vercel.com/v1/integrations/deploy/...`           | Vercel deployment webhook                                    |
 
 ### Environment Variables Explained
 
@@ -376,6 +376,14 @@ kill -9 <PID>
 - Check GitHub Actions logs
 - Verify all secrets are set in GitHub
 - Ensure migrations are committed to git
+
+**Login not working on mobile (iOS Safari)?**
+
+Safari on iOS blocks cross-site cookies by default, even when the backend sets `SameSite=None; Secure=true`. This is Apple's ITP (Intelligent Tracking Prevention). Since the frontend (Vercel) and backend (Render) are on different domains, the auth cookies get silently blocked on mobile.
+
+The fix: `vercel.json` configures Vercel as a reverse proxy. Instead of the browser calling the Render URL directly, it calls `/api/*` on the same Vercel domain. Vercel then relays the request to Render server-to-server. The browser only ever sees the Vercel domain, so cookies are first-party and Safari allows them.
+
+This is why `VITE_BACKEND_URL` must be set to `/api` (not the Render URL) in the Vercel dashboard.
 
 ---
 
