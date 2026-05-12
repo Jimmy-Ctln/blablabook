@@ -2,6 +2,7 @@ import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import background from "@/assets/hero-bg.jpg";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { motion } from "framer-motion";
 
 export default function Hero() {
   const currentUser = useCurrentUser();
@@ -9,7 +10,7 @@ export default function Hero() {
   const username = currentUser.data?.username;
 
   return (
-    <section className="relative flex min-h-[60vh] sm:min-h-[70vh] items-center justify-center sm:items-start sm:justify-start pt-12 sm:pt-20 md:pt-24 overflow-hidden">
+    <section className="relative flex min-h-[65vh] items-center overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={background}
@@ -20,61 +21,92 @@ export default function Hero() {
         <div className="absolute inset-0 bg-linear-to-r from-background via-transparent to-[rgba(10,12,20,0.6)]" />
       </div>
 
-      <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 pb-16 sm:pb-20">
-        <div className="max-w-3xl mx-auto sm:mx-0 text-center sm:text-left">
-          <div className="mb-8 sm:mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs sm:text-sm text-primary justify-center w-full sm:w-auto">
-            <Sparkles className="h-4 w-4 shrink-0" />
-            <span className="font-medium">
-              {isAuthenticated
-                ? `Bienvenue sur Blablabook, ${username} !`
-                : "Votre prochaine aventure littéraire commence ici"}
-            </span>
-          </div>
+      <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-10 pb-40">
+        <div className="flex flex-col items-center gap-10 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:gap-16 min-[1000px]:max-w-5xl min-[1000px]:mx-auto">
 
-          {isAuthenticated ? (
-            <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
-              Bonjour,{" "}
-              <span className="text-primary to-blue-300">{username}</span>
-              <br />
-              Que lit-on aujourd'hui ?
-            </h1>
-          ) : (
-            <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
-              Lisez.{" "}
-              <span className="bg-linear-to-r rounded-xl px-2 from-primary to-blue-300">
-                Collectionnez.
+          <div className="flex flex-col items-center text-center min-[1000px]:items-start min-[1000px]:text-left min-[1000px]:flex-1 min-[1000px]:max-w-2xl">
+            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs sm:text-sm text-primary">
+              <Sparkles className="h-4 w-4 shrink-0" />
+              <span className="font-medium">
+                {isAuthenticated
+                  ? `Bienvenue sur Blablabook, ${username} !`
+                  : "Votre prochaine aventure littéraire commence ici"}
               </span>
-              <br />
-              Partagez.
-            </h1>
-          )}
+            </div>
 
-          <p className="mt-8 sm:mt-6 max-w-lg mx-auto sm:mx-0 text-balance text-sm sm:text-base md:text-lg leading-relaxed text-white/70">
-            {isAuthenticated
-              ? "Retrouvez votre bibliothèque, suivez vos lectures en cours et découvrez de nouvelles aventures littéraires."
-              : "Blablabook est votre bibliothèque personnelle en ligne. Découvrez des livres, suivez vos lectures et explorez les collections de la communauté."}
-          </p>
-
-          <div className="mt-8 sm:mt-10 flex flex-col items-center gap-4 sm:items-start sm:gap-4 sm:flex-row">
             {isAuthenticated ? (
-              <Link
-                to="/library"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-primary/90 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_32px_rgba(59,130,246,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:shadow-[0_12px_40px_rgba(59,130,246,0.45)]"
-              >
-                <BookOpen className="h-4 w-4 shrink-0" />
-                <span>Ma Bibliothèque</span>
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 shrink-0" />
-              </Link>
+              <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
+                Bonjour,{" "}
+                <span className="text-primary">{username}</span>
+                <br />
+                Que lit-on aujourd'hui ?
+              </h1>
             ) : (
-              <Link
-                to="/login"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-primary/90 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_32px_rgba(59,130,246,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:shadow-[0_12px_40px_rgba(59,130,246,0.45)]"
-              >
-                <span>Se connecter</span>
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 shrink-0" />
-              </Link>
+              <h1 className="text-balance font-bold leading-tight tracking-tight text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
+                Lisez.{" "}
+                <span className="bg-linear-to-r rounded-xl px-2 from-primary to-blue-300">
+                  Collectionnez.
+                </span>
+                <br />
+                Partagez.
+              </h1>
             )}
+
+            <p className="mt-6 text-balance text-sm sm:text-base md:text-lg leading-relaxed text-white/70 max-w-lg">
+              {isAuthenticated
+                ? "Retrouvez votre bibliothèque, suivez vos lectures en cours et découvrez de nouvelles aventures littéraires."
+                : "Blablabook est votre bibliothèque personnelle en ligne. Découvrez des livres, suivez vos lectures et explorez les collections de la communauté."}
+            </p>
+
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row min-[1000px]:items-start">
+              {isAuthenticated ? (
+                <Link
+                  to="/library"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-primary/90 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_32px_rgba(59,130,246,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:shadow-[0_12px_40px_rgba(59,130,246,0.45)]"
+                >
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  <span>Ma Bibliothèque</span>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 shrink-0" />
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-primary/90 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_32px_rgba(59,130,246,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:shadow-[0_12px_40px_rgba(59,130,246,0.45)]"
+                >
+                  <span>Se connecter</span>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 shrink-0" />
+                </Link>
+              )}
+            </div>
           </div>
+
+          <div className="hidden min-[1000px]:flex justify-center items-center shrink-0">
+            <motion.div
+              className="relative"
+              animate={{ y: [0, -22, 0], rotate: [-4, 4, -4] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <motion.div
+                className="absolute -inset-8 bg-radial from-primary/40 via-blue-500/20 to-transparent rounded-full blur-3xl"
+                animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.15, 0.9] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.img
+                src="/book.svg"
+                alt="Logo Blablabook"
+                className="relative w-56 h-56 min-[1200px]:w-72 min-[1200px]:h-72"
+                animate={{
+                  filter: [
+                    "drop-shadow(0 12px 40px rgba(59,130,246,0.3))",
+                    "drop-shadow(0 20px 60px rgba(59,130,246,0.65))",
+                    "drop-shadow(0 12px 40px rgba(59,130,246,0.3))",
+                  ],
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </motion.div>
+          </div>
+
         </div>
       </div>
     </section>

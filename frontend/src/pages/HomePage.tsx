@@ -9,11 +9,14 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useExternalBooks } from "@/hooks/useExternalBooks";
-import { Input } from "@/components/ui/input";
+import SearchBar from "@/components/SearchBar";
 import { AlertCircle } from "lucide-react";
-import { Loader } from "@/components/Loader";
+import { useNavigate } from "@tanstack/react-router";
+import SearchResultsSkeleton from "@/components/SearchResultsSkeleton";
+import notFound from "@/assets/not-found.svg";
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState<string>("");
   const categories = [
     "science-fiction",
@@ -37,11 +40,14 @@ export default function HomePage() {
     queryFn: () => getBooks(categories),
   });
 
-  // Search external books
+  // Search external books with pagination
   const {
     data: externalSearchResults = [],
-    isLoading: isSearching,
+    isFetching: isSearchFetching,
     error: searchError,
+    numFound,
+    hasMore,
+    hasReceivedData,
   } = useExternalBooks({
     mode: "search",
     param: searchText,
@@ -56,14 +62,8 @@ export default function HomePage() {
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-4">
-          Résultats de recherche pour "{searchText}"
+          Résultats de recherche pour "{searchText}" ({numFound} résultats)
         </h2>
-
-        {isSearching && (
-          <div className="flex justify-center py-8">
-            <Loader text="Recherche en cours..." size="md" />
-          </div>
-        )}
 
         {searchError && (
           <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive rounded-lg text-destructive">
@@ -72,21 +72,63 @@ export default function HomePage() {
           </div>
         )}
 
-        {!isSearching && !searchError && externalSearchResults.length === 0 && (
-          <div className="p-4 bg-muted rounded-lg text-center">
-            <p className="text-muted-foreground">
-              Aucun livre trouvé pour "{searchText}"
-            </p>
+        {/* Show loading state with skeleton (while fetching and no results yet) */}
+        {isSearchFetching && externalSearchResults.length === 0 && (
+          <SearchResultsSkeleton />
+        )}
+
+        {/* Show results as they come in with skeleton loaders */}
+        {externalSearchResults.length > 0 && (
+          <div className="space-y-4">
+            <CarouselDisplay
+              title="Résultats"
+              books={externalSearchResults.map((book) => ({
+                ...mapExternalBookToDisplay(book),
+                editionCount: book.editionCount,
+              }))}
+              isLoading={isSearchFetching}
+            />
+
+            {/* Load More Button - Navigate to full search page */}
+            {hasMore && !isSearchFetching && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() =>
+                    navigate({ to: "/search", search: { q: searchText } })
+                  }
+                  disabled={isSearchFetching}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSearchFetching ? "Chargement..." : "Voir plus résultats"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {!isSearching && !searchError && externalSearchResults.length > 0 && (
-          <CarouselDisplay
-            title="Résultats"
-            books={externalSearchResults.map(mapExternalBookToDisplay)}
-            isLoading={false}
-          />
-        )}
+        {hasReceivedData &&
+          !isSearchFetching &&
+          !searchError &&
+          externalSearchResults.length === 0 && (
+            <div className="w-full mx-auto my-8 px-8">
+              <h2 className="text-xl font-bold text-foreground">Résultats</h2>
+              <div className="mt-4 min-h-80 flex flex-col items-center justify-center gap-4 rounded-xl bg-muted/30">
+                <img
+                  src={notFound}
+                  alt="Aucun résultat"
+                  className="w-40 h-40 opacity-80"
+                />
+                <div className="text-center">
+                  <p className="text-base font-semibold text-foreground">
+                    Aucun livre trouvé pour "{searchText}"
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Essayez avec d'autres mots-clés ou un titre différent
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   ) : (
@@ -122,12 +164,9 @@ export default function HomePage() {
       <div className="relative z-20 -mt-20 md:-mt-16 lg:-mt-20 container mx-auto px-4 sm:px-6 md:px-8">
         {/* Search Bar */}
         <div className="mb-8 flex justify-center">
-          <Input
-            type="text"
+          <SearchBar
             placeholder="Rechercher un livre..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="max-w-md px-4 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            onSearch={setSearchText}
           />
         </div>
 

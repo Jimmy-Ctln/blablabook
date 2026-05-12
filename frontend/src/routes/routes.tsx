@@ -16,6 +16,7 @@ import ProfilePage from "@/pages/ProfilePage/ProfilePage";
 import PrivacyPolicy from "@/pages/Legal/PrivacyPolicy";
 import LegalNotice from "@/pages/Legal/LegalNotice";
 import TermsOfUse from "@/pages/Legal/TermsOfUse";
+import SearchResultsPage from "@/pages/SearchResultsPage";
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,
@@ -90,6 +91,12 @@ const termsRoute = createRoute({
   component: () => <TermsOfUse />,
 });
 
+const searchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/search",
+  component: () => <SearchResultsPage />,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   registerPage,
@@ -98,6 +105,7 @@ const routeTree = rootRoute.addChildren([
   privacyRoute,
   legalRoute,
   termsRoute,
+  searchRoute,
   protectedRoute.addChildren([libraryRoute, profilePage]),
 ]);
 

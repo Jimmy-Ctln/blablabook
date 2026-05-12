@@ -2,41 +2,36 @@
 @coversBaseUrl = https://covers.openlibrary.org
 
 ### Example data (editable)
-@searchText = Harry potter
+@searchText = Star Wars
 @categoryName = fantasy
 @randomLikeQuery = science
 @isbn = 9780140328721
-@workId = OL45804W
+@workId = /works/OL83573W
 @authorId = OL34184A
 @editionKey = OL7723154M
 @coverId = 15152634
+@limit = 10
+@offset = 0
+
+### ------------------------------------------------------------------
+### TEST - Check what fields are actually returned in editions
+### ------------------------------------------------------------------
+GET {{baseUrl}}/search.json?q={{searchText}}&limit=1&fields=key,title,author_name,editions,editions.key,editions.title,editions.isbn,editions.language,editions.covers
+Accept: application/json
+
+###
 
 ### ------------------------------------------------------------------
 ### 1) SEARCH - searchText mode (uses /search.json?q=...)
+### With EDITIONS embedded - optimized to avoid 500+ requests!
 ### ------------------------------------------------------------------
-GET {{baseUrl}}/search.json?q={{searchText}}&limit=1&lang=fr&fields=key,title,author_name,edition_key,subject
+GET {{baseUrl}}/search.json?q={{searchText}}&limit={{limit}}&offset={{offset}}&fields=key,title,author_name,first_publish_year,cover_i,editions,editions.key,editions.title,editions.isbn,editions.language,editions.covers
 Accept: application/json
 
 ###
 
 ### ------------------------------------------------------------------
-### 2) SEARCH - category mode (uses /search.json?q=categoryName)
-### ------------------------------------------------------------------
-GET {{baseUrl}}/search.json?q={{categoryName}}&limit=20&fields=key,title,author_name,edition_key,subject
-Accept: application/json
-
-###
-
-### ------------------------------------------------------------------
-### 3) SEARCH - random mode (simulates a random query)
-### ------------------------------------------------------------------
-GET {{baseUrl}}/search.json?q={{randomLikeQuery}}&limit=20&fields=key,title,author_name,edition_key,subject
-Accept: application/json
-
-###
-
-### ------------------------------------------------------------------
-### 4) BOOK EDITION - edition details via edition_key
+### 2) BOOK EDITION - edition details via edition_key
 ### Used in searchExternalBooks: /books/{editionKey}.json
 ### ------------------------------------------------------------------
 GET {{baseUrl}}/books/{{editionKey}}.json
@@ -45,7 +40,7 @@ Accept: application/json
 ###
 
 ### ------------------------------------------------------------------
-### 5) ISBN - edition by ISBN
+### 3) ISBN - edition by ISBN
 ### Used in getOpenLibIsbnData
 ### ------------------------------------------------------------------
 GET {{baseUrl}}/isbn/{{isbn}}.json
@@ -54,7 +49,7 @@ Accept: application/json
 ###
 
 ### ------------------------------------------------------------------
-### 6) WORK - work details
+### 4) WORK - work details
 ### Used in getOpenLibWorkData
 ### ------------------------------------------------------------------
 GET {{baseUrl}}/works/{{workId}}.json
@@ -63,7 +58,7 @@ Accept: application/json
 ###
 
 ### ------------------------------------------------------------------
-### 7) AUTHOR - author details
+### 5) AUTHOR - author details
 ### Used in getOpenLibAuthorData
 ### ------------------------------------------------------------------
 GET {{baseUrl}}/authors/{{authorId}}.json
@@ -72,13 +67,31 @@ Accept: application/json
 ###
 
 ### ------------------------------------------------------------------
-### 8) COVER - cover image (used for book covers)
+### 6) COVER - cover image large format (used for book detail pages)
 ### ------------------------------------------------------------------
 GET {{coversBaseUrl}}/b/id/{{coverId}}-L.jpg
 
 ###
 
 ### ------------------------------------------------------------------
-### 9) COVER - medium format (used in searchExternalBooks)
+### 7) COVER - cover image medium format (used for search results)
 ### ------------------------------------------------------------------
 GET {{coversBaseUrl}}/b/id/{{coverId}}-M.jpg
+
+###
+
+### ------------------------------------------------------------------
+### 8) SEARCH - category mode (uses /search.json?q=categoryName) - OPTIONAL
+### ------------------------------------------------------------------
+GET {{baseUrl}}/search.json?q={{categoryName}}&limit={{limit}}&offset={{offset}}&language=fre&fields=key,title,author_name,edition_key,subject
+Accept: application/json
+
+###
+
+### ------------------------------------------------------------------
+### 9) SEARCH - random mode (simulates a random query) - OPTIONAL
+### ------------------------------------------------------------------
+GET {{baseUrl}}/search.json?q={{randomLikeQuery}}&limit={{limit}}&offset={{offset}}&language=fre&fields=key,title,author_name,edition_key,subject
+Accept: application/json
+
+###
