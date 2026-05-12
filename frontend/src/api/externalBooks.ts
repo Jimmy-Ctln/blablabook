@@ -188,7 +188,7 @@ export const getFullExternalBook = async (
 
   return {
     isbn,
-    title: dataIsbn.title,
+    title: dataIsbn.title || "",
     authors: [dataAuthor.name || "Inconnu"],
     cover: coverUrl,
     description: parseDescription(dataWork.description),
