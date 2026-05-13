@@ -8,6 +8,7 @@ import { BooksModule } from './books/books.module';
 import { UserModule } from './user/user.module';
 import { CategoryModule } from './category/category.module';
 import { DrizzleModule } from './db/drizzle.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DrizzleModule } from './db/drizzle.module';
     BooksModule,
     UserModule,
     CategoryModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [

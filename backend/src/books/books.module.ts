@@ -7,5 +7,6 @@ import { CategoryModule } from '../category/category.module';
   imports: [CategoryModule],
   controllers: [BooksController],
   providers: [BooksService],
+  exports: [BooksService],
 })
 export class BooksModule {}

@@ -17,8 +17,8 @@ export default function Hero() {
           alt=""
           className="absolute inset-0 object-cover h-full w-full"
         />
-        <div className="absolute inset-0 bg-linear-to-r from-[rgba(10,12,20,0.95)] via-[rgba(10,12,20,0.8)] to-[rgba(10,12,20,0.5)]" />
-        <div className="absolute inset-0 bg-linear-to-r from-background via-transparent to-[rgba(10,12,20,0.6)]" />
+        <div className="absolute inset-0 bg-linear-to-r from-[rgba(10,12,20,0.95)] via-[rgba(10,12,20,0.75)] to-[rgba(10,12,20,0.45)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-background to-transparent" />
       </div>
 
       <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-10 pb-40">

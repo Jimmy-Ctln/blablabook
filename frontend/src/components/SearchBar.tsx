@@ -37,7 +37,7 @@ export default function SearchBar({
         value={query}
         onChange={handleChange}
         aria-label="Rechercher un livre ou un auteur"
-        className={`bg-transparent${query ? " pr-8" : ""}`}
+        className={`bg-background shadow-md placeholder:text-foreground/50${query ? " pr-8" : ""}`}
         role="search"
         data-testid="search-input"
       />

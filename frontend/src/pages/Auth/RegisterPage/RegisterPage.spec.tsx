@@ -6,6 +6,7 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import api from "@/api/axios";
+import { Toaster } from "@/components/ui/sonner";
 
 describe("Register Page", () => {
   let queryClient: QueryClient;
@@ -24,6 +25,7 @@ describe("Register Page", () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster />
       </QueryClientProvider>,
     );
   };
@@ -44,24 +46,24 @@ describe("Register Page", () => {
       expect(passwordInput).not.toBeNull();
       await userEvent.type(inputs[0], "test@email.com");
       await userEvent.type(inputs[1], "testuser");
-      await userEvent.type(passwordInput!, "password123");
+      await userEvent.type(passwordInput!, "Password123!");
       const confirmInput = container.querySelectorAll(
         'input[type="password"]',
       )[1];
-      await userEvent.type(confirmInput!, "password123");
+      await userEvent.type(confirmInput!, "Password123!");
       await userEvent.click(screen.getByText("Soumettre"));
       expect(postSpy).toHaveBeenCalledWith("/auth/register", {
         email: "test@email.com",
         username: "testuser",
-        password: "password123",
-        confirmPassword: "password123",
+        password: "Password123!",
+        confirmPassword: "Password123!",
       });
       postSpy.mockRestore();
     });
 
     it("should handle registration error", async () => {
       const postSpy = vi.spyOn(api, "post").mockRejectedValue({
-        response: { data: { message: "Email déjà utilisé" } },
+        response: { data: { message: "email is already in use" } },
         message: "Error",
       });
       const { container } = await renderWithProviders("/register");
@@ -69,13 +71,13 @@ describe("Register Page", () => {
       const passwordInput = container.querySelector('input[type="password"]');
       await userEvent.type(inputs[0], "existing@email.com");
       await userEvent.type(inputs[1], "user");
-      await userEvent.type(passwordInput!, "password123");
+      await userEvent.type(passwordInput!, "Password123!");
       const confirmInput = container.querySelectorAll(
         'input[type="password"]',
       )[1];
-      await userEvent.type(confirmInput!, "password123");
+      await userEvent.type(confirmInput!, "Password123!");
       await userEvent.click(screen.getByText("Soumettre"));
-      expect(await screen.findByText("Email déjà utilisé")).toBeInTheDocument();
+      expect(await screen.findByText("Cette adresse email est déjà utilisée")).toBeInTheDocument();
       postSpy.mockRestore();
     });
   });

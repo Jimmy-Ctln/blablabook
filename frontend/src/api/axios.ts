@@ -26,6 +26,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Login/register failures must reach the form's catch — no redirect
+    const isAuthFormEndpoint =
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register");
+    if (isAuthFormEndpoint) {
+      return Promise.reject(error);
+    }
+
     if (originalRequest._retry || originalRequest.url?.includes("/auth/")) {
       useAuthStore.getState().clearAuth();
       window.location.href = "/login";

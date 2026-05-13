@@ -16,6 +16,7 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import api from "@/api/axios";
+import { Toaster } from "@/components/ui/sonner";
 
 describe("Login Page", async () => {
   let queryClient: QueryClient;
@@ -36,6 +37,7 @@ describe("Login Page", async () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster />
       </QueryClientProvider>,
     );
   };
@@ -64,7 +66,7 @@ describe("Login Page", async () => {
 
   it("should handle login error and show message", async () => {
     const postSpy = vi.spyOn(api, "post").mockRejectedValue({
-      response: { data: { message: "Email ou mot de passe incorrect" } },
+      response: { data: { message: "email or password is invalid" } },
       message: "Error",
     });
     const { container } = await renderWithProviders("/login");

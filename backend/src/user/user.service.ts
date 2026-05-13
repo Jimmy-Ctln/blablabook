@@ -88,6 +88,23 @@ export class UserService {
       }
     }
 
+    if (updateData.username) {
+      const existingUser = await db
+        .select()
+        .from(user)
+        .where(
+          and(
+            ilike(user.username, updateData.username),
+            isNull(user.deletedAt),
+            not(eq(user.id, id)),
+          ),
+        );
+
+      if (existingUser.length > 0) {
+        throw new UnprocessableEntityException('username is already in use');
+      }
+    }
+
     if (updateData.password) {
       updateData.password = await argon2.hash(updateData.password);
     }

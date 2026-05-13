@@ -1,16 +1,15 @@
+import { AlertCircle } from "lucide-react";
 import type { FormFieldInfoProps } from "@/@types/form";
 
-
-
 export default function FormFieldInfo({ field }: FormFieldInfoProps) {
-  const errors = field.state.meta.errors; // get errors array
+  const errors = field.state.meta.errors;
 
   if (field.state.meta.isTouched && !field.state.meta.isValid && errors.length > 0) {
     const firstError = errors[0];
     let errorMessage: string;
 
-    if (typeof firstError === 'object' && firstError !== null && "message" in firstError) {
-      errorMessage = firstError.message as 'string';
+    if (typeof firstError === "object" && firstError !== null && "message" in firstError) {
+      errorMessage = firstError.message as string;
     } else if (typeof firstError === "string") {
       errorMessage = firstError;
     } else {
@@ -18,14 +17,16 @@ export default function FormFieldInfo({ field }: FormFieldInfoProps) {
     }
 
     return (
-      <em className="text-red-500 italic text-sm text-center font-bold" role="alert">
+      <p className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+        <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         {errorMessage}
-      </em>
-    )
+      </p>
+    );
   }
 
   if (field.state.meta.isValidating) {
-    return <em>Validation en cours ... </em>
+    return <p className="text-sm text-muted-foreground">Validation en cours…</p>;
   }
+
   return null;
 }
