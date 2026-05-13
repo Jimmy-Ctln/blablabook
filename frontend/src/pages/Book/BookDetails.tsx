@@ -1,8 +1,18 @@
 import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2, Clock, BookOpen, Plus, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Clock,
+  BookOpen,
+  Plus,
+  Check,
+  Tag,
+  Calendar,
+} from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { addBookToUserList } from "../../api/books";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { useBookByIsbn } from "../../hooks/useBookByIsbn";
 import { useUserBooks } from "../../hooks/useUserBooks";
 import { bookDetailsRoute } from "../../routes/routes";
 import { getFullExternalBook } from "../../api/externalBooks";
@@ -33,6 +43,8 @@ const BookDetails = () => {
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
+
+  const { data: dbBook } = useBookByIsbn(isbn);
 
   const {
     books: userBooks,
@@ -105,6 +117,10 @@ const BookDetails = () => {
   const userBookData = userBooks.find((b) => b.isbn === book?.isbn);
   const isConnected = !!currentUser?.id;
 
+  const publishYear = book?.publishedAt
+    ? /\d{4}/.exec(book.publishedAt)?.[0]
+    : null;
+
   if (isLoading) {
     return (
       <div className="flex h-[50vh] w-full items-center justify-center">
@@ -172,6 +188,48 @@ const BookDetails = () => {
                       author={book.authors[0]}
                     />
                   </div>
+
+                  {/* Metadata: genre, year, pages */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+                    {isBookInLibrary && userBookData?.categoryName ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20 capitalize">
+                        <Tag className="h-3 w-3 shrink-0" />
+                        {userBookData.categoryName}
+                      </span>
+                    ) : !isBookInLibrary && dbBook?.categoryName ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20 capitalize">
+                        <Tag className="h-3 w-3 shrink-0" />
+                        {dbBook.categoryName}
+                      </span>
+                    ) : !isBookInLibrary &&
+                      !dbBook &&
+                      book.categories.length > 0 ? (
+                      book.categories.slice(0, 3).map((cat, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium"
+                        >
+                          <Tag className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-30">{cat}</span>
+                        </span>
+                      ))
+                    ) : null}
+
+                    {publishYear && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        {publishYear}
+                      </span>
+                    )}
+
+                    {book.pages > 0 && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                        <BookOpen className="h-3 w-3 shrink-0" />
+                        {book.pages} pages
+                      </span>
+                    )}
+                  </div>
+
                   {isConnected && isBookInLibrary && (
                     <div className="flex justify-center lg:justify-start">
                       <div className="px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-full">
