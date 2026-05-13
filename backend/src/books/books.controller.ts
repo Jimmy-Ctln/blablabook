@@ -53,6 +53,19 @@ export class BooksController {
   }
 
   /**
+   * GET /books/isbn/:isbn
+   * Returns a single book by ISBN if it exists in the database.
+   */
+  @Get('isbn/:isbn')
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
+  @ApiOperation({ summary: 'Get a book by ISBN' })
+  @ApiResponse({ status: 200, description: 'Book found' })
+  @ApiResponse({ status: 404, description: 'Book not found' })
+  async getBookByIsbn(@Param('isbn') isbn: string) {
+    return this.booksService.findByIsbn(isbn);
+  }
+
+  /**
    * GET /books/random
    * Returns randoms books persisted in the `book` table (not user-specific).
    */

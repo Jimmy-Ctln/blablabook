@@ -49,8 +49,14 @@ export class BooksService {
    */
   async findByIsbn(isbn: string) {
     const [found] = await this.db
-      .select({ id: book.id, isbn: book.isbn, name: book.name })
+      .select({
+        id: book.id,
+        isbn: book.isbn,
+        name: book.name,
+        categoryName: category.name,
+      })
       .from(book)
+      .innerJoin(category, eq(book.categoryId, category.id))
       .where(eq(book.isbn, isbn));
     return found ?? null;
   }
