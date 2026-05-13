@@ -1,49 +1,88 @@
-# BlablaBook
+# BlaBlaBook
 
-An open-source personal book management platform for tracking your reading journey. Organize your library, mark books as read, currently reading, or to-read.
+[![CI Dev](https://github.com/Jimmy-Ctln/blablabook/actions/workflows/CICD-dev.yml/badge.svg)](https://github.com/Jimmy-Ctln/blablabook/actions/workflows/CICD-dev.yml)
+[![CI Prod](https://github.com/Jimmy-Ctln/blablabook/actions/workflows/CICD-prod.yml/badge.svg)](https://github.com/Jimmy-Ctln/blablabook/actions/workflows/CICD-prod.yml)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-10-E0234E?logo=nestjs&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
+A mobile-first personal book management web application. Search for books, build your library, track your reading progress, and share reviews with other readers.
+
+**[Live Demo](https://your-app.vercel.app)** — *(replace with your Vercel URL)*
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Technologies Stack](#technologies-stack)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
-- [Deployment & CI/CD](#deployment--cicd)
 - [Project Structure](#project-structure)
 - [Commands Reference](#commands-reference)
 - [Testing](#testing)
+- [Deployment & CI/CD](#deployment--cicd)
+- [Troubleshooting](#troubleshooting)
+- [About](#about)
 
 ---
 
-## Project Overview
+## Features
 
-BlablaBook provides a simple and intuitive solution for managing your personal library. Whether you're tracking your reading progress or discovering new books through the OpenLibrary API, this platform makes it easy to:
+### Core (MVP)
 
-- Add books to your library from OpenLibrary
-- Track reading status: Read, Currently Reading, or To Read
-- Search and manage your collection
-- Access a clean, modern interface built with React
+- **Book search** — Search the OpenLibrary catalog by title, author, or ISBN
+- **Personal library** — Add books to your collection and organize them
+- **Reading status** — Automatically computed from reading dates: *To Read*, *Reading*, or *Read*
+- **Book details** — View cover, description, author, publisher, and publication date
+- **Reviews & ratings** — Leave a rating (1–5 stars) and a written review on any book
+- **User account** — Register, log in, update your profile, change password, and delete your account
+- **Secure authentication** — JWT access tokens + refresh tokens with rotation, stored in HttpOnly cookies
+
+### Additional
+
+- **Light / Dark theme** — Toggle between light and dark mode
+- **Category preferences** — Select your favorite genres during onboarding
+- **GDPR-compliant account deletion** — Account data is fully anonymized on deletion (email, username, password, avatar replaced with anonymous values). Reviews are preserved without any link to the original user.
 
 ---
 
-## Technologies Stack
+## Tech Stack
 
-| Technology               | Purpose                                        |
-| ------------------------ | ---------------------------------------------- |
-| Docker & Docker Compose  | Containerization and orchestration             |
-| React + TypeScript       | Frontend framework with type safety            |
-| Vite                     | Build tool for blazing-fast development        |
-| Zustand                  | State management                               |
-| TanStack Query & Router  | Data fetching and type-safe routing            |
-| Zod                      | Schema validation                              |
-| Tailwind CSS & Shadcn/ui | Styling and UI components                      |
-| NestJS                   | Backend framework with structured architecture |
-| PostgreSQL               | Production-grade relational database           |
-| Drizzle ORM              | Type-safe database queries                     |
-| Swagger                  | Interactive API documentation                  |
-| Jest & Vitest            | Testing frameworks                             |
-| GitHub Actions           | Continuous Integration and Deployment          |
+### Frontend
+
+| Technology          | Purpose                              |
+| ------------------- | ------------------------------------ |
+| React + TypeScript  | UI framework with full type safety   |
+| Vite                | Fast build tool and dev server       |
+| TanStack Router     | File-based routing with auth guards  |
+| TanStack Query      | Server state, caching, and sync      |
+| Zustand             | Client-side auth state management    |
+| Zod                 | Form and API response validation     |
+| Tailwind CSS        | Utility-first styling                |
+| Shadcn/ui           | Accessible, composable UI components |
+
+### Backend
+
+| Technology        | Purpose                                      |
+| ----------------- | -------------------------------------------- |
+| NestJS            | Structured backend framework (Node.js)       |
+| PostgreSQL        | Relational database                          |
+| Drizzle ORM       | Type-safe SQL queries and schema management  |
+| argon2            | Secure password hashing                      |
+| Helmet            | HTTP security headers                        |
+| @nestjs/throttler | Rate limiting to prevent abuse               |
+| Swagger           | Interactive API documentation at `/api`      |
+
+### Infrastructure
+
+| Technology      | Purpose                                    |
+| --------------- | ------------------------------------------ |
+| Docker + Compose | Containerized dev and prod environments   |
+| GitHub Actions  | CI/CD pipelines for testing and deployment |
+| Vercel          | Frontend hosting + reverse proxy for Safari|
+| Render          | Backend hosting                            |
+| Supabase        | Managed PostgreSQL in production           |
 
 ---
 
@@ -51,70 +90,65 @@ BlablaBook provides a simple and intuitive solution for managing your personal l
 
 ### Prerequisites
 
-- Docker installed and running
-- Git for cloning the repository
+- [Docker](https://docs.docker.com/get-docker/) installed and running
+- Git
 
-### Installation
-
-1. Clone the repository:
+### 1. Clone the repository
 
 ```bash
 git clone <your-repo-url>
 cd projet-blablabook
 ```
 
-2. Create a `.env` file at the project root:
+### 2. Set up environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-3. Start the development environment:
+Open `.env` and fill in the values:
+
+```env
+# Database
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_secure_password
+DB_NAME=blablabook
+
+# Backend
+DATABASE_URL=postgresql://postgres:your_secure_password@postgres:5432/blablabook?schema=public
+JWT_SECRET=a_very_long_random_secret_at_least_32_chars
+FRONTEND_URL=http://localhost:5173
+NODE_ENV=development
+
+# Frontend
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+### 3. Start the development environment
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### Docker Environments
+This starts:
+- **Frontend** at `http://localhost:5173` (hot reload via Vite)
+- **Backend** at `http://localhost:3000` (watch mode)
+- **Swagger docs** at `http://localhost:3000/api`
+- **Adminer** (database UI) at `http://localhost:8080`
 
-**Development** (`docker-compose.dev.yml`)
+### 4. Seed the database
 
-- Frontend with hot reload via Vite dev server
-- Backend with watch mode for live file changes
-- Adminer for database management
-- Perfect for active development
+The seed runs automatically when the dev environment starts — no manual step needed.
 
-**Production** (`docker-compose.yml`)
-
-- Optimized React build served via Nginx
-- Production-ready NestJS backend
-- PostgreSQL with persistent volumes
-- Ready to deploy on Render and Vercel
-
-### Starting the Application
-
-Development:
+If you ever need to re-run it (e.g. after wiping the database):
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+docker exec -it backend npm run seed
 ```
 
-Production:
-
-```bash
-docker compose up -d
-```
-
-### Database Setup
-
-To seed initial data:
-
-```bash
-cd backend
-npx ts-node src/seed.ts
-```
-
-### Access Services
+### Service URLs
 
 | Service           | URL                       |
 | ----------------- | ------------------------- |
@@ -125,143 +159,53 @@ npx ts-node src/seed.ts
 
 ---
 
-## Deployment & CI/CD
-
-This project uses GitHub Actions for automated testing and deployment. The CI/CD pipeline is designed to prevent broken code from reaching production.
-
-### Pipeline Overview
-
-**Development Branch (`dev`)**
-
-- Triggers on: Push or Pull Request to `dev`
-- Runs: Frontend tests, Backend tests, Docker integration tests
-- Result: No deployment (safe testing environment)
-
-**Main Branch (`main`)**
-
-- Triggers on: Push or Pull Request to `main`
-- Runs: Frontend tests, Backend tests, Docker integration tests, database migrations
-- Result: If all tests pass → Automatic deployment to Vercel (frontend) and Render (backend)
-
-### Setting Up GitHub Secrets
-
-Create these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
-
-| Secret               | Example Value                                                 | Purpose                                                      |
-| -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
-| `DATABASE_URL`       | `postgresql://username:password@localhost:5432/database_name` | Test database URL                                            |
-| `JWT_SECRET`         | `your-secret-key-for-jwt-signing`                             | JWT signing key                                              |
-| `DB_NAME`            | `your_database_name`                                          | Database name                                                |
-| `DB_USER`            | `your_database_user`                                          | Database user                                                |
-| `DB_PASSWORD`        | `your_secure_database_password`                               | Database password                                            |
-| `VITE_BACKEND_URL`   | `/api`                                                        | Production backend URL (proxied via Vercel — see note below) |
-| `FRONTEND_URL`       | `https://your-frontend-url.vercel.app`                        | Frontend URL for CORS                                        |
-| `RENDER_DEPLOY_HOOK` | `https://api.render.com/deploy/srv-xxxxx/...`                 | Render deployment webhook                                    |
-| `VERCEL_DEPLOY_HOOK` | `https://api.vercel.com/v1/integrations/deploy/...`           | Vercel deployment webhook                                    |
-
-### Environment Variables Explained
-
-**During Tests (CI/CD)**
-
-- Uses `DATABASE_URL` pointing to local test database
-- Frontend uses `VITE_BACKEND_URL` for test backend
-- `NODE_ENV` set to `production` for production pipeline
-
-**Production (Render/Vercel)**
-
-- Backend receives secrets directly from GitHub Actions
-- Migrations are automatically applied at startup
-- Database seeding runs before server starts
-
-### Testing the Pipeline Locally
-
-**Test the dev pipeline:**
-
-1. Create a feature branch from `dev`
-2. Make changes and push
-3. Create a Pull Request to `dev`
-4. Check GitHub Actions (Settings → Actions) to see tests run
-5. No deployment occurs
-
-**Test the prod pipeline:**
-
-1. Create a feature branch from `main`
-2. Make changes and push
-3. Create a Pull Request to `main`
-4. If all tests pass, deployment to production automatically triggers
-
-### Database Migration Strategy
-
-Developer workflow:
-
-```bash
-# 1. Modify schema.ts
-# 2. Generate migration
-npx drizzle-kit generate
-
-# 3. Commit and push (migrations are versioned in git)
-git add drizzle/
-git commit -m "Add new schema migration"
-git push
-```
-
-Pipeline automatically:
-
-- Applies migrations from git
-- Runs tests
-- Deploys if tests pass
-- Seed data is loaded on production startup
-
----
-
 ## Project Structure
 
 ```
 .
 ├── .github/workflows/
-│   ├── CICD-dev.yml           # Development pipeline
-│   └── CICD-prod.yml          # Production pipeline with deployment
+│   ├── CICD-dev.yml           # Dev pipeline (tests only, no deploy)
+│   └── CICD-prod.yml          # Prod pipeline (tests + deploy)
 │
 ├── backend/
 │   ├── src/
-│   │   ├── auth/              # Authentication & JWT
-│   │   ├── books/             # Books management module
-│   │   ├── category/          # Categories module
-│   │   ├── user/              # User management
-│   │   ├── db/                # Database config & Drizzle schema
-│   │   ├── security/          # Security utilities (cookies, tokens)
-│   │   ├── main.ts            # Application entry point
+│   │   ├── auth/              # JWT auth, refresh token rotation
+│   │   ├── books/             # Library management
+│   │   ├── category/          # Book categories
+│   │   ├── review/            # Book reviews and ratings
+│   │   ├── user/              # User profile and account management
+│   │   ├── security/          # Cookie and token utilities
+│   │   ├── db/                # Drizzle schema and DB connection
+│   │   ├── main.ts            # App entry point
 │   │   └── seed.ts            # Database seeding
-│   ├── drizzle/               # Migration files (version controlled)
+│   ├── drizzle/               # Migration files (version controlled in Git)
 │   ├── Dockerfile             # Production image
 │   ├── Dockerfile.dev         # Development image
-│   ├── start.sh               # Production startup script
-│   └── package.json
+│   └── start.sh               # Production startup (migrate → seed → start)
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── components/        # Reusable React components
-│   │   ├── pages/             # Page components
-│   │   ├── api/               # API client functions
-│   │   ├── stores/            # Zustand state management
+│   │   ├── pages/             # Page-level components
+│   │   ├── api/               # API call functions (backend + OpenLibrary)
+│   │   ├── stores/            # Zustand auth store
 │   │   ├── hooks/             # Custom React hooks
-│   │   ├── routes/            # TanStack Router configuration
-│   │   └── main.tsx           # Entry point
+│   │   └── routes/            # TanStack Router config and auth guards
 │   ├── Dockerfile             # Production image
-│   ├── Dockerfile.dev         # Development image
-│   └── package.json
+│   └── Dockerfile.dev         # Development image
 │
+├── documentation/             # Project docs and specifications
 ├── docker-compose.yml         # Production configuration
 ├── docker-compose.dev.yml     # Development configuration
-├── .env.example               # Environment template
-└── README.md
+├── vercel.json                # Reverse proxy config (fixes Safari cookie issue)
+└── .env.example               # Environment variable template
 ```
 
 ---
 
 ## Commands Reference
 
-### Docker Compose
+### Docker
 
 | Command                                          | Purpose                            |
 | ------------------------------------------------ | ---------------------------------- |
@@ -269,132 +213,158 @@ Pipeline automatically:
 | `docker compose up -d`                           | Start production environment       |
 | `docker compose down`                            | Stop all containers                |
 | `docker compose down -v`                         | Stop containers and remove volumes |
-| `docker compose logs -f`                         | Stream logs                        |
-| `docker compose logs -f <service>`               | Stream logs for specific service   |
+| `docker compose logs -f`                         | Stream all logs                    |
+| `docker compose logs -f backend`                 | Stream backend logs only           |
 | `docker compose ps`                              | List running containers            |
 
-### Container Shell Access
+### Shell access
 
 | Command                       | Purpose                         |
 | ----------------------------- | ------------------------------- |
-| `docker exec -it backend sh`  | Access backend container shell  |
-| `docker exec -it frontend sh` | Access frontend container shell |
-| `docker exec -it postgres sh` | Access database container shell |
+| `docker exec -it backend sh`  | Access backend container        |
+| `docker exec -it frontend sh` | Access frontend container       |
+| `docker exec -it postgres sh` | Access database container       |
 
-### Backend Commands
+### Backend
 
-| Command              | Purpose                   |
-| -------------------- | ------------------------- |
-| `npm run test`       | Run backend tests (Jest)  |
-| `npm run migrate`    | Apply database migrations |
-| `npm run build`      | Build for production      |
-| `npm run start:dev`  | Start with watch mode     |
-| `npm run start:prod` | Start production server   |
+| Command              | Purpose                          |
+| -------------------- | -------------------------------- |
+| `npm run start:dev`  | Start in watch mode              |
+| `npm run build`      | Build for production             |
+| `npm run start`      | Start production server          |
+| `npm run seed`       | Seed the database                |
+| `npm run test`       | Run tests (Jest)                 |
 
-### Frontend Commands
+### Frontend
 
-| Command            | Purpose                       |
-| ------------------ | ----------------------------- |
-| `npm run test`     | Run frontend tests (Vitest)   |
-| `npm run build`    | Build for production          |
-| `npm run dev`      | Start development server      |
-| `npm run coverage` | Generate test coverage report |
+| Command             | Purpose                          |
+| ------------------- | -------------------------------- |
+| `npm run dev`       | Start dev server (Vite)          |
+| `npm run build`     | Build for production             |
+| `npm run test`      | Run tests (Vitest)               |
+| `npm run coverage`  | Generate test coverage report    |
+
+### Database migrations (Drizzle)
+
+```bash
+# 1. Edit backend/src/db/schema.ts
+# 2. Generate the migration file
+npx drizzle-kit generate
+
+# 3. Commit and push — migrations are applied automatically in CI/CD
+git add drizzle/
+git commit -m "feat: add X to schema"
+git push
+```
 
 ---
 
 ## Testing
 
-The project includes comprehensive testing for both frontend and backend.
+### Backend (Jest)
 
-### Backend Tests (Jest)
-
-- Unit tests for all modules
-- Authentication and authorization tests
-- Database query tests with mocked Drizzle ORM
-- API endpoint validation
-
-Run tests:
+Tests cover the three main service layers: auth, users, and books.
 
 ```bash
 cd backend
 npm run test
 ```
 
-### Frontend Tests (Vitest)
+- `auth.service.spec.ts` — Registration, login, token refresh, logout
+- `user.service.spec.ts` — Profile updates, password change, soft delete
+- `books.service.spec.ts` — Library operations, reading status, book search
 
-- Component tests
-- Hook tests
-- Integration tests
+### Frontend (Vitest)
 
-Run tests:
+Tests cover the key pages and user flows.
 
 ```bash
 cd frontend
 npm run test
 ```
 
-### Category Module Validation
+- `LoginPage.spec.tsx` / `RegisterPage.spec.tsx` — Form validation and submission
+- `HomePage.test.tsx` — Rendering and basic interactions
+- `LibraryPage.test.tsx` — Library display
+- `BookDetails.test.tsx` — Book detail page rendering
 
-| Test Case                   | Expected Result                   |
-| --------------------------- | --------------------------------- |
-| Get All Categories          | Returns list of active categories |
-| Get Category by ID          | Returns specific category object  |
-| Category by non-existent ID | Returns 404 error                 |
-| Invalid ID format           | Returns 400 validation error      |
-| Find or Create (exists)     | Returns existing category         |
-| Find or Create (new)        | Creates and returns new category  |
+---
 
-### Integration Tests
+## Deployment & CI/CD
 
-The Docker integration tests verify that all services communicate correctly:
+### How it works
 
-- Database connectivity
-- API health checks
-- Service startup sequence
-- Environment configuration
+There are two GitHub Actions pipelines:
+
+**`CICD-dev.yml`** — Runs on push/PR to `dev`
+- Runs frontend and backend tests
+- Runs Docker integration tests (services startup, health checks)
+- No deployment — safe to test freely
+
+**`CICD-prod.yml`** — Runs on push/PR to `main`
+- Same tests as dev pipeline
+- Applies database migrations
+- On success → deploys frontend to Vercel, backend to Render
+
+### GitHub Secrets required
+
+Set these in your repository under Settings → Secrets → Actions:
+
+| Secret               | Description                                        |
+| -------------------- | -------------------------------------------------- |
+| `DATABASE_URL`       | PostgreSQL connection string (for CI test DB)      |
+| `JWT_SECRET`         | JWT signing key                                    |
+| `DB_NAME`            | Database name                                      |
+| `DB_USER`            | Database user                                      |
+| `DB_PASSWORD`        | Database password                                  |
+| `VITE_BACKEND_URL`   | Set to `/api` in production (Vercel reverse proxy) |
+| `FRONTEND_URL`       | Your Vercel app URL (for CORS)                     |
+| `RENDER_DEPLOY_HOOK` | Render webhook to trigger backend deployment       |
+| `VERCEL_DEPLOY_HOOK` | Vercel webhook to trigger frontend deployment      |
 
 ---
 
 ## Troubleshooting
 
-**Port already in use?**
+**Port already in use**
 
 ```bash
-# Kill process on port (e.g., 3000)
-lsof -i :3000
-kill -9 <PID>
+lsof -i :3000     # find what's using the port
+kill -9 <PID>     # free it
 ```
 
-**Database connection issues?**
+**Database not connecting**
 
-- Verify `docker compose ps` shows all containers running
-- Check logs: `docker compose logs postgres`
-- Ensure `DATABASE_URL` is correct in `.env`
+```bash
+docker compose ps                    # check all containers are running
+docker compose logs postgres         # read postgres logs
+```
+Make sure `DATABASE_URL` in `.env` matches your DB credentials.
 
-**Tests failing in CI/CD?**
+**Tests failing in CI/CD**
 
-- Check GitHub Actions logs
-- Verify all secrets are set in GitHub
-- Ensure migrations are committed to git
+- Check the GitHub Actions logs for the exact error
+- Verify all secrets are configured in GitHub Settings
+- Make sure your migration files are committed to Git
 
-**Login not working on mobile (iOS Safari)?**
+**Login not working on iOS Safari**
 
-Safari on iOS blocks cross-site cookies by default, even when the backend sets `SameSite=None; Secure=true`. This is Apple's ITP (Intelligent Tracking Prevention). Since the frontend (Vercel) and backend (Render) are on different domains, the auth cookies get silently blocked on mobile.
+Safari blocks cross-site cookies by default (Apple's ITP — Intelligent Tracking Prevention). When the frontend (Vercel) and backend (Render) are on different domains, auth cookies get silently blocked on mobile.
 
-The fix: `vercel.json` configures Vercel as a reverse proxy. Instead of the browser calling the Render URL directly, it calls `/api/*` on the same Vercel domain. Vercel then relays the request to Render server-to-server. The browser only ever sees the Vercel domain, so cookies are first-party and Safari allows them.
+The fix: `vercel.json` configures Vercel as a **reverse proxy**. Instead of the browser calling Render directly, it calls `/api/*` on the Vercel domain, and Vercel relays it to Render server-to-server. The browser only ever sees the Vercel domain, so cookies are treated as first-party and Safari allows them.
 
-This is why `VITE_BACKEND_URL` must be set to `/api` (not the Render URL) in the Vercel dashboard.
+This is why `VITE_BACKEND_URL` must be set to `/api` (not the Render URL) in the Vercel dashboard and in GitHub Secrets.
 
 ---
 
-## About This Project
+## About
 
-This is a student project developed as part of a professional examination for a **Developer-Designer certification**. It demonstrates full-stack development capabilities including frontend development, backend architecture, database design, and CI/CD pipeline implementation.
+BlaBlaBook is a student project built for a **Titre Professionnel Concepteur Développeur d'Applications** certification. It demonstrates full-stack development skills across frontend architecture, backend design, database modeling, security, and automated deployment.
 
-The project was built to showcase practical knowledge of:
+Built with: React · NestJS · PostgreSQL · Docker · GitHub Actions
 
-- Modern web application development (React, NestJS)
-- Database design and optimization (PostgreSQL, Drizzle ORM)
-- Containerization and orchestration (Docker)
-- Continuous Integration and Deployment (GitHub Actions)
-- API design and documentation
+---
+
+## License
+
+© 2025 Jimmy Catalano — All rights reserved.
