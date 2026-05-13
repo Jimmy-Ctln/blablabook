@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2, Clock, Plus, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Clock, BookOpen, Plus, Check } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { addBookToUserList } from "../../api/books";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
@@ -136,7 +136,7 @@ const BookDetails = () => {
   return (
     <div className="w-full min-h-screen bg-background animate-in fade-in zoom-in-95 duration-500">
       <div className="sticky top-0 z-40 bg-background border-b border-border">
-        <div className="container px-4 sm:px-6 py-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <Button
             onClick={() => router.history.back()}
             variant="secondary"
@@ -148,11 +148,11 @@ const BookDetails = () => {
           </Button>
         </div>
       </div>
-      <div className="container px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <div className="md:col-span-1">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="lg:col-span-1">
             <div className="flex flex-col gap-4">
-              <div className="relative group shadow-lg rounded-lg overflow-hidden mx-auto md:mx-0 w-48 sm:w-56 md:w-full">
+              <div className="relative group shadow-lg rounded-lg overflow-hidden mx-auto lg:mx-0 w-48 sm:w-56 lg:w-full">
                 <BookCover
                   src={book.cover}
                   alt={book.title}
@@ -162,10 +162,10 @@ const BookDetails = () => {
             </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2">
             <div className="space-y-6">
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex-1">
                     <BookHeaderInfo
                       title={book.title}
@@ -173,7 +173,7 @@ const BookDetails = () => {
                     />
                   </div>
                   {isConnected && isBookInLibrary && (
-                    <div className="inline-flex sm:justify-end">
+                    <div className="flex justify-center lg:justify-start">
                       <div className="px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-full">
                         <span className="text-sm font-semibold text-primary capitalize">
                           {userBookData?.status}
@@ -193,7 +193,7 @@ const BookDetails = () => {
                       },
                       {
                         status: "En cours" as BookStatus,
-                        icon: Clock,
+                        icon: BookOpen,
                         label: "En cours",
                       },
                       {
@@ -214,7 +214,7 @@ const BookDetails = () => {
                         className="w-full gap-2"
                       >
                         <Icon className="h-4 w-4" />
-                        <span className="hidden sm:inline">{label}</span>
+                        <span>{label}</span>
                       </Button>
                     ))}
                   </div>
