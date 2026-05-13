@@ -9,7 +9,7 @@
 
 A mobile-first personal book management web application. Search for books, build your library, track your reading progress, and share reviews with other readers.
 
-**[Live Demo](https://your-app.vercel.app)** — *(replace with your Vercel URL)*
+**[Live Demo](https://blablabook-sigma.vercel.app)**
 
 ---
 
