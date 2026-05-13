@@ -87,7 +87,7 @@ export default function ProfilePage() {
       toast.success("Informations mises à jour avec succès!");
     },
     onError: (error) => {
-      const message = error?.response?.data?.message ?? "";
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
       toast.error(
         UPDATE_USER_ERRORS[message] ??
           "Erreur lors de la mise à jour des informations",
