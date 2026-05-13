@@ -9,7 +9,14 @@ export type Review = {
 };
 
 export type CreateReviewPayload = {
-  bookId: number;
+  isbn: string;
   rating: number;
   review_text: string;
+  bookName: string;
+  bookCoverUrl: string;
+  bookAuthor: string;
+  bookDescription: string;
+  bookPublishingHouse: string;
+  bookPublishedAt: string;
+  bookCategories?: string[];
 };
