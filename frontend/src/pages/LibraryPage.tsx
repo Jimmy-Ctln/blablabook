@@ -34,7 +34,7 @@ export default function LibraryPage() {
     if (userId) {
       refetch();
     }
-  }, [userId]);
+  }, [userId, refetch]);
 
   const filteredBooks: BookDisplay[] =
     books?.filter((b: BookDisplay) => {

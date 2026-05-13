@@ -60,6 +60,7 @@ export default function Footer() {
               {footerLinks.map((link) => (
                 <li key={link.href}>
                   <Link
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     to={link.href as any}
                     className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
                   >

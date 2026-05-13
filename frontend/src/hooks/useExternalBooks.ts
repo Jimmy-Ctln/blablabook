@@ -76,9 +76,11 @@ export const useExternalBooks = (options: UseExternalBooksOptions) => {
 
   // Effect 1: reset accumulated state on new search (must stay BEFORE Effect 2).
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     setAllBooks([]);
     setOffset(0);
     setHasReceivedData(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [param, mode]);
 
   // Effect 2: append books once the fetch is fully done.
@@ -86,12 +88,14 @@ export const useExternalBooks = (options: UseExternalBooksOptions) => {
   // request is still in-flight (cache revalidation, pagination, etc.).
   useEffect(() => {
     if (!isFetching && data?.books) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setHasReceivedData(true);
       if (offset === 0) {
         setAllBooks(data.books);
       } else {
         setAllBooks((prev) => [...prev, ...data.books]);
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [isFetching, data?.books, offset]);
 
