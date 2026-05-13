@@ -12,7 +12,6 @@ import {
   Req,
   ForbiddenException,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { RequestWithUser } from '@/auth/types';
@@ -35,35 +34,6 @@ import { AuthGuard } from '../auth/auth.guard';
 @Controller('books')
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
-
-  /**
-   * GET /books/isbn/:isbn
-   * Returns the internal book record matching the given ISBN, or 404.
-   */
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Get('isbn/:isbn')
-  @ApiOperation({ summary: 'Find internal book by ISBN' })
-  async getBookByIsbn(@Param('isbn') isbn: string) {
-    const found = await this.booksService.findByIsbn(isbn);
-    if (!found) {
-      throw new NotFoundException('Book not found in database');
-    }
-    return found;
-  }
-
-  /**
-   * POST /books/register
-   * Finds or creates a book by ISBN without linking it to any user's library.
-   * Used when a user wants to review a book not yet in the database.
-   */
-  @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
-  @Post('register')
-  @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Find or create a book by ISBN (no library link)' })
-  async registerBook(@Body() createBookDto: CreateBookDto) {
-    return this.booksService.createBook(createBookDto);
-  }
 
   /**
    * GET /books
