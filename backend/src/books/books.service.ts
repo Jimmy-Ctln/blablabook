@@ -74,27 +74,30 @@ export class BooksService {
     let matchedKeywords: Array<{ keywordId: number; categoryId: number }> = [];
 
     if (normalizedSubjects.length > 0) {
+      // Join all OpenLibrary subjects into one string, then find every seeded keyword
+      // that appears as a whole word inside it (~* = case-insensitive regex, \m/\M = word boundaries).
+      // Using word boundaries prevents false positives where a short keyword like "imp"
+      // would wrongly match inside a longer word like "important".
       matchedKeywords = await this.db
         .select({ keywordId: keyword.id, categoryId: category.id })
         .from(keyword)
         .innerJoin(category, eq(category.id, keyword.categoryId))
         .where(
-          sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+          sql`${normalizedSubjects.join(' ')} ~* ('\\m' || ${keyword.name} || '\\M')`,
         );
 
       if (matchedKeywords.length > 0) {
-        const categoryResult = await this.db
-          .select({ categoryId: category.id })
-          .from(keyword)
-          .innerJoin(category, eq(category.id, keyword.categoryId))
-          .where(
-            sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
-          )
-          .groupBy(category.id)
-          .orderBy(desc(count(keyword.id)))
-          .limit(1);
-
-        categoryId = categoryResult[0]?.categoryId ?? 1;
+        // Count matched keywords per category, then pick the category with the most hits.
+        // e.g. { 3: 8, 2: 2 } → category 3 (fantasy) wins with 8 keyword matches.
+        const counts = matchedKeywords.reduce(
+          (acc, { categoryId: cId }) => {
+            acc[cId] = (acc[cId] ?? 0) + 1;
+            return acc;
+          },
+          {} as Record<number, number>,
+        );
+        const winner = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
+        categoryId = winner ? Number(winner[0]) : 1;
       }
     }
 
