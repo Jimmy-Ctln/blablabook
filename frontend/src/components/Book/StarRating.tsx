@@ -13,7 +13,7 @@ export function StarRating({ interactive = false, value, onChange }: StarRatingP
           key={star}
           type={interactive ? "button" : undefined}
           disabled={!interactive}
-          onClick={interactive ? () => onChange(star) : undefined}
+          onClick={() => onChange?.(star)}
           aria-label={interactive ? `${star} étoile${star > 1 ? "s" : ""}` : undefined}
           className={cn(
             "transition-colors",
