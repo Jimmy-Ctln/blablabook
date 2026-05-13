@@ -9,14 +9,16 @@ import * as schema from '@/db/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, and, sql } from 'drizzle-orm';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { BooksService } from '@/books/books.service';
 
 @Injectable()
 export class ReviewService {
   constructor(
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
+    private readonly booksService: BooksService,
   ) {}
 
-  async getReviewsByBookId(bookId: number) {
+  async getReviewsByIsbn(isbn: string) {
     return this.db
       .select({
         id: schema.review.id,
@@ -28,25 +30,32 @@ export class ReviewService {
         avatar_url: schema.user.avatar_url,
       })
       .from(schema.review)
+      .innerJoin(schema.book, eq(schema.book.id, schema.review.bookId))
       .leftJoin(schema.user, eq(schema.user.id, schema.review.userId))
-      .where(eq(schema.review.bookId, bookId))
+      .where(eq(schema.book.isbn, isbn))
       .orderBy(sql`${schema.review.createdAt} DESC`);
   }
 
   async createReview(userId: number, dto: CreateReviewDto) {
-    const [book] = await this.db
-      .select({ id: schema.book.id })
-      .from(schema.book)
-      .where(eq(schema.book.id, dto.bookId));
-
-    if (!book) throw new NotFoundException('Book not found');
+    // Find the book by ISBN, or create it if it doesn't exist yet
+    const existing = await this.booksService.findByIsbn(dto.isbn);
+    const bookId = existing?.id ?? (await this.booksService.createBook({
+      name: dto.bookName,
+      coverUrl: dto.bookCoverUrl,
+      author: dto.bookAuthor,
+      description: dto.bookDescription,
+      isbn: dto.isbn,
+      publishingHouse: dto.bookPublishingHouse,
+      publishedAt: dto.bookPublishedAt,
+      categories: dto.bookCategories,
+    })).id;
 
     const [alreadyReviewed] = await this.db
       .select({ id: schema.review.id })
       .from(schema.review)
       .where(
         and(
-          eq(schema.review.bookId, dto.bookId),
+          eq(schema.review.bookId, bookId),
           eq(schema.review.userId, userId),
         ),
       );
@@ -58,7 +67,7 @@ export class ReviewService {
     const [created] = await this.db
       .insert(schema.review)
       .values({
-        bookId: dto.bookId,
+        bookId,
         userId,
         rating: dto.rating,
         review_text: dto.review_text,
@@ -92,9 +101,7 @@ export class ReviewService {
     if (existing.userId !== userId)
       throw new ForbiddenException('You can only delete your own reviews');
 
-    await this.db
-      .delete(schema.review)
-      .where(eq(schema.review.id, reviewId));
+    await this.db.delete(schema.review).where(eq(schema.review.id, reviewId));
 
     return { id: reviewId };
   }

@@ -23,10 +23,10 @@ export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Get('book/:bookId')
-  @ApiOperation({ summary: 'Get all reviews for a book' })
-  getReviews(@Param('bookId', ParseIntPipe) bookId: number) {
-    return this.reviewService.getReviewsByBookId(bookId);
+  @Get('book/:isbn')
+  @ApiOperation({ summary: 'Get all reviews for a book by ISBN' })
+  getReviews(@Param('isbn') isbn: string) {
+    return this.reviewService.getReviewsByIsbn(isbn);
   }
 
   @UseGuards(AuthGuard)
