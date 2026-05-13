@@ -247,24 +247,20 @@ export class BooksService {
       .limit(limit);
 
     // Compute status and attach categories for each book
-    const booksWithStatus = await Promise.all(
-      rows.map(async (b) => {
-        return {
-          id: b.id,
-          name: b.name,
-          cover_url: b.cover_url,
-          author: b.author,
-          description: b.description,
-          isbn: b.isbn,
-          publishingHouse: b.publishingHouse,
-          publishedAt: b.publishedAt,
-          categoryName: b.categoryName,
-          status: this.computeStatus(b.readStart, b.readEnd),
-          readStart: b.readStart,
-          readEnd: b.readEnd,
-        };
-      }),
-    );
+    const booksWithStatus = rows.map((b) => ({
+      id: b.id,
+      name: b.name,
+      cover_url: b.cover_url,
+      author: b.author,
+      description: b.description,
+      isbn: b.isbn,
+      publishingHouse: b.publishingHouse,
+      publishedAt: b.publishedAt,
+      categoryName: b.categoryName,
+      status: this.computeStatus(b.readStart, b.readEnd),
+      readStart: b.readStart,
+      readEnd: b.readEnd,
+    }));
 
     return {
       books: booksWithStatus as BookDto[],
