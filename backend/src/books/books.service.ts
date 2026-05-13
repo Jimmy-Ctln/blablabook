@@ -47,6 +47,84 @@ export class BooksService {
    * Get all books from the `book` table.
    * @returns Array of persisted book records
    */
+  async findByIsbn(isbn: string) {
+    const [found] = await this.db
+      .select({ id: book.id, isbn: book.isbn, name: book.name })
+      .from(book)
+      .where(eq(book.isbn, isbn));
+    return found ?? null;
+  }
+
+  async createBook(dto: CreateBookDto): Promise<{ id: number }> {
+    return this.insertBook(dto);
+  }
+
+  private async insertBook(dto: CreateBookDto): Promise<BookSelect> {
+    const normalizedSubjects = (dto.categories ?? [])
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+
+    let categoryId = 1;
+    let matchedKeywords: Array<{ keywordId: number; categoryId: number }> = [];
+
+    if (normalizedSubjects.length > 0) {
+      matchedKeywords = await this.db
+        .select({ keywordId: keyword.id, categoryId: category.id })
+        .from(keyword)
+        .innerJoin(category, eq(category.id, keyword.categoryId))
+        .where(
+          sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+        );
+
+      if (matchedKeywords.length > 0) {
+        const categoryResult = await this.db
+          .select({ categoryId: category.id })
+          .from(keyword)
+          .innerJoin(category, eq(category.id, keyword.categoryId))
+          .where(
+            sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+          )
+          .groupBy(category.id)
+          .orderBy(desc(count(keyword.id)))
+          .limit(1);
+
+        categoryId = categoryResult[0]?.categoryId ?? 1;
+      }
+    }
+
+    const [inserted] = await this.db
+      .insert(book)
+      .values({
+        name: dto.name,
+        cover_url: dto.coverUrl,
+        author: dto.author,
+        description: dto.description,
+        isbn: dto.isbn,
+        publishingHouse: dto.publishingHouse,
+        publishedAt: dto.publishedAt,
+        categoryId,
+      })
+      .returning();
+
+    if (matchedKeywords.length > 0) {
+      try {
+        await this.db.insert(bookKeyword).values(
+          matchedKeywords.map((kw) => ({
+            bookId: inserted.id,
+            keywordId: kw.keywordId,
+          })),
+        );
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        if (!errorMsg.includes('unique') && !errorMsg.includes('UNIQUE')) {
+          throw err;
+        }
+      }
+    }
+
+    return inserted;
+  }
+
   async findAllBooks(
     categories?: string[],
   ): Promise<Record<string, BookDto[]>> {
@@ -208,91 +286,9 @@ export class BooksService {
 
       let existingBook = found[0];
 
-      let matchedKeywords: Array<{
-        keywordId: number;
-        keywordName: string;
-        categoryId: number;
-        categoryName: string;
-      }> = [];
-
       if (!existingBook) {
-        // NEW BOOK - Perform matching and category determination
-
-        // Normalize subjects from DTO
-        const normalizedSubjects = (createBookDto.categories ?? [])
-          .map((c) => c.trim())
-          .filter((c) => c.length > 0);
-
-        // Get all keywords that match the book subjects
-        if (normalizedSubjects.length > 0) {
-          matchedKeywords = await this.db
-            .select({
-              keywordId: keyword.id,
-              keywordName: keyword.name,
-              categoryId: category.id,
-              categoryName: category.name,
-            })
-            .from(keyword)
-            .innerJoin(category, eq(category.id, keyword.categoryId))
-            .where(
-              sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
-            );
-        }
-
-        // Determine category based on matching results
-        let categoryId = 1; // Default category "Unknown"
-
-        if (matchedKeywords.length > 0) {
-          // Get the winning category (the one with the most matches)
-          const categoryResult = await this.db
-            .select({ categoryName: category.name, categoryId: category.id })
-            .from(keyword)
-            .innerJoin(category, eq(category.id, keyword.categoryId))
-            .where(
-              sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
-            )
-            .groupBy(category.id)
-            .orderBy(desc(count(keyword.id)))
-            .limit(1);
-
-          categoryId = categoryResult[0]?.categoryId ?? 1;
-        }
-
-        // Create the book
-        const inserted = await this.db
-          .insert(book)
-          .values({
-            name: createBookDto.name,
-            cover_url: createBookDto.coverUrl,
-            author: createBookDto.author,
-            description: createBookDto.description,
-            isbn: createBookDto.isbn,
-            publishingHouse: createBookDto.publishingHouse,
-            publishedAt: createBookDto.publishedAt,
-            categoryId: categoryId,
-          })
-          .returning();
-
-        existingBook = inserted[0];
-
-        // Record matched keywords for audit trail (only for new books)
-        if (matchedKeywords.length > 0) {
-          try {
-            await this.db.insert(bookKeyword).values(
-              matchedKeywords.map((kw) => ({
-                bookId: existingBook.id,
-                keywordId: kw.keywordId,
-              })),
-            );
-          } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : String(err);
-            if (!errorMsg.includes('unique') && !errorMsg.includes('UNIQUE')) {
-              throw err;
-            }
-          }
-        }
+        existingBook = await this.insertBook(createBookDto);
       }
-      // For existing books: reuse as-is with their existing category and keywords
 
       // Retrieve (or lazily create) the user's list
       const userListFound = await this.db
