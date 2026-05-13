@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import HomePage from "./HomePage";
 
 // Mock dependencies
@@ -39,7 +40,7 @@ vi.mock("@/components/CarouselDisplay", () => ({
     isLoading,
   }: {
     title: string;
-    books: any[];
+    books: { title?: string }[];
     isLoading?: boolean;
   }) => (
     <div data-testid={`carousel-${title}`}>
@@ -63,7 +64,7 @@ vi.mock("@/components/Loader", () => ({
 }));
 
 vi.mock("@/components/ui/input", () => ({
-  Input: (props: any) => <input data-testid="search-input" {...props} />,
+  Input: (props: React.ComponentProps<"input">) => <input data-testid="search-input" {...props} />,
 }));
 
 vi.mock("@/api/books", () => ({

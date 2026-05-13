@@ -11,7 +11,7 @@ import {
   removeBookFromUserList,
   updateBookStatus,
 } from "@/api/books";
-import type { BookDisplay, BookStatus } from "@/@types/books";
+import type { BookDisplay, BookRow, BookStatus } from "@/@types/books";
 import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 
 const PAGE_SIZE = 10;
@@ -43,7 +43,7 @@ export const useUserBooks = (userId?: number) => {
         "userBooks",
         userId,
         pageIndex * PAGE_SIZE,
-      ]) as { books: any[]; total: number } | undefined;
+      ]) as { books: BookRow[]; total: number } | undefined;
 
       if (!cachedQuery) break;
 

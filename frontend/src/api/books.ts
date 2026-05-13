@@ -26,6 +26,19 @@ export function getSearchBooks(params: GetExternalBooksParams) {
   return api.get(`/books/search`, { params: query });
 }
 
+/** Get a single book by ISBN from the database (returns null if not found). */
+export const getBookByIsbn = async (
+  isbn: string,
+): Promise<{
+  id: number;
+  isbn: string;
+  name: string;
+  categoryName: string;
+} | null> => {
+  const response = await api.get(`/books/isbn/${isbn}`);
+  return response.data ?? null;
+};
+
 /** Get all books persisted in the backend `book` table. */
 export const getBooks = async (
   categories?: string | string[],

@@ -1,8 +1,18 @@
 import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2, Clock, Plus, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Clock,
+  BookOpen,
+  Plus,
+  Check,
+  Tag,
+  Calendar,
+} from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { addBookToUserList } from "../../api/books";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { useBookByIsbn } from "../../hooks/useBookByIsbn";
 import { useUserBooks } from "../../hooks/useUserBooks";
 import { bookDetailsRoute } from "../../routes/routes";
 import { getFullExternalBook } from "../../api/externalBooks";
@@ -33,6 +43,8 @@ const BookDetails = () => {
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
+
+  const { data: dbBook } = useBookByIsbn(isbn);
 
   const {
     books: userBooks,
@@ -105,6 +117,10 @@ const BookDetails = () => {
   const userBookData = userBooks.find((b) => b.isbn === book?.isbn);
   const isConnected = !!currentUser?.id;
 
+  const publishYear = book?.publishedAt
+    ? /\d{4}/.exec(book.publishedAt)?.[0]
+    : null;
+
   if (isLoading) {
     return (
       <div className="flex h-[50vh] w-full items-center justify-center">
@@ -136,7 +152,7 @@ const BookDetails = () => {
   return (
     <div className="w-full min-h-screen bg-background animate-in fade-in zoom-in-95 duration-500">
       <div className="sticky top-0 z-40 bg-background border-b border-border">
-        <div className="container px-4 sm:px-6 py-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <Button
             onClick={() => router.history.back()}
             variant="secondary"
@@ -148,11 +164,11 @@ const BookDetails = () => {
           </Button>
         </div>
       </div>
-      <div className="container px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <div className="md:col-span-1">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="lg:col-span-1">
             <div className="flex flex-col gap-4">
-              <div className="relative group shadow-lg rounded-lg overflow-hidden mx-auto md:mx-0 w-48 sm:w-56 md:w-full">
+              <div className="relative group shadow-lg rounded-lg overflow-hidden mx-auto lg:mx-0 w-48 sm:w-56 lg:w-full">
                 <BookCover
                   src={book.cover}
                   alt={book.title}
@@ -162,18 +178,60 @@ const BookDetails = () => {
             </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2">
             <div className="space-y-6">
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex-1">
                     <BookHeaderInfo
                       title={book.title}
                       author={book.authors[0]}
                     />
                   </div>
+
+                  {/* Metadata: genre, year, pages */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+                    {isBookInLibrary && userBookData?.categoryName ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20 capitalize">
+                        <Tag className="h-3 w-3 shrink-0" />
+                        {userBookData.categoryName}
+                      </span>
+                    ) : !isBookInLibrary && dbBook?.categoryName ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20 capitalize">
+                        <Tag className="h-3 w-3 shrink-0" />
+                        {dbBook.categoryName}
+                      </span>
+                    ) : !isBookInLibrary &&
+                      !dbBook &&
+                      book.categories.length > 0 ? (
+                      book.categories.slice(0, 3).map((cat, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium"
+                        >
+                          <Tag className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-30">{cat}</span>
+                        </span>
+                      ))
+                    ) : null}
+
+                    {publishYear && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        {publishYear}
+                      </span>
+                    )}
+
+                    {book.pages > 0 && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                        <BookOpen className="h-3 w-3 shrink-0" />
+                        {book.pages} pages
+                      </span>
+                    )}
+                  </div>
+
                   {isConnected && isBookInLibrary && (
-                    <div className="inline-flex sm:justify-end">
+                    <div className="flex justify-center lg:justify-start">
                       <div className="px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-full">
                         <span className="text-sm font-semibold text-primary capitalize">
                           {userBookData?.status}
@@ -193,7 +251,7 @@ const BookDetails = () => {
                       },
                       {
                         status: "En cours" as BookStatus,
-                        icon: Clock,
+                        icon: BookOpen,
                         label: "En cours",
                       },
                       {
@@ -214,7 +272,7 @@ const BookDetails = () => {
                         className="w-full gap-2"
                       >
                         <Icon className="h-4 w-4" />
-                        <span className="hidden sm:inline">{label}</span>
+                        <span>{label}</span>
                       </Button>
                     ))}
                   </div>
