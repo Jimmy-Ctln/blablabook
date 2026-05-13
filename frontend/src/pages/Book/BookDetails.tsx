@@ -12,6 +12,7 @@ import { BookCover } from "../../components/Book/BookCover";
 import { BookHeaderInfo } from "../../components/Book/BookHeaderInfo";
 import { Button } from "../../components/ui/button";
 import { BookSummary } from "@/components/Book/BookSummary";
+import { ReviewSection } from "@/components/Book/ReviewSection";
 import type { AxiosError } from "axios";
 import { Separator } from "@/components/ui/separator";
 
@@ -265,6 +266,12 @@ const BookDetails = () => {
                   </Button>
                 </div>
               )}
+
+              <ReviewSection
+                book={book}
+                currentUserId={currentUser?.id}
+                isConnected={isConnected}
+              />
             </div>
           </div>
         </div>
