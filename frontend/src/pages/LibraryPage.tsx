@@ -108,7 +108,7 @@ export default function LibraryPage() {
               size="sm"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Ajouter</span>
+              <span>Ajouter un livre</span>
             </Button>
           </div>
           <p className="text-sm sm:text-base text-muted-foreground">
