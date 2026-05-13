@@ -6,16 +6,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { CarouselProps } from "../@types/carouselProps";
-import { Skeleton } from "@/components/ui/skeleton";
 import BookCardCarousel from "./BookCardCarousel";
-
-function BookCardSkeleton() {
-  return (
-    <div className="flex flex-col gap-4 w-full">
-      <Skeleton className="max-w-[80%] h-80 rounded-lg" />
-    </div>
-  );
-}
+import { BookCardSkeleton } from "./BookCardSkeleton";
 
 export default function CarouselDisplay({
   books,
@@ -43,7 +35,7 @@ export default function CarouselDisplay({
           ? Array.from({ length: 5 }).map((_, i) => (
               <CarouselItem
                 key={i}
-                className="basis-full md:basis-1/2 lg:basis-1/4"
+                className="basis-full md:basis-1/3 lg:basis-1/6"
               >
                 <BookCardSkeleton />
               </CarouselItem>
