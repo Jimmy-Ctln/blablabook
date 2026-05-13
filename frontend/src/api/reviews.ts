@@ -1,8 +1,8 @@
 import api from "./axios";
 import type { Review, CreateReviewPayload } from "../@types/reviews";
 
-export const getReviewsByBookId = async (bookId: number): Promise<Review[]> => {
-  const response = await api.get<Review[]>(`/reviews/book/${bookId}`);
+export const getReviewsByIsbn = async (isbn: string): Promise<Review[]> => {
+  const response = await api.get<Review[]>(`/reviews/book/${isbn}`);
   return response.data;
 };
 
