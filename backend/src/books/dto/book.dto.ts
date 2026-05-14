@@ -9,4 +9,5 @@ export class BookDto {
   publishedAt: string;
   categoryName: string;
   status?: string;
+  comment?: string | null;
 }

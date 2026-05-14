@@ -18,6 +18,7 @@ import type { RequestWithUser } from '@/auth/types';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookStatusDto } from './dto/update-book-status.dto';
+import { UpdateBookNoteDto } from './dto/update-book-note.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -201,6 +202,37 @@ export class BooksController {
       bookId,
       readStart,
       readEnd,
+    );
+  }
+
+  /**
+   * PATCH /books/library/:userId/book/:bookId/note
+   * Updates the private note (comment) for a book in the user's list.
+   */
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @UseGuards(AuthGuard)
+  @Patch('library/:userId/book/:bookId/note')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Update private note for a book in user library' })
+  @ApiResponse({ status: 200, description: 'Note updated successfully' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async updateBookNote(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('bookId', ParseIntPipe) bookId: number,
+    @Body() updateNoteDto: UpdateBookNoteDto,
+    @Req() request: RequestWithUser,
+  ) {
+    const authenticatedUserId = request['user']?.sub;
+    if (!authenticatedUserId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (authenticatedUserId !== userId) {
+      throw new ForbiddenException('You can only update your own notes');
+    }
+    return this.booksService.updateBookNote(
+      userId,
+      bookId,
+      updateNoteDto.comment ?? null,
     );
   }
 }
