@@ -61,11 +61,11 @@ export interface BookDisplay {
   name: string;
   description?: string | null;
   author: string;
-  cover_url?: string | null;
+  cover_url?: string;
   cover?: string;
   isbn: string;
-  publisher?: string | null;
-  publishDate?: string | null;
+  publisher?: string;
+  publishDate?: string;
   status?: string; //The status is optionnal because externals books don't have status
   categories?: string[];
   categoryName?: string;
