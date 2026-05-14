@@ -314,21 +314,10 @@ describe('BooksService', () => {
       where: jest.fn().mockResolvedValue([]),
     };
 
-    // Mock: keywords matching
     const selectChain2 = {
       from: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([{ categoryId: 2, keywordId: 5 }]),
-    };
-
-    // Mock: category result
-    const selectChain3 = {
-      from: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      groupBy: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue([{ categoryId: 2 }]),
     };
 
     // Mock: insert book
@@ -338,7 +327,7 @@ describe('BooksService', () => {
     };
 
     // Mock: user list
-    const selectChain4 = {
+    const selectChain3 = {
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([{ id: 1, userId: 1 }]),
     };
@@ -357,8 +346,7 @@ describe('BooksService', () => {
     mockDb.select
       .mockReturnValueOnce(selectChain1)
       .mockReturnValueOnce(selectChain2)
-      .mockReturnValueOnce(selectChain3)
-      .mockReturnValueOnce(selectChain4);
+      .mockReturnValueOnce(selectChain3);
 
     mockDb.insert
       .mockReturnValueOnce(insertChain1)
