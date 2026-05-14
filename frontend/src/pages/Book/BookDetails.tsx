@@ -20,6 +20,7 @@ import type { ExternalBookDisplayData } from "../../@types/externalBooks";
 import type { BookStatus } from "../../@types/books";
 import { BookCover } from "../../components/Book/BookCover";
 import { BookHeaderInfo } from "../../components/Book/BookHeaderInfo";
+import { BookNoteSection } from "../../components/Book/BookNoteSection";
 import { Button } from "../../components/ui/button";
 import { BookSummary } from "@/components/Book/BookSummary";
 import { ReviewSection } from "@/components/Book/ReviewSection";
@@ -51,6 +52,8 @@ const BookDetails = () => {
     refetch,
     updateStatus,
     isUpdatingStatus,
+    updateNote,
+    isUpdatingNote,
   } = useUserBooks(currentUser?.id);
 
   const formatDateForDB = (dateString: string): string => {
@@ -112,7 +115,6 @@ const BookDetails = () => {
       });
   };
 
-  // Check if book is already in user's library
   const isBookInLibrary = userBooks.some((b) => b.isbn === book?.isbn);
   const userBookData = userBooks.find((b) => b.isbn === book?.isbn);
   const isConnected = !!currentUser?.id;
@@ -276,6 +278,14 @@ const BookDetails = () => {
                       </Button>
                     ))}
                   </div>
+                )}
+
+                {isConnected && isBookInLibrary && userBookData && (
+                  <BookNoteSection
+                    userBookData={userBookData}
+                    updateNote={updateNote}
+                    isUpdatingNote={isUpdatingNote}
+                  />
                 )}
 
                 <Separator />
