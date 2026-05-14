@@ -156,3 +156,16 @@ export const updateBookStatus = async (
   );
   return response.data;
 };
+
+/** Update the private note (comment) for a book in a user's library. */
+export const updateBookNote = async (
+  userId: number,
+  bookId: number,
+  comment: string | null,
+): Promise<{ comment: string | null }> => {
+  const response = await api.patch<{ comment: string | null }>(
+    `/books/library/${userId}/book/${bookId}/note`,
+    { comment },
+  );
+  return response.data;
+};

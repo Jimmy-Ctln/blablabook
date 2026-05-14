@@ -22,6 +22,7 @@ export function mapBookRowToDisplay(book: BookRow): BookDisplay {
     readStart: book.readStart,
     readEnd: book.readEnd,
     addedAt: book.addedAt,
+    comment: book.comment,
   };
 }
 

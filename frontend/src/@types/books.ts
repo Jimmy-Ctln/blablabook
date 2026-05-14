@@ -43,6 +43,7 @@ export interface BookRow {
   readStart?: Date | null;
   readEnd?: Date | null;
   addedAt?: Date;
+  comment?: string | null;
 }
 
 // /**
@@ -71,4 +72,5 @@ export interface BookDisplay {
   readStart?: Date | null;
   readEnd?: Date | null;
   addedAt?: Date;
+  comment?: string | null;
 }
