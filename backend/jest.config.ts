@@ -5,7 +5,7 @@ const config: Config = {
   rootDir: '.', // On part de la racine du projet
   testRegex: '.*\\.spec\\.ts$', // On ne cherche QUE les .spec.ts
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest', // On compile tout avec ts-jest
+    '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: 'tsconfig.spec.json' }],
   },
   coverageDirectory: './coverage',
   testEnvironment: 'node',

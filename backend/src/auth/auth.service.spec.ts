@@ -124,14 +124,6 @@ describe('AuthService', () => {
         confirmPassword,
       };
 
-      type RegisterResolvedValue = {
-        id: number;
-        email: string;
-        username: string;
-        role: string;
-        image: string | null;
-      };
-
       const mockNewUser: UserSelect = {
         id: 1,
         email,
@@ -142,14 +134,6 @@ describe('AuthService', () => {
         createdAt: date,
         updatedAt: date,
         deletedAt: null,
-      };
-
-      const resolvedValue: RegisterResolvedValue = {
-        id: userId,
-        email,
-        username,
-        role: 'USER',
-        image: null,
       };
 
       userServiceMock.checkUserExisting.mockResolvedValue(null);
