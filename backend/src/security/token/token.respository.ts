@@ -28,9 +28,16 @@ export class TokenRepository {
     return result[0] ?? null;
   }
   async destroyRefreshToken(refreshToken: string): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.refreshToken)
+      .where(eq(schema.refreshToken.refresh_token, refreshToken))
+      .returning({ id: schema.refreshToken.id });
+    return result.length > 0;
+  }
+
+  async destroyAllUserTokens(userId: number): Promise<void> {
     await this.db
       .delete(schema.refreshToken)
-      .where(eq(schema.refreshToken.refresh_token, refreshToken));
-    return true; //si détruit on retourne true
+      .where(eq(schema.refreshToken.userId, userId));
   }
 }

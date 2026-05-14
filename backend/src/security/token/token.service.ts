@@ -47,6 +47,9 @@ export class TokenService {
   }
 
   async generateRefreshToken(userId: number): Promise<string> {
+    // Invalidate all existing sessions before creating a new one (single-session policy)
+    await this.tokenRespository.destroyAllUserTokens(userId);
+
     // generate random string for the refresh token => send to front
     const tokenValue = randomBytes(32).toString('hex');
 
