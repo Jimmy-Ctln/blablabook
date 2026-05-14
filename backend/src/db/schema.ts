@@ -25,16 +25,18 @@ export const user = pgTable('user', {
   deletedAt: timestamp('deleted_at'),
 });
 
-export const list = pgTable('list', {
-  id: serial().primaryKey(),
-  name: varchar({ length: 150 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'),
-  userId: integer('user_id')
-    .references(() => user.id, { onDelete: 'cascade' })
-    .notNull(),
-});
+export const list = pgTable(
+  'list',
+  {
+    id: serial().primaryKey(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    userId: integer('user_id')
+      .references(() => user.id, { onDelete: 'cascade' })
+      .notNull(),
+  },
+  (t) => [unique('unique_user_list').on(t.userId)],
+);
 
 export const book = pgTable('book', {
   id: serial().primaryKey(),

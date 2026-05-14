@@ -32,6 +32,30 @@ export class BooksService {
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
     private readonly categoryService: CategoryService,
   ) {}
+  private async getUserList(userId: number) {
+    const [userList] = await this.db
+      .select()
+      .from(list)
+      .where(eq(list.userId, userId));
+    if (!userList) {
+      throw new HttpException('User list not found', HttpStatus.NOT_FOUND);
+    }
+    return userList;
+  }
+
+  private async getOrCreateUserList(userId: number) {
+    const [existing] = await this.db
+      .select()
+      .from(list)
+      .where(eq(list.userId, userId));
+    if (existing) return existing;
+    const [created] = await this.db
+      .insert(list)
+      .values({ userId })
+      .returning();
+    return created;
+  }
+
   /**
    * Compute reading status without using nested ternaries to satisfy Sonar.
    */
@@ -297,26 +321,7 @@ export class BooksService {
         existingBook = await this.insertBook(createBookDto);
       }
 
-      // Retrieve (or lazily create) the user's list
-      const userListFound = await this.db
-        .select()
-        .from(list)
-        .where(eq(list.userId, userId));
-
-      let userList = userListFound[0];
-
-      // Create list if it does not exist
-      if (!userList) {
-        const created = await this.db
-          .insert(list)
-          .values({
-            name: 'My List',
-            userId,
-          })
-          .returning();
-
-        userList = created[0];
-      }
+      const userList = await this.getOrCreateUserList(userId);
 
       // Link book to list in the join table
       await this.db
@@ -353,24 +358,13 @@ export class BooksService {
   async removeFromUserList(
     userId: number,
     bookId: number,
-  ): Promise<ListBookSelect[] | null> {
-    // Retrieve user list
-    const userListFound = await this.db
-      .select()
-      .from(list)
-      .where(eq(list.userId, userId));
+  ): Promise<ListBookSelect[]> {
+    const userList = await this.getUserList(userId);
 
-    const userList = userListFound[0];
-
-    if (!userList) return null;
-
-    // Delete relation from listBook
-    const deleted = await this.db
+    return this.db
       .delete(listBook)
       .where(and(eq(listBook.bookId, bookId), eq(listBook.listId, userList.id)))
       .returning();
-
-    return deleted;
   }
 
   /**
@@ -389,17 +383,7 @@ export class BooksService {
     readEnd: Date | null,
   ): Promise<BookSelect> {
     try {
-      // Find user's list
-      const userListFound = await this.db
-        .select()
-        .from(list)
-        .where(eq(list.userId, userId));
-
-      const userList = userListFound[0];
-
-      if (!userList) {
-        throw new HttpException('User list not found', HttpStatus.NOT_FOUND);
-      }
+      const userList = await this.getUserList(userId);
 
       // Update the listBook entry with new dates
       const updated = await this.db
@@ -459,16 +443,7 @@ export class BooksService {
     bookId: number,
     comment: string | null,
   ): Promise<{ comment: string | null }> {
-    const userListFound = await this.db
-      .select()
-      .from(list)
-      .where(eq(list.userId, userId));
-
-    const userList = userListFound[0];
-
-    if (!userList) {
-      throw new HttpException('User list not found', HttpStatus.NOT_FOUND);
-    }
+    const userList = await this.getUserList(userId);
 
     const updated = await this.db
       .update(listBook)
