@@ -4,6 +4,7 @@ services:
     runtime: node
     region: frankfurt
     plan: free
+    autoDeploy: false
     buildCommand: cd backend && npm install --include=dev
     startCommand: cd backend && npm run build && npm run seed && node dist/src/main.js
     envVars:
