@@ -67,21 +67,6 @@ export const category = pgTable('category', {
   isActive: boolean('is_active').default(true),
 });
 
-export const userCategory = pgTable(
-  'user_category',
-  {
-    id: serial().primaryKey(),
-    categoryId: integer('category_id')
-      .references(() => category.id)
-      .notNull(),
-    userId: integer('user_id')
-      .references(() => user.id, { onDelete: 'cascade' })
-      .notNull(),
-  },
-  // prevent duplicate category for user
-  (t) => [unique('unique_category_user').on(t.userId, t.categoryId)],
-);
-
 export const listBook = pgTable(
   'list_book',
   {
