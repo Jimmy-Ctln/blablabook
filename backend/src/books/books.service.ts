@@ -239,6 +239,7 @@ export class BooksService {
         readStart: listBook.readStart,
         readEnd: listBook.readEnd,
         addedAt: listBook.addedAt,
+        comment: listBook.comment,
       })
       .from(listBook)
       .innerJoin(book, eq(book.id, listBook.bookId))
@@ -263,6 +264,7 @@ export class BooksService {
       status: this.computeStatus(b.readStart, b.readEnd),
       readStart: b.readStart,
       readEnd: b.readEnd,
+      comment: b.comment,
     }));
 
     return {
@@ -450,5 +452,39 @@ export class BooksService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async updateBookNote(
+    userId: number,
+    bookId: number,
+    comment: string | null,
+  ): Promise<{ comment: string | null }> {
+    const userListFound = await this.db
+      .select()
+      .from(list)
+      .where(eq(list.userId, userId));
+
+    const userList = userListFound[0];
+
+    if (!userList) {
+      throw new HttpException('User list not found', HttpStatus.NOT_FOUND);
+    }
+
+    const updated = await this.db
+      .update(listBook)
+      .set({ comment, updatedAt: new Date() })
+      .where(
+        and(eq(listBook.bookId, bookId), eq(listBook.listId, userList.id)),
+      )
+      .returning();
+
+    if (!updated || updated.length === 0) {
+      throw new HttpException(
+        'Book not found in user list',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return { comment: updated[0].comment };
   }
 }
