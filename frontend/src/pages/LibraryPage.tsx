@@ -34,7 +34,7 @@ export default function LibraryPage() {
     if (userId) {
       refetch();
     }
-  }, [userId]);
+  }, [userId, refetch]);
 
   const filteredBooks: BookDisplay[] =
     books?.filter((b: BookDisplay) => {
@@ -85,10 +85,10 @@ export default function LibraryPage() {
     <div className="w-full min-h-screen bg-background">
       <AddBookModal isOpen={open} setOpen={setOpen} />
 
-      <div className="container px-6 sm:px-8 md:px-12 py-6 sm:py-8 md:py-10">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10">
         {/* En-tête principal */}
         <div className="mb-8 sm:mb-10">
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex glass-accent h-12 w-12 shrink-0 items-center justify-center rounded-xl">
                 <Library className="h-6 w-6 text-primary" />
@@ -104,11 +104,11 @@ export default function LibraryPage() {
             </div>
             <Button
               onClick={() => setOpen(true)}
-              className="shrink-0 gap-2 rounded-lg h-10 sm:h-11"
+              className="shrink-0 gap-2 rounded-lg h-10 w-10 sm:h-11 sm:w-auto sm:px-4"
               size="sm"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Ajouter</span>
+              <span className="hidden sm:inline">Ajouter un livre</span>
             </Button>
           </div>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -117,7 +117,7 @@ export default function LibraryPage() {
         </div>
 
         {/* Statistiques - Stats cards */}
-        <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 mb-8">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             const isActive = activeFilter === stat.status;
@@ -125,7 +125,7 @@ export default function LibraryPage() {
               <button
                 key={stat.status}
                 onClick={() => setActiveFilter(stat.status)}
-                className={`flex flex-col items-center justify-center rounded-lg transition-all duration-200 h-20 w-full sm:h-24 sm:w-24 ${
+                className={`flex flex-col items-center justify-center rounded-lg transition-all duration-200 h-20 w-full sm:h-24 ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-md"
                     : "bg-secondary/50 text-foreground border border-border/50 hover:bg-secondary hover:border-primary/30"
@@ -134,6 +134,9 @@ export default function LibraryPage() {
                 <Icon className="h-5 w-5 sm:h-6 sm:w-6 mb-1" />
                 <span className="text-lg sm:text-xl font-bold">
                   {stat.count}
+                </span>
+                <span className="text-[10px] sm:text-xs mt-0.5 opacity-80">
+                  {stat.label}
                 </span>
               </button>
             );

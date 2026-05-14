@@ -26,6 +26,19 @@ export function getSearchBooks(params: GetExternalBooksParams) {
   return api.get(`/books/search`, { params: query });
 }
 
+/** Get a single book by ISBN from the database (returns null if not found). */
+export const getBookByIsbn = async (
+  isbn: string,
+): Promise<{
+  id: number;
+  isbn: string;
+  name: string;
+  categoryName: string;
+} | null> => {
+  const response = await api.get(`/books/isbn/${isbn}`);
+  return response.data ?? null;
+};
+
 /** Get all books persisted in the backend `book` table. */
 export const getBooks = async (
   categories?: string | string[],
@@ -140,6 +153,19 @@ export const updateBookStatus = async (
   const response = await api.patch<BookRow>(
     `/books/library/${userId}/book/${bookId}/status`,
     { readStart, readEnd },
+  );
+  return response.data;
+};
+
+/** Update the private note (comment) for a book in a user's library. */
+export const updateBookNote = async (
+  userId: number,
+  bookId: number,
+  comment: string | null,
+): Promise<{ comment: string | null }> => {
+  const response = await api.patch<{ comment: string | null }>(
+    `/books/library/${userId}/book/${bookId}/note`,
+    { comment },
   );
   return response.data;
 };

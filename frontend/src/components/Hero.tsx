@@ -10,7 +10,7 @@ export default function Hero() {
   const username = currentUser.data?.username;
 
   return (
-    <section className="relative flex min-h-[65vh] items-center overflow-hidden">
+    <section className="relative flex min-h-[80vh] items-center overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={background}
@@ -21,10 +21,10 @@ export default function Hero() {
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-background to-transparent" />
       </div>
 
-      <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-10 pb-40">
-        <div className="flex flex-col items-center gap-10 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:gap-16 min-[1000px]:max-w-5xl min-[1000px]:mx-auto">
+      <div className="relative w-full px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 pt-10 pb-40">
+        <div className="flex flex-col items-center gap-10 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:gap-20 min-[1000px]:max-w-7xl min-[1000px]:mx-auto">
 
-          <div className="flex flex-col items-center text-center min-[1000px]:items-start min-[1000px]:text-left min-[1000px]:flex-1 min-[1000px]:max-w-2xl">
+          <div className="flex flex-col items-center text-center min-[1000px]:items-start min-[1000px]:text-left min-[1000px]:flex-1 min-[1000px]:max-w-3xl">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs sm:text-sm text-primary">
               <Sparkles className="h-4 w-4 shrink-0" />
               <span className="font-medium">

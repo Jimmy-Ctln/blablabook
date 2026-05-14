@@ -35,16 +35,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Audit frontend dependencies for known security vulnerabilities
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
       # Run frontend test suite (fail fast if tests fail)
       - name: Run frontend tests
         run: npm run test
+
+      # Lint frontend source (catches style and type errors before build)
+      - name: Lint frontend
+        run: npm run lint
 
       # Build frontend assets with Vite
       - name: Build frontend
         run: npm run build
         env:
-          # Environment variable injected for consistency with production build
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
   ### BACKEND CI ###
   ci-backend:
@@ -73,9 +80,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Audit backend dependencies for known security vulnerabilities
+      - name: Audit backend dependencies
+        run: npm audit --audit-level=high
+
       # Run backend test suite (fail fast if tests fail)
       - name: Run backend tests
         run: npm run test
+
+      # Lint backend source
+      - name: Lint backend
+        run: npm run lint
 
       # Compile TypeScript backend to JavaScript
       - name: Build backend

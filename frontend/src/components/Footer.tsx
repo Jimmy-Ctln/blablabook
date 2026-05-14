@@ -16,7 +16,7 @@ export default function Footer() {
 
   return (
     <footer className="w-full bg-secondary border-t border-border mt-auto">
-      <div className="container px-4 sm:px-6 md:px-12 py-8 sm:py-10 md:py-12">
+      <div className="container mx-auto px-4 sm:px-6 md:px-12 py-8 sm:py-10 md:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
           <div className="flex flex-col items-center sm:items-start">
             <div className="flex items-center gap-2 mb-3">
@@ -60,6 +60,7 @@ export default function Footer() {
               {footerLinks.map((link) => (
                 <li key={link.href}>
                   <Link
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     to={link.href as any}
                     className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
                   >

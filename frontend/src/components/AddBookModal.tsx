@@ -1,12 +1,12 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Plus, Search, ArrowRight } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { useQuery } from "@tanstack/react-query";
 import { getBooks } from "@/api/books";
@@ -14,7 +14,6 @@ import type { BooksByCategory } from "@/@types/books";
 import type { SearchBooksResponse } from "@/@types/externalBooks";
 import { searchExternalBooks } from "@/api/externalBooks";
 import SearchBar from "./SearchBar";
-import { Button } from "./ui/button";
 import { Separator } from "@/components/ui/separator";
 import BookCardModal from "./bookCardModal";
 import {
@@ -28,6 +27,7 @@ type AddBookModalProps = {
 };
 
 export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
   const { data: booksByCategory = {} } = useQuery<BooksByCategory>({
@@ -44,13 +44,13 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
     }
     setOpen(nextOpen);
   };
-  // TanStack Query to look external books
+
   const {
     data: externalBooksResponse,
     isFetching,
     refetch: refetchExternalBooks,
   } = useQuery<SearchBooksResponse>({
-    enabled: false, // don't fetch on mount
+    enabled: false,
     queryKey: ["externalBooks", query],
     queryFn: () =>
       searchExternalBooks({ type: "searchText", searchText: query }),
@@ -66,83 +66,108 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
 
   const tenBooks = allBooks.slice(0, 10).map(mapBookRowToDisplay);
   const normalizedQuery = query.trim();
+  const isTyping = normalizedQuery.length === 1;
   const hasSearched = normalizedQuery.length >= 2;
-  const showExternalResults = hasSearched && normalizedQuery.length > 0;
-  const displayedBooks = showExternalResults
+  const displayedBooks = hasSearched
     ? externalBookResult.map(mapExternalBookToDisplay)
     : tenBooks;
+  const hasMore =
+    hasSearched &&
+    (externalBooksResponse?.numFound ?? 0) > displayedBooks.length;
+
+  const handleSeeMore = () => {
+    handleOpenChange(false);
+    void navigate({ to: "/search", search: { q: normalizedQuery } });
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-none overflow-hidden rounded-3xl border p-0 text-foreground sm:w-[calc(100vw-3rem)] sm:max-w-2xl lg:max-w-3xl">
-        <div className="flex max-h-[84dvh] min-h-[65dvh] flex-col bg-background sm:min-h-144">
-          <DialogHeader className="space-y-3 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
-            <DialogTitle className="flex items-start gap-3 text-foreground font-semibold">
-              <div className="glass-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-                <Plus className="h-5 w-5 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg leading-tight sm:text-xl">
-                  Ajouter un livre
-                </h3>
-                <p className="text-xs text-muted-foreground sm:text-sm">
-                  Recherchez et ajoutez des livres a votre bibliotheque.
-                </p>
-              </div>
-            </DialogTitle>
-            <SearchBar
-              onSearch={setQuery}
-              placeholder="Titre, auteur, ISBN..."
-            />
-          </DialogHeader>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col p-0 sm:max-w-md"
+      >
+        {/* Header */}
+        <SheetHeader className="shrink-0 space-y-3 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
+          <SheetTitle className="flex items-center gap-3 text-foreground font-semibold">
+            <div className="glass-accent flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-base leading-tight sm:text-lg">
+                Ajouter un livre
+              </p>
+              <p className="text-xs font-normal text-muted-foreground">
+                Recherchez parmi des milliers de livres
+              </p>
+            </div>
+          </SheetTitle>
+          <SearchBar
+            onSearch={setQuery}
+            placeholder="Titre, auteur, ISBN..."
+          />
+        </SheetHeader>
 
-          <Separator />
+        <Separator />
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            <span className="text-xs text-muted-foreground sm:text-sm">
-              {showExternalResults
-                ? `Resultats pour "${normalizedQuery}"`
-                : `${tenBooks.length} suggestions de livres`}
-            </span>
+        {/* Results */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3 sm:px-6 sm:py-4">
+          {/* Label */}
+          <p className="mb-3 text-xs text-muted-foreground">
+            {hasSearched
+              ? isFetching
+                ? "Recherche en cours…"
+                : `${displayedBooks.length} résultat${displayedBooks.length !== 1 ? "s" : ""} pour "${normalizedQuery}"`
+              : isTyping
+                ? "Continuez à taper…"
+                : `${tenBooks.length} suggestions`}
+          </p>
 
-            <div className="mt-4 min-h-72 space-y-3 sm:min-h-80">
-              {isFetching ? (
-                Array.from({ length: 6 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="h-24 animate-pulse rounded-xl border bg-muted/30"
-                  />
-                ))
-              ) : !isFetching &&
-                showExternalResults &&
-                displayedBooks.length === 0 ? (
-                <div className="flex h-full min-h-72 items-center justify-center rounded-xl border border-dashed px-4 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Aucun livre trouve. Essayez un autre mot-cle.
-                  </p>
-                </div>
-              ) : (
-                displayedBooks.map((book) => (
-                  <BookCardModal
-                    key={`${book.isbn ?? "book"}-${book.name}`}
-                    book={book}
-                  />
-                ))
+          {/* Content */}
+          {isTyping ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center text-muted-foreground">
+              <Search className="h-8 w-8 opacity-30" />
+              <p className="text-sm">Entrez au moins 2 caractères</p>
+            </div>
+          ) : isFetching ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-20 animate-pulse rounded-xl border bg-muted/30"
+                />
+              ))}
+            </div>
+          ) : hasSearched && displayedBooks.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-10 text-center">
+              <Search className="h-8 w-8 text-muted-foreground opacity-40" />
+              <p className="text-sm text-muted-foreground">
+                Aucun résultat pour &quot;{normalizedQuery}&quot;
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                Essayez un autre titre ou auteur
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {displayedBooks.map((book) => (
+                <BookCardModal
+                  key={`${book.isbn ?? "book"}-${book.name}`}
+                  book={book}
+                />
+              ))}
+              {hasMore && (
+                <button
+                  onClick={handleSeeMore}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  Voir plus de résultats
+                  <ArrowRight className="h-4 w-4" />
+                </button>
               )}
             </div>
-          </div>
-
-          <Separator />
-          <DialogFooter className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
-            <span className="w-full text-xs text-muted-foreground sm:text-sm">
-              Parcourez le catalogue pour enrichir votre collection.
-            </span>
-            <Button className="w-full sm:w-auto" onClick={() => setOpen(false)}>
-              Terminer
-            </Button>
-          </DialogFooter>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

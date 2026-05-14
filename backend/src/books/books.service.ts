@@ -32,6 +32,30 @@ export class BooksService {
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
     private readonly categoryService: CategoryService,
   ) {}
+  private async getUserList(userId: number) {
+    const [userList] = await this.db
+      .select()
+      .from(list)
+      .where(eq(list.userId, userId));
+    if (!userList) {
+      throw new HttpException('User list not found', HttpStatus.NOT_FOUND);
+    }
+    return userList;
+  }
+
+  private async getOrCreateUserList(userId: number) {
+    const [existing] = await this.db
+      .select()
+      .from(list)
+      .where(eq(list.userId, userId));
+    if (existing) return existing;
+    const [created] = await this.db
+      .insert(list)
+      .values({ userId })
+      .returning();
+    return created;
+  }
+
   /**
    * Compute reading status without using nested ternaries to satisfy Sonar.
    */
@@ -49,8 +73,14 @@ export class BooksService {
    */
   async findByIsbn(isbn: string) {
     const [found] = await this.db
-      .select({ id: book.id, isbn: book.isbn, name: book.name })
+      .select({
+        id: book.id,
+        isbn: book.isbn,
+        name: book.name,
+        categoryName: category.name,
+      })
       .from(book)
+      .innerJoin(category, eq(book.categoryId, category.id))
       .where(eq(book.isbn, isbn));
     return found ?? null;
   }
@@ -68,27 +98,30 @@ export class BooksService {
     let matchedKeywords: Array<{ keywordId: number; categoryId: number }> = [];
 
     if (normalizedSubjects.length > 0) {
+      // Join all OpenLibrary subjects into one string, then find every seeded keyword
+      // that appears as a whole word inside it (~* = case-insensitive regex, \m/\M = word boundaries).
+      // Using word boundaries prevents false positives where a short keyword like "imp"
+      // would wrongly match inside a longer word like "important".
       matchedKeywords = await this.db
         .select({ keywordId: keyword.id, categoryId: category.id })
         .from(keyword)
         .innerJoin(category, eq(category.id, keyword.categoryId))
         .where(
-          sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
+          sql`${normalizedSubjects.join(' ')} ~* ('\\m' || ${keyword.name} || '\\M')`,
         );
 
       if (matchedKeywords.length > 0) {
-        const categoryResult = await this.db
-          .select({ categoryId: category.id })
-          .from(keyword)
-          .innerJoin(category, eq(category.id, keyword.categoryId))
-          .where(
-            sql`${normalizedSubjects.join(' ')} ILIKE '%' || ${keyword.name} || '%'`,
-          )
-          .groupBy(category.id)
-          .orderBy(desc(count(keyword.id)))
-          .limit(1);
-
-        categoryId = categoryResult[0]?.categoryId ?? 1;
+        // Count matched keywords per category, then pick the category with the most hits.
+        // e.g. { 3: 8, 2: 2 } → category 3 (fantasy) wins with 8 keyword matches.
+        const counts = matchedKeywords.reduce(
+          (acc, { categoryId: cId }) => {
+            acc[cId] = (acc[cId] ?? 0) + 1;
+            return acc;
+          },
+          {} as Record<number, number>,
+        );
+        const winner = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
+        categoryId = winner ? Number(winner[0]) : 1;
       }
     }
 
@@ -230,6 +263,7 @@ export class BooksService {
         readStart: listBook.readStart,
         readEnd: listBook.readEnd,
         addedAt: listBook.addedAt,
+        comment: listBook.comment,
       })
       .from(listBook)
       .innerJoin(book, eq(book.id, listBook.bookId))
@@ -241,24 +275,21 @@ export class BooksService {
       .limit(limit);
 
     // Compute status and attach categories for each book
-    const booksWithStatus = await Promise.all(
-      rows.map(async (b) => {
-        return {
-          id: b.id,
-          name: b.name,
-          cover_url: b.cover_url,
-          author: b.author,
-          description: b.description,
-          isbn: b.isbn,
-          publishingHouse: b.publishingHouse,
-          publishedAt: b.publishedAt,
-          categoryName: b.categoryName,
-          status: this.computeStatus(b.readStart, b.readEnd),
-          readStart: b.readStart,
-          readEnd: b.readEnd,
-        };
-      }),
-    );
+    const booksWithStatus = rows.map((b) => ({
+      id: b.id,
+      name: b.name,
+      cover_url: b.cover_url,
+      author: b.author,
+      description: b.description,
+      isbn: b.isbn,
+      publishingHouse: b.publishingHouse,
+      publishedAt: b.publishedAt,
+      categoryName: b.categoryName,
+      status: this.computeStatus(b.readStart, b.readEnd),
+      readStart: b.readStart,
+      readEnd: b.readEnd,
+      comment: b.comment,
+    }));
 
     return {
       books: booksWithStatus as BookDto[],
@@ -290,26 +321,7 @@ export class BooksService {
         existingBook = await this.insertBook(createBookDto);
       }
 
-      // Retrieve (or lazily create) the user's list
-      const userListFound = await this.db
-        .select()
-        .from(list)
-        .where(eq(list.userId, userId));
-
-      let userList = userListFound[0];
-
-      // Create list if it does not exist
-      if (!userList) {
-        const created = await this.db
-          .insert(list)
-          .values({
-            name: 'My List',
-            userId,
-          })
-          .returning();
-
-        userList = created[0];
-      }
+      const userList = await this.getOrCreateUserList(userId);
 
       // Link book to list in the join table
       await this.db
@@ -346,24 +358,13 @@ export class BooksService {
   async removeFromUserList(
     userId: number,
     bookId: number,
-  ): Promise<ListBookSelect[] | null> {
-    // Retrieve user list
-    const userListFound = await this.db
-      .select()
-      .from(list)
-      .where(eq(list.userId, userId));
+  ): Promise<ListBookSelect[]> {
+    const userList = await this.getUserList(userId);
 
-    const userList = userListFound[0];
-
-    if (!userList) return null;
-
-    // Delete relation from listBook
-    const deleted = await this.db
+    return this.db
       .delete(listBook)
       .where(and(eq(listBook.bookId, bookId), eq(listBook.listId, userList.id)))
       .returning();
-
-    return deleted;
   }
 
   /**
@@ -382,17 +383,7 @@ export class BooksService {
     readEnd: Date | null,
   ): Promise<BookSelect> {
     try {
-      // Find user's list
-      const userListFound = await this.db
-        .select()
-        .from(list)
-        .where(eq(list.userId, userId));
-
-      const userList = userListFound[0];
-
-      if (!userList) {
-        throw new HttpException('User list not found', HttpStatus.NOT_FOUND);
-      }
+      const userList = await this.getUserList(userId);
 
       // Update the listBook entry with new dates
       const updated = await this.db
@@ -445,5 +436,30 @@ export class BooksService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async updateBookNote(
+    userId: number,
+    bookId: number,
+    comment: string | null,
+  ): Promise<{ comment: string | null }> {
+    const userList = await this.getUserList(userId);
+
+    const updated = await this.db
+      .update(listBook)
+      .set({ comment, updatedAt: new Date() })
+      .where(
+        and(eq(listBook.bookId, bookId), eq(listBook.listId, userList.id)),
+      )
+      .returning();
+
+    if (!updated || updated.length === 0) {
+      throw new HttpException(
+        'Book not found in user list',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return { comment: updated[0].comment };
   }
 }

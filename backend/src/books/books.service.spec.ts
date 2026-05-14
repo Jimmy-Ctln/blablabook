@@ -314,21 +314,10 @@ describe('BooksService', () => {
       where: jest.fn().mockResolvedValue([]),
     };
 
-    // Mock: keywords matching
     const selectChain2 = {
       from: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([{ categoryId: 2, keywordId: 5 }]),
-    };
-
-    // Mock: category result
-    const selectChain3 = {
-      from: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      groupBy: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue([{ categoryId: 2 }]),
     };
 
     // Mock: insert book
@@ -338,7 +327,7 @@ describe('BooksService', () => {
     };
 
     // Mock: user list
-    const selectChain4 = {
+    const selectChain3 = {
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([{ id: 1, userId: 1 }]),
     };
@@ -357,8 +346,7 @@ describe('BooksService', () => {
     mockDb.select
       .mockReturnValueOnce(selectChain1)
       .mockReturnValueOnce(selectChain2)
-      .mockReturnValueOnce(selectChain3)
-      .mockReturnValueOnce(selectChain4);
+      .mockReturnValueOnce(selectChain3);
 
     mockDb.insert
       .mockReturnValueOnce(insertChain1)
@@ -422,6 +410,45 @@ describe('BooksService', () => {
 
     expect(result.id).toBe(1);
     expect(insertChain1.values).toHaveBeenCalled();
+  });
+
+  it('should update book note successfully', async () => {
+    const mockUserList = { id: 1, userId: 1 };
+    const comment = 'Je suis à la page 232...';
+
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockUserList]),
+    };
+
+    const returningChain = {
+      returning: jest.fn().mockResolvedValue([{ comment }]),
+    };
+    const updateChain = {
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnValue(returningChain),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+    mockDb.update.mockReturnValue(updateChain);
+
+    const result = await service.updateBookNote(1, 1, comment);
+
+    expect(result.comment).toBe(comment);
+    expect(updateChain.set).toHaveBeenCalled();
+  });
+
+  it('should throw when user list not found during note update', async () => {
+    const selectChain = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
+    mockDb.select.mockReturnValue(selectChain);
+
+    await expect(service.updateBookNote(1, 1, 'Ma note')).rejects.toThrow(
+      'User list not found',
+    );
   });
 
   it('should handle error when adding book to list', async () => {

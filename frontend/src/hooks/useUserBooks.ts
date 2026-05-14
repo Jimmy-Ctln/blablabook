@@ -10,8 +10,9 @@ import {
   getUserBooks,
   removeBookFromUserList,
   updateBookStatus,
+  updateBookNote,
 } from "@/api/books";
-import type { BookDisplay, BookStatus } from "@/@types/books";
+import type { BookDisplay, BookRow, BookStatus } from "@/@types/books";
 import { mapBookRowToDisplay } from "@/lib/bookDisplayMapper";
 
 const PAGE_SIZE = 10;
@@ -43,7 +44,7 @@ export const useUserBooks = (userId?: number) => {
         "userBooks",
         userId,
         pageIndex * PAGE_SIZE,
-      ]) as { books: any[]; total: number } | undefined;
+      ]) as { books: BookRow[]; total: number } | undefined;
 
       if (!cachedQuery) break;
 
@@ -96,6 +97,23 @@ export const useUserBooks = (userId?: number) => {
     },
   });
 
+  // Update private note for a book
+  const updateNoteMutation = useMutation({
+    mutationFn: ({
+      bookId,
+      comment,
+    }: {
+      bookId: number;
+      comment: string | null;
+    }) => {
+      if (!userId) throw new Error("UserId is required");
+      return updateBookNote(userId, bookId, comment);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userBooks"] });
+    },
+  });
+
   const refetch = useCallback(() => {
     setOffset(0);
     return booksQuery.refetch();
@@ -116,5 +134,7 @@ export const useUserBooks = (userId?: number) => {
     isRemoving: removeMutation.isPending,
     updateStatus: updateStatusMutation.mutate,
     isUpdatingStatus: updateStatusMutation.isPending,
+    updateNote: updateNoteMutation.mutate,
+    isUpdatingNote: updateNoteMutation.isPending,
   };
 };

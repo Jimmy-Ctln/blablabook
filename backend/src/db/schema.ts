@@ -25,26 +25,28 @@ export const user = pgTable('user', {
   deletedAt: timestamp('deleted_at'),
 });
 
-export const list = pgTable('list', {
-  id: serial().primaryKey(),
-  name: varchar({ length: 150 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'),
-  userId: integer('user_id')
-    .references(() => user.id, { onDelete: 'cascade' })
-    .notNull(),
-});
+export const list = pgTable(
+  'list',
+  {
+    id: serial().primaryKey(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    userId: integer('user_id')
+      .references(() => user.id, { onDelete: 'cascade' })
+      .notNull(),
+  },
+  (t) => [unique('unique_user_list').on(t.userId)],
+);
 
 export const book = pgTable('book', {
   id: serial().primaryKey(),
   name: varchar({ length: 255 }).notNull(),
-  cover_url: varchar('cover_url', { length: 500 }).notNull(),
+  cover_url: varchar('cover_url', { length: 500 }),
   author: varchar({ length: 255 }).notNull(),
-  description: text().notNull(),
+  description: text(),
   isbn: varchar('isbn', { length: 255 }).notNull().unique(),
-  publishingHouse: varchar('publishing_house', { length: 255 }).notNull(),
-  publishedAt: date('published_at').notNull(),
+  publishingHouse: varchar('publishing_house', { length: 255 }),
+  publishedAt: date('published_at'),
   categoryId: integer('category_id')
     .references(() => category.id)
     .default(1) // ← Default category “Unknown” (id: 1)
@@ -64,21 +66,6 @@ export const category = pgTable('category', {
   name: varchar({ length: 100 }).notNull().unique(),
   isActive: boolean('is_active').default(true),
 });
-
-export const userCategory = pgTable(
-  'user_category',
-  {
-    id: serial().primaryKey(),
-    categoryId: integer('category_id')
-      .references(() => category.id)
-      .notNull(),
-    userId: integer('user_id')
-      .references(() => user.id, { onDelete: 'cascade' })
-      .notNull(),
-  },
-  // prevent duplicate category for user
-  (t) => [unique('unique_category_user').on(t.userId, t.categoryId)],
-);
 
 export const listBook = pgTable(
   'list_book',

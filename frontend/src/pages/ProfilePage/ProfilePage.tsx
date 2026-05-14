@@ -87,7 +87,7 @@ export default function ProfilePage() {
       toast.success("Informations mises à jour avec succès!");
     },
     onError: (error) => {
-      const message = error?.response?.data?.message ?? "";
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
       toast.error(
         UPDATE_USER_ERRORS[message] ??
           "Erreur lors de la mise à jour des informations",
@@ -102,7 +102,7 @@ export default function ProfilePage() {
       toast.success("Mot de passe modifié avec succès");
     },
     onError: (error) => {
-      const message = (error as any)?.response?.data?.message ?? "";
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
       toast.error(
         CHANGE_PASSWORD_ERRORS[message] ??
           "Erreur lors de la modification du mot de passe",
@@ -177,16 +177,18 @@ export default function ProfilePage() {
         email: user.email ?? "",
       });
     }
-  }, [user]);
+  }, [user, userInfoForm]);
 
   // Reset password form and visibility toggles when dialog closes
   useEffect(() => {
     if (!openPasswordDialog) {
       passwordForm.reset();
+      /* eslint-disable react-hooks/set-state-in-effect */
       setShowCurrentPassword(false);
       setShowNewPassword(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [openPasswordDialog]);
+  }, [openPasswordDialog, passwordForm]);
 
   if (isLoading)
     return <div className="p-8 text-center">Chargement du profil...</div>;

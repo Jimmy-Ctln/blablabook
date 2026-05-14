@@ -39,25 +39,26 @@ export class ReviewService {
   async createReview(userId: number, dto: CreateReviewDto) {
     // Find the book by ISBN, or create it if it doesn't exist yet
     const existing = await this.booksService.findByIsbn(dto.isbn);
-    const bookId = existing?.id ?? (await this.booksService.createBook({
-      name: dto.bookName,
-      coverUrl: dto.bookCoverUrl,
-      author: dto.bookAuthor,
-      description: dto.bookDescription,
-      isbn: dto.isbn,
-      publishingHouse: dto.bookPublishingHouse,
-      publishedAt: dto.bookPublishedAt,
-      categories: dto.bookCategories,
-    })).id;
+    const bookId =
+      existing?.id ??
+      (
+        await this.booksService.createBook({
+          name: dto.bookName,
+          coverUrl: dto.bookCoverUrl,
+          author: dto.bookAuthor,
+          description: dto.bookDescription,
+          isbn: dto.isbn,
+          publishingHouse: dto.bookPublishingHouse,
+          publishedAt: dto.bookPublishedAt,
+          categories: dto.bookCategories,
+        })
+      ).id;
 
     const [alreadyReviewed] = await this.db
       .select({ id: schema.review.id })
       .from(schema.review)
       .where(
-        and(
-          eq(schema.review.bookId, bookId),
-          eq(schema.review.userId, userId),
-        ),
+        and(eq(schema.review.bookId, bookId), eq(schema.review.userId, userId)),
       );
 
     if (alreadyReviewed) {

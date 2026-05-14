@@ -58,10 +58,10 @@ export type ExternalBookDisplayData = {
   title: string;
   authors: string[];
   cover?: string;
-  description: string;
+  description?: string;
   isbn: string;
-  publisher: string;
-  publishedAt: string;
+  publisher?: string;
+  publishedAt?: string;
   pages: number;
   language: string;
   categories: string[];
