@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NotebookPen, Pencil, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { BookDisplay } from "@/@types/books";
@@ -16,10 +16,12 @@ export function BookNoteSection({
 }: BookNoteSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [noteText, setNoteText] = useState(userBookData.comment ?? "");
+  const [prevComment, setPrevComment] = useState(userBookData.comment);
 
-  useEffect(() => {
+  if (prevComment !== userBookData.comment) {
+    setPrevComment(userBookData.comment);
     setNoteText(userBookData.comment ?? "");
-  }, [userBookData.comment]);
+  }
 
   const handleSave = () => {
     if (!userBookData.internalId) return;

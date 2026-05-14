@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: prod-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   ### FRONTEND CI ###
@@ -31,19 +31,19 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
       - name: Run frontend tests
         run: npm run test
+
+      - name: Lint frontend
+        run: npm run lint
 
       - name: Build frontend
         run: npm run build
         env:
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-
-      - name: Upload frontend build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
 
   ### BACKEND CI ###
   ci-backend:
@@ -67,8 +67,14 @@ jobs:
       - name: Install backend dependencies
         run: npm ci
 
+      - name: Audit backend dependencies
+        run: npm audit --audit-level=high
+
       - name: Run backend tests
         run: npm run test
+
+      - name: Lint backend
+        run: npm run lint
 
       - name: Build backend
         run: npm run build
@@ -82,7 +88,7 @@ jobs:
   # This prevents applying schema changes with unvalidated code
   db-prod-migrations:
     runs-on: ubuntu-latest
-    needs: [ci-backend]
+    needs: [ci-frontend, ci-backend]
 
     if: github.event_name == 'push'
 
