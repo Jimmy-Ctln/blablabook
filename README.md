@@ -22,6 +22,7 @@ A mobile-first personal book management web application. Search for books, build
 - [Commands Reference](#commands-reference)
 - [Testing](#testing)
 - [Deployment & CI/CD](#deployment--cicd)
+- [Security](#security)
 - [Troubleshooting](#troubleshooting)
 - [About](#about)
 
@@ -163,9 +164,11 @@ docker exec -it backend npm run seed
 
 ```
 .
-├── .github/workflows/
-│   ├── CICD-dev.yml           # Dev pipeline (tests only, no deploy)
-│   └── CICD-prod.yml          # Prod pipeline (tests + deploy)
+├── .github/
+│   ├── workflows/
+│   │   ├── CICD-dev.yml       # Dev pipeline (tests + lint + audit + docker integration)
+│   │   └── CICD-prod.yml      # Prod pipeline (tests + lint + audit + migrations + deploy)
+│   └── dependabot.yml         # Weekly automated dependency security scanning
 │
 ├── backend/
 │   ├── src/
@@ -197,7 +200,7 @@ docker exec -it backend npm run seed
 ├── documentation/             # Project docs and specifications
 ├── docker-compose.yml         # Production configuration
 ├── docker-compose.dev.yml     # Development configuration
-├── vercel.json                # Reverse proxy config (fixes Safari cookie issue)
+├── vercel.json                # Reverse proxy config (fixes Safari cookie issue) + disables Vercel auto-deploys (CI controls deployments via deploy hooks)
 └── .env.example               # Environment variable template
 ```
 
@@ -292,19 +295,61 @@ npm run test
 
 ## Deployment & CI/CD
 
-### How it works
+### Philosophy
 
-There are two GitHub Actions pipelines:
+No code reaches production without passing every quality gate. The pipelines enforce a strict sequence — if any step fails, the process stops immediately and nothing is deployed.
 
-**`CICD-dev.yml`** — Runs on push/PR to `dev`
-- Runs frontend and backend tests
-- Runs Docker integration tests (services startup, health checks)
-- No deployment — safe to test freely
+### Dev pipeline — `CICD-dev.yml`
 
-**`CICD-prod.yml`** — Runs on push/PR to `main`
-- Same tests as dev pipeline
-- Applies database migrations
-- On success → deploys frontend to Vercel, backend to Render
+Runs on every push and pull request to `dev`. No deployment — purely a validation pipeline.
+
+```
+npm audit (high+)       → blocks if a dependency has a known vulnerability
+Tests                   → blocks if any test fails
+Lint                    → blocks if code style rules are violated
+Build                   → blocks if TypeScript compilation fails
+Database migration check → validates migration files can be generated without errors
+Docker integration tests → spins up all containers and verifies that:
+                           - PostgreSQL is reachable
+                           - Backend starts and responds on /health
+                           - Frontend starts and responds
+                           - Frontend container can reach Backend container
+                           - Backend container can query the database
+```
+
+### Prod pipeline — `CICD-prod.yml`
+
+Runs on every push and pull request to `main`. Deployments only trigger on direct push (not on PRs).
+
+```
+npm audit (high+)        → blocks if a dependency has a known vulnerability
+Tests                    → blocks if any test fails
+Lint                     → blocks if code style rules are violated
+Build + Docker image     → validates TypeScript and Docker build
+         ↓
+Database migrations      → applied to production DB only after all tests pass
+         ↓
+Deploy backend (Render)  → triggered via deploy hook, then polled until /health responds
+         ↓
+Deploy frontend (Vercel) → triggered via deploy hook only after backend is confirmed healthy,
+                           then polled until the production URL responds
+```
+
+The deployment order matters: migrations run before the backend is updated, and the frontend is deployed only after the backend is confirmed running. This prevents users from hitting a new frontend against an old or broken backend.
+
+### Automated dependency scanning — Dependabot
+
+`dependabot.yml` runs every week and automatically opens pull requests when:
+- A frontend or backend npm package has a known security vulnerability
+- A GitHub Actions action has an available security update
+
+This complements the `npm audit` step in CI: `npm audit` catches vulnerabilities on every push, Dependabot catches them even when you haven't pushed code in weeks.
+
+### Vercel auto-deploy disabled
+
+By default, Vercel auto-deploys a preview on every Git push, including to `dev`, before any CI validation runs. This was causing broken previews and errors to appear before tests even passed.
+
+`vercel.json` sets `"ignoreCommand": "exit 0"`, which tells Vercel to skip all automatic builds triggered by Git pushes. Deployments are controlled exclusively by the CI pipeline via deploy hooks — Vercel only builds when the prod pipeline explicitly triggers it after all tests pass.
 
 ### GitHub Secrets required
 
@@ -312,15 +357,76 @@ Set these in your repository under Settings → Secrets → Actions:
 
 | Secret               | Description                                        |
 | -------------------- | -------------------------------------------------- |
-| `DATABASE_URL`       | PostgreSQL connection string (for CI test DB)      |
-| `JWT_SECRET`         | JWT signing key                                    |
-| `DB_NAME`            | Database name                                      |
-| `DB_USER`            | Database user                                      |
-| `DB_PASSWORD`        | Database password                                  |
-| `VITE_BACKEND_URL`   | Set to `/api` in production (Vercel reverse proxy) |
-| `FRONTEND_URL`       | Your Vercel app URL (for CORS)                     |
+| `DATABASE_URL`       | PostgreSQL connection string (Docker CI)           |
+| `JWT_SECRET`         | JWT signing key (for CI tests)                     |
+| `DB_NAME`            | Database name (Docker CI)                          |
+| `DB_USER`            | Database user (Docker CI)                          |
+| `DB_PASSWORD`        | Database password (Docker CI)                      |
+| `DB_HOST`            | Database host (Docker CI)                          |
+| `VITE_BACKEND_URL`   | Backend URL (Docker CI — localhost value)          |
+| `FRONTEND_URL`       | Frontend URL (Docker CI — localhost value)         |
+| `BACKEND_DOCKER_URL` | Internal Docker network URL for container tests    |
+| `PROD_DATABASE_URL`  | Production PostgreSQL connection string            |
+| `PROD_BACKEND_URL`   | Production Render URL (for health check polling)   |
+| `PROD_FRONTEND_URL`  | Production Vercel URL (for health check polling)   |
 | `RENDER_DEPLOY_HOOK` | Render webhook to trigger backend deployment       |
 | `VERCEL_DEPLOY_HOOK` | Vercel webhook to trigger frontend deployment      |
+
+---
+
+## Security
+
+Security is treated as a first-class concern, not an afterthought. Below is an overview of the protections in place.
+
+### Authentication & token security
+
+- **JWT access tokens** (15 min expiry) are stored in `HttpOnly` cookies — JavaScript cannot read them, which prevents token theft via XSS attacks
+- **Refresh tokens** (30 days) are hashed in the database using HMAC-SHA256 — even if the database is compromised, raw tokens are never exposed
+- **Token rotation** — every refresh call invalidates the old token and issues a new one
+- **Single-session policy** — logging in destroys all existing refresh tokens for that user, preventing concurrent sessions from multiple devices
+
+### XSS prevention
+
+`HttpOnly` cookies ensure that even if malicious JavaScript is injected into the page, it cannot access or steal authentication tokens.
+
+### CSRF prevention
+
+Two complementary layers:
+- **`SameSite`** cookie attribute prevents cookies from being sent on cross-origin requests initiated by third-party sites
+- **Strict CORS** — only the exact `FRONTEND_URL` is whitelisted. Requests from any other origin are rejected before reaching any endpoint
+
+### SQL injection prevention
+
+The application uses **Drizzle ORM**, which builds all database queries through a type-safe query builder. Raw SQL strings constructed from user input are never used, eliminating SQL injection by design.
+
+### Password security
+
+Passwords are hashed using **Argon2**, the winner of the Password Hashing Competition and the current industry standard. It is resistant to brute-force and GPU-based cracking attacks.
+
+### Input validation & mass assignment prevention
+
+Every API endpoint validates incoming data through **DTOs with class-validator**. The `ValidationPipe` is configured with:
+- `whitelist: true` — unknown fields are silently stripped before reaching the controller
+- `forbidNonWhitelisted: true` — if an unknown field is sent, the request is rejected with a 400 error
+
+This prevents mass assignment attacks where an attacker tries to inject unexpected fields (e.g. `isAdmin: true`).
+
+### BOLA / IDOR prevention
+
+Every endpoint that accesses user-specific data explicitly verifies that the authenticated user's ID matches the requested resource's owner ID. Users cannot access or modify another user's library, reviews, or profile.
+
+### Rate limiting
+
+`@nestjs/throttler` limits the number of requests per IP address globally (60 requests / 60 seconds by default), with stricter limits on sensitive endpoints. This mitigates brute-force and enumeration attacks.
+
+### HTTP security headers
+
+**Helmet** sets a suite of security-related HTTP headers on every response, including `X-Frame-Options` (clickjacking prevention), `Content-Security-Policy`, and `X-Content-Type-Options`.
+
+### Dependency vulnerability scanning
+
+- `npm audit --audit-level=high` runs in every CI pipeline and blocks deployment if a high or critical vulnerability is found in any dependency
+- **Dependabot** scans dependencies weekly and opens pull requests automatically when vulnerabilities are discovered — even between code pushes
 
 ---
 
