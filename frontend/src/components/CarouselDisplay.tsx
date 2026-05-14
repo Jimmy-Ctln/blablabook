@@ -32,7 +32,7 @@ export default function CarouselDisplay({
       </div>
       <CarouselContent className="mt-4">
         {isLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
+          ? Array.from({ length: 6 }).map((_, i) => (
               <CarouselItem
                 key={i}
                 className="basis-full md:basis-1/3 lg:basis-1/6"
