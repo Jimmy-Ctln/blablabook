@@ -5,7 +5,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, ArrowRight } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { useQuery } from "@tanstack/react-query";
 import { getBooks } from "@/api/books";
@@ -26,6 +27,7 @@ type AddBookModalProps = {
 };
 
 export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
   const { data: booksByCategory = {} } = useQuery<BooksByCategory>({
@@ -69,6 +71,14 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
   const displayedBooks = hasSearched
     ? externalBookResult.map(mapExternalBookToDisplay)
     : tenBooks;
+  const hasMore =
+    hasSearched &&
+    (externalBooksResponse?.numFound ?? 0) > displayedBooks.length;
+
+  const handleSeeMore = () => {
+    handleOpenChange(false);
+    void navigate({ to: "/search", search: { q: normalizedQuery } });
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
@@ -145,6 +155,15 @@ export function AddBookModal({ isOpen, setOpen }: AddBookModalProps) {
                   book={book}
                 />
               ))}
+              {hasMore && (
+                <button
+                  onClick={handleSeeMore}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  Voir plus de résultats
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
         </div>
