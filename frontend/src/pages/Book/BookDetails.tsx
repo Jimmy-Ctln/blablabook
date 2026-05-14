@@ -57,13 +57,10 @@ const BookDetails = () => {
   } = useUserBooks(currentUser?.id);
 
   const formatDateForDB = (dateString: string): string => {
-    if (!dateString) return new Date().toISOString().split("T")[0];
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) {
       const yearMatch = /\d{4}/.exec(dateString);
-      return yearMatch
-        ? `${yearMatch[0]}-01-01`
-        : new Date().toISOString().split("T")[0];
+      return yearMatch ? `${yearMatch[0]}-01-01` : "";
     }
     return date.toISOString().split("T")[0];
   };
@@ -73,12 +70,14 @@ const BookDetails = () => {
       if (!currentUser?.id) throw new Error("User not logged in");
       const payload = {
         name: bookData.title,
-        coverUrl: bookData.cover ?? "",
-        author: bookData.authors[0],
-        description: bookData.description || "No description provided",
+        coverUrl: bookData.cover || undefined,
+        author: bookData.authors[0] || "Auteur inconnu",
+        description: bookData.description || undefined,
         isbn: bookData.isbn,
-        publishingHouse: bookData.publisher,
-        publishedAt: formatDateForDB(bookData.publishedAt),
+        publishingHouse: bookData.publisher || undefined,
+        publishedAt: bookData.publishedAt
+          ? formatDateForDB(bookData.publishedAt)
+          : undefined,
         categories: bookData.categories,
       };
       return addBookToUserList(currentUser.id, payload);
@@ -187,7 +186,7 @@ const BookDetails = () => {
                   <div className="flex-1">
                     <BookHeaderInfo
                       title={book.title}
-                      author={book.authors[0]}
+                      author={book.authors[0] || "Auteur inconnu"}
                     />
                   </div>
 
