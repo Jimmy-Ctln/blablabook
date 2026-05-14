@@ -132,25 +132,29 @@ jobs:
         run: |
           curl --fail -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
 
-      # Wait for backend deployment to complete and become healthy
-      # Validates that the service is responsive at the health endpoint
+      # Wait for the NEW backend version to be live.
+      # We compare the SHA returned by /health against the SHA that triggered
+      # this workflow run. The old backend keeps responding during the swap,
+      # so checking only HTTP 200 would give false positives.
       - name: Wait for backend deployment
         run: |
           max_attempts=30
           attempt=1
+          expected_sha="${{ github.sha }}"
 
-          until curl --fail --silent ${{ secrets.PROD_BACKEND_URL }}/health || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for backend deployment... ($attempt/$max_attempts)"
+          while [ $attempt -le $max_attempts ]; do
+            deployed_sha=$(curl --silent --max-time 10 ${{ secrets.PROD_BACKEND_URL }}/health | jq -r '.version // "unknown"')
+            if [ "$deployed_sha" = "$expected_sha" ]; then
+              echo "✓ Backend deployed at SHA $expected_sha"
+              exit 0
+            fi
+            echo "Waiting for new backend version... ($attempt/$max_attempts) — expected $expected_sha, got $deployed_sha"
             sleep 10
             attempt=$((attempt + 1))
           done
 
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Backend deployment failed!"
-            exit 1
-          fi
-
-          echo "✓ Backend deployment successful"
+          echo "Backend deployment failed: SHA never matched after $max_attempts attempts"
+          exit 1
 
   ### DEPLOY FRONTEND (VERCEL) ###
   # Deploy frontend application to Vercel
@@ -167,22 +171,27 @@ jobs:
         run: |
           curl --fail -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}
 
-      # Wait for frontend deployment to complete and become publicly accessible
-      # Validates that the production frontend URL is responding
+      # Wait for the NEW frontend version to be live.
+      # Vite writes the build-time VERCEL_GIT_COMMIT_SHA into /version.txt,
+      # so we can compare it against the SHA that triggered this run.
+      # Same reason as the backend: the old version keeps serving requests
+      # during the swap, so checking only HTTP 200 would give false positives.
       - name: Wait for frontend deployment
         run: |
           max_attempts=30
           attempt=1
+          expected_sha="${{ github.sha }}"
 
-          until curl --fail --silent ${{ secrets.PROD_FRONTEND_URL }} || [ $attempt -ge $max_attempts ]; do
-            echo "Waiting for frontend deployment... ($attempt/$max_attempts)"
+          while [ $attempt -le $max_attempts ]; do
+            deployed_sha=$(curl --silent --max-time 10 ${{ secrets.PROD_FRONTEND_URL }}/version.txt || echo "unknown")
+            if [ "$deployed_sha" = "$expected_sha" ]; then
+              echo "✓ Frontend deployed at SHA $expected_sha"
+              exit 0
+            fi
+            echo "Waiting for new frontend version... ($attempt/$max_attempts) — expected $expected_sha, got $deployed_sha"
             sleep 10
             attempt=$((attempt + 1))
           done
 
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Frontend deployment failed!"
-            exit 1
-          fi
-
-          echo "✓ Frontend deployment successful"
+          echo "Frontend deployment failed: SHA never matched after $max_attempts attempts"
+          exit 1

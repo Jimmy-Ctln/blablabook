@@ -12,6 +12,9 @@ export class AppController {
 
   @Get('health')
   health() {
-    return { status: 'ok' };
+    return {
+      status: 'ok',
+      version: process.env.RENDER_GIT_COMMIT ?? 'unknown',
+    };
   }
 }

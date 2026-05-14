@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && cp dist/index.html dist/200.html",
+    "build": "tsc -b && vite build && cp dist/index.html dist/200.html && printf '%s' \"${VERCEL_GIT_COMMIT_SHA:-unknown}\" > dist/version.txt",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "preview": "vite preview",
