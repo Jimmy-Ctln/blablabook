@@ -26,9 +26,9 @@ api.interceptors.response.use(
 
     // Handle rate limiting (429 Too Many Requests)
     if (error.response?.status === 429) {
-      toast.error(
-        "Limite de requêtes atteinte. Veuillez réessayer ultérieurement.",
-      );
+      toast.error("Limite de requêtes atteinte. Veuillez réessayer dans quelques secondes.", {
+        id: "rate-limit",
+      });
       return Promise.reject(error);
     }
 
