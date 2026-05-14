@@ -200,7 +200,7 @@ docker exec -it backend npm run seed
 ├── documentation/             # Project docs and specifications
 ├── docker-compose.yml         # Production configuration
 ├── docker-compose.dev.yml     # Development configuration
-├── vercel.json                # Reverse proxy config (fixes Safari cookie issue) + disables Vercel auto-deploys (CI controls deployments via deploy hooks)
+├── vercel.json                # Reverse proxy config (fixes Safari cookie issue)
 └── .env.example               # Environment variable template
 ```
 
@@ -344,12 +344,6 @@ The deployment order matters: migrations run before the backend is updated, and 
 - A GitHub Actions action has an available security update
 
 This complements the `npm audit` step in CI: `npm audit` catches vulnerabilities on every push, Dependabot catches them even when you haven't pushed code in weeks.
-
-### Vercel auto-deploy disabled
-
-By default, Vercel auto-deploys a preview on every Git push, including to `dev`, before any CI validation runs. This was causing broken previews and errors to appear before tests even passed.
-
-`vercel.json` sets `"ignoreCommand": "exit 0"`, which tells Vercel to skip all automatic builds triggered by Git pushes. Deployments are controlled exclusively by the CI pipeline via deploy hooks — Vercel only builds when the prod pipeline explicitly triggers it after all tests pass.
 
 ### GitHub Secrets required
 
