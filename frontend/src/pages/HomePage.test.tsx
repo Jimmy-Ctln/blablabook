@@ -72,6 +72,10 @@ vi.mock("@/api/books", () => ({
   getBooks: vi.fn().mockResolvedValue({}),
 }));
 
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: vi.fn(() => vi.fn()),
+}));
+
 describe("HomePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
