@@ -41,12 +41,12 @@ export const list = pgTable(
 export const book = pgTable('book', {
   id: serial().primaryKey(),
   name: varchar({ length: 255 }).notNull(),
-  cover_url: varchar('cover_url', { length: 500 }).notNull(),
+  cover_url: varchar('cover_url', { length: 500 }),
   author: varchar({ length: 255 }).notNull(),
-  description: text().notNull(),
+  description: text(),
   isbn: varchar('isbn', { length: 255 }).notNull().unique(),
-  publishingHouse: varchar('publishing_house', { length: 255 }).notNull(),
-  publishedAt: date('published_at').notNull(),
+  publishingHouse: varchar('publishing_house', { length: 255 }),
+  publishedAt: date('published_at'),
   categoryId: integer('category_id')
     .references(() => category.id)
     .default(1) // ← Default category “Unknown” (id: 1)

@@ -12,21 +12,13 @@ import { getOpenLibIsbnData, getOpenLibWorkData } from "@/api/externalBooks";
  * Normalize various `publishDate` shapes (full date, year-only, invalid) to
  * a stable `YYYY-MM-DD` format expected by the backend.
  */
-const toIsoDate = (publishDate?: string): string => {
-  if (!publishDate) return new Date().toISOString().split("T")[0];
-
-  // Try parsing as date
+const toIsoDate = (publishDate?: string): string | undefined => {
+  if (!publishDate) return undefined;
   const parsed = new Date(publishDate);
-  if (!Number.isNaN(parsed.getTime())) {
-    return parsed.toISOString().split("T")[0];
-  }
-
-  // If year only (YYYY), pad with -01-01
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().split("T")[0];
   const yearMatch = /^(\d{4})$/.exec(publishDate);
   if (yearMatch) return `${yearMatch[1]}-01-01`;
-
-  // Default to today
-  return new Date().toISOString().split("T")[0];
+  return undefined;
 };
 
 export const useAddBook = (userId?: number) => {
@@ -63,14 +55,12 @@ export const useAddBook = (userId?: number) => {
       }
 
       const createBookDto: CreateBookDto = {
-        // Fallbacks ensure minimal valid payloads if external fields are missing
-        name: bookDisplay.name || "Unknown Title",
-        author: bookDisplay.author || "Unknown Author",
-        isbn: bookDisplay.isbn || "N/A",
-        coverUrl:
-          bookDisplay.cover_url || bookDisplay.cover || "default_cover.png",
-        description: description || "Pas de description pour ce livre",
-        publishingHouse: bookDisplay.publisher || "Unknown publisher",
+        name: bookDisplay.name,
+        author: bookDisplay.author,
+        isbn: bookDisplay.isbn,
+        coverUrl: bookDisplay.cover_url || bookDisplay.cover || undefined,
+        description: description || undefined,
+        publishingHouse: bookDisplay.publisher || undefined,
         publishedAt: toIsoDate(bookDisplay.publishDate),
         categories: bookDisplay.categories || [],
       };

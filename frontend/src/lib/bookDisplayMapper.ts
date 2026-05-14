@@ -4,11 +4,11 @@ import type { BookDisplay } from "@/@types/books";
 
 // Maps a BookRow (internal) to a BookDisplay
 export function mapBookRowToDisplay(book: BookRow): BookDisplay {
-  const resolvedCover = book.cover_url;
+  const resolvedCover = book.cover_url ?? undefined;
 
   return {
     id: book.id.toString(),
-    internalId: book.id, //Need to save original id of the bookRow
+    internalId: book.id,
     name: book.name,
     author: book.author,
     cover_url: resolvedCover,
@@ -16,8 +16,8 @@ export function mapBookRowToDisplay(book: BookRow): BookDisplay {
     isbn: book.isbn,
     categoryName: book.categoryName,
     categories: book.categoryName ? [book.categoryName] : [],
-    publishDate: book.publishedAt,
-    publisher: book.publishingHouse,
+    publishDate: book.publishedAt ?? undefined,
+    publisher: book.publishingHouse ?? undefined,
     status: book.status,
     readStart: book.readStart,
     readEnd: book.readEnd,
@@ -32,11 +32,11 @@ export function mapExternalBookToDisplay(book: ExternalBook): BookDisplay {
     id: book.key,
     name: book.title,
     author: book.author,
-    cover_url: book.cover ?? "",
-    cover: book.cover ?? "",
+    cover_url: book.cover,
+    cover: book.cover,
     isbn: book.isbn,
     categories: book.categories ?? [],
-    publishDate: book.publishDate ?? "",
-    publisher: book.publisher ?? "",
+    publishDate: book.publishDate,
+    publisher: book.publisher,
   };
 }

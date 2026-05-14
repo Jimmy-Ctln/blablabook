@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsArray } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookDto {
@@ -14,11 +14,11 @@ export class CreateBookDto {
   @ApiProperty({
     example: 'https://example.com/cover.jpg',
     description: 'Book cover image URL or ID',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  coverUrl: string;
+  coverUrl?: string;
 
   @ApiProperty({
     example: 'F. Scott Fitzgerald',
@@ -32,11 +32,11 @@ export class CreateBookDto {
   @ApiProperty({
     example: 'A classic novel set in the Jazz Age',
     description: 'Book description or synopsis',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     example: '978-0-7432-7356-5',
@@ -50,20 +50,20 @@ export class CreateBookDto {
   @ApiProperty({
     example: 'Scribner',
     description: 'Publishing house or publisher name',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  publishingHouse: string;
+  publishingHouse?: string;
 
   @ApiProperty({
     example: '1925-04-10',
     description: 'Publication date in YYYY-MM-DD format',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  publishedAt: string;
+  publishedAt?: string;
 
   @ApiProperty({
     example: ['fiction', 'classic'],
