@@ -1,12 +1,23 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Trust the first reverse proxy (Render, Vercel...) so rate limiting
+  // uses the real client IP from X-Forwarded-For instead of the proxy IP
+  app.set('trust proxy', 1);
+
+  // Limit request body to 1 MB to prevent memory exhaustion DoS attacks
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ limit: '1mb', extended: true }));
+
   app.use(helmet());
   app.use(cookieParser());
 
