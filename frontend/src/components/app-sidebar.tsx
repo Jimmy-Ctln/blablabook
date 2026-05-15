@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Home, Book, LogIn, Loader2 } from "lucide-react";
+import { Home, Book, LogIn, Loader2, Moon, Sun } from "lucide-react";
+import { useThemeStore } from "@/stores/themeStore";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: currentUser, isLoading, isError } = useCurrentUser();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useThemeStore();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const [loadedImages, setLoadedImages] = React.useState<
@@ -173,6 +175,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="mb-3 sm:mb-4 gap-3">
+        <button
+          onClick={toggleTheme}
+          aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
+          className="flex items-center gap-3 w-full px-2 py-2 rounded-lg hover:bg-accent transition-colors text-sm text-muted-foreground hover:text-foreground"
+        >
+          {theme === "dark" ? <Moon className="h-4 w-4 shrink-0" /> : <Sun className="h-4 w-4 shrink-0" />}
+          <span>{theme === "dark" ? "Mode clair" : "Mode sombre"}</span>
+        </button>
+        <Separator />
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

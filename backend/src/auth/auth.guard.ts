@@ -31,7 +31,7 @@ export class AuthGuard implements CanActivate {
       request.user = payload;
       request.refresh_token = tokens.refreshTokenCookie;
       return true;
-    } catch (error) {
+    } catch {
       // JWT validation failed (invalid signature or expired)
       throw new UnauthorizedException();
     }

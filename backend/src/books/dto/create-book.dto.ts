@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsArray } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, IsOptional, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookDto {
@@ -9,16 +9,17 @@ export class CreateBookDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255, { message: 'name must be shorter than 255 characters' })
   name: string;
 
   @ApiProperty({
     example: 'https://example.com/cover.jpg',
     description: 'Book cover image URL or ID',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  coverUrl: string;
+  coverUrl?: string;
 
   @ApiProperty({
     example: 'F. Scott Fitzgerald',
@@ -27,16 +28,18 @@ export class CreateBookDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255, { message: 'author must be shorter than 255 characters' })
   author: string;
 
   @ApiProperty({
     example: 'A classic novel set in the Jazz Age',
     description: 'Book description or synopsis',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  @MaxLength(5000, { message: 'description must be shorter than 5000 characters' })
+  description?: string;
 
   @ApiProperty({
     example: '978-0-7432-7356-5',
@@ -50,20 +53,20 @@ export class CreateBookDto {
   @ApiProperty({
     example: 'Scribner',
     description: 'Publishing house or publisher name',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  publishingHouse: string;
+  publishingHouse?: string;
 
   @ApiProperty({
     example: '1925-04-10',
     description: 'Publication date in YYYY-MM-DD format',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  publishedAt: string;
+  publishedAt?: string;
 
   @ApiProperty({
     example: ['fiction', 'classic'],

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type BookCoverImageProps = {
   src?: string;
@@ -18,7 +19,9 @@ export function BookCoverImage({ src, alt, className, imgClassName }: BookCoverI
   return (
     <div className={`relative w-full h-full ${className ?? ""}`}>
       {!loaded && !showFallback && (
-        <div className="absolute inset-0 animate-pulse bg-muted" />
+        <div className="absolute inset-0 bg-muted flex items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground/50" />
+        </div>
       )}
 
       {showFallback ? (

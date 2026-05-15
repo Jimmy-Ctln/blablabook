@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,8 +11,27 @@ interface CookieConsent {
   timestamp: number;
 }
 
+// 13 months in milliseconds (CNIL 2020-062 directive)
+const CONSENT_EXPIRATION_MS = 13 * 30 * 24 * 60 * 60 * 1000;
+
+function getInitialVisibility(): boolean {
+  const stored = localStorage.getItem("cookieConsent");
+  if (!stored) return true;
+  try {
+    const consent = JSON.parse(stored) as CookieConsent;
+    if (Date.now() - consent.timestamp > CONSENT_EXPIRATION_MS) {
+      localStorage.removeItem("cookieConsent");
+      return true;
+    }
+    return false;
+  } catch {
+    localStorage.removeItem("cookieConsent");
+    return true;
+  }
+}
+
 export default function CookieConsent() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(getInitialVisibility);
   const [isExpanded, setIsExpanded] = useState(false);
   const [marketingEnabled, setMarketingEnabled] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
@@ -24,40 +43,6 @@ export default function CookieConsent() {
   const handleAnalyticsChange = (checked: unknown) => {
     setAnalyticsEnabled(checked as boolean);
   };
-
-  // 13 months in milliseconds (CNIL 2020-062 directive)
-  const CONSENT_EXPIRATION_MS = 13 * 30 * 24 * 60 * 60 * 1000;
-
-  useEffect(() => {
-    // Check if user has already given consent
-    const storedConsent = localStorage.getItem("cookieConsent");
-
-    if (!storedConsent) {
-      // No consent found - show banner
-      setIsVisible(true);
-    } else {
-      // Consent found - check if expired
-      try {
-        const consent: CookieConsent = JSON.parse(storedConsent);
-        const consentAge = Date.now() - consent.timestamp;
-
-        if (consentAge > CONSENT_EXPIRATION_MS) {
-          // Consent expired (13 months passed) - remove and show banner again
-          console.log(
-            "🍪 Cookie consent expired (13 months) - requesting new consent",
-          );
-          localStorage.removeItem("cookieConsent");
-          setIsVisible(true);
-        }
-        // Consent still valid - do nothing (banner stays hidden)
-      } catch (error) {
-        // Invalid JSON - remove and show banner
-        console.error("❌ Invalid cookie consent data:", error);
-        localStorage.removeItem("cookieConsent");
-        setIsVisible(true);
-      }
-    }
-  }, []);
 
   const handleAcceptAll = () => {
     const consent: CookieConsent = {

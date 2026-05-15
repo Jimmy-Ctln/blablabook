@@ -5,7 +5,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Skeleton } from "@/components/ui/skeleton";
+import { BookCardSkeleton } from "./BookCardSkeleton";
 
 export default function SearchResultsSkeleton() {
   return (
@@ -28,11 +28,9 @@ export default function SearchResultsSkeleton() {
         {Array.from({ length: 6 }).map((_, i) => (
           <CarouselItem
             key={i}
-            className="basis-full md:basis-1/2 lg:basis-1/4"
+            className="basis-full md:basis-1/3 lg:basis-1/6"
           >
-            <div className="flex flex-col gap-4 w-full">
-              <Skeleton className="max-w-[80%] h-80 rounded-lg" />
-            </div>
+            <BookCardSkeleton />
           </CarouselItem>
         ))}
       </CarouselContent>

@@ -59,7 +59,12 @@ export class CreateReviewDto {
   @IsNotEmpty()
   bookPublishedAt: string;
 
-  @ApiProperty({ example: ['fiction', 'classic'], required: false, isArray: true, type: String })
+  @ApiProperty({
+    example: ['fiction', 'classic'],
+    required: false,
+    isArray: true,
+    type: String,
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

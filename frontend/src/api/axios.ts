@@ -9,6 +9,16 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Global refresh lock: if multiple requests fail with 401 simultaneously, only
+// one refresh call is made. Others are queued and replayed once the refresh completes.
+let isRefreshing = false;
+let refreshQueue: Array<() => void> = [];
+
+const drainQueue = () => {
+  refreshQueue.forEach((resolve) => resolve());
+  refreshQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -16,9 +26,9 @@ api.interceptors.response.use(
 
     // Handle rate limiting (429 Too Many Requests)
     if (error.response?.status === 429) {
-      toast.error(
-        "Limite de requêtes atteinte. Veuillez réessayer ultérieurement.",
-      );
+      toast.error("Limite de requêtes atteinte. Veuillez réessayer dans quelques secondes.", {
+        id: "rate-limit",
+      });
       return Promise.reject(error);
     }
 
@@ -40,15 +50,27 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Another refresh is already in progress — queue this request and wait
+    if (isRefreshing) {
+      return new Promise((resolve) => {
+        refreshQueue.push(() => resolve(api(originalRequest)));
+      });
+    }
+
     originalRequest._retry = true;
+    isRefreshing = true;
 
     try {
       await api.post("/auth/refresh");
+      drainQueue();
       return api(originalRequest);
     } catch (refreshError) {
+      refreshQueue = [];
       useAuthStore.getState().clearAuth();
       window.location.href = "/login";
       return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
     }
   },
 );

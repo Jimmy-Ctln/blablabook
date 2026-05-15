@@ -18,6 +18,7 @@ import type { RequestWithUser } from '@/auth/types';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookStatusDto } from './dto/update-book-status.dto';
+import { UpdateBookNoteDto } from './dto/update-book-note.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -53,6 +54,19 @@ export class BooksController {
   }
 
   /**
+   * GET /books/isbn/:isbn
+   * Returns a single book by ISBN if it exists in the database.
+   */
+  @Get('isbn/:isbn')
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
+  @ApiOperation({ summary: 'Get a book by ISBN' })
+  @ApiResponse({ status: 200, description: 'Book found' })
+  @ApiResponse({ status: 404, description: 'Book not found' })
+  async getBookByIsbn(@Param('isbn') isbn: string) {
+    return this.booksService.findByIsbn(isbn);
+  }
+
+  /**
    * GET /books/random
    * Returns randoms books persisted in the `book` table (not user-specific).
    */
@@ -68,7 +82,7 @@ export class BooksController {
    * Supports pagination with offset and limit query parameters.
    */
   @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('library/:userId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get all books for a user' })
@@ -126,7 +140,7 @@ export class BooksController {
    * Removes the link between a book and the user's list.
    */
   @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Delete('library/:userId/book/:bookId')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Remove a book from a user library' })
@@ -188,6 +202,37 @@ export class BooksController {
       bookId,
       readStart,
       readEnd,
+    );
+  }
+
+  /**
+   * PATCH /books/library/:userId/book/:bookId/note
+   * Updates the private note (comment) for a book in the user's list.
+   */
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @UseGuards(AuthGuard)
+  @Patch('library/:userId/book/:bookId/note')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Update private note for a book in user library' })
+  @ApiResponse({ status: 200, description: 'Note updated successfully' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async updateBookNote(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('bookId', ParseIntPipe) bookId: number,
+    @Body() updateNoteDto: UpdateBookNoteDto,
+    @Req() request: RequestWithUser,
+  ) {
+    const authenticatedUserId = request['user']?.sub;
+    if (!authenticatedUserId) {
+      throw new BadRequestException('User not found in request');
+    }
+    if (authenticatedUserId !== userId) {
+      throw new ForbiddenException('You can only update your own notes');
+    }
+    return this.booksService.updateBookNote(
+      userId,
+      bookId,
+      updateNoteDto.comment ?? null,
     );
   }
 }

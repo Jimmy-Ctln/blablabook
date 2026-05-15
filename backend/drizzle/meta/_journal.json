@@ -22,6 +22,27 @@
       "when": 1775408400919,
       "tag": "0002_bright_ultron",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778752243983,
+      "tag": "0003_woozy_whirlwind",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778753724595,
+      "tag": "0004_bizarre_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778754625279,
+      "tag": "0005_redundant_texas_twister",
+      "breakpoints": true
     }
   ]
 }

@@ -22,14 +22,14 @@ const buildCoverUrl = (
 
 // OpenLibrary's description field can be either a plain string or an object
 // { value: string } depending on the endpoint version — normalize both forms.
-const parseDescription = (desc: unknown): string => {
-  if (!desc) return "";
+const parseDescription = (desc: unknown): string | undefined => {
+  if (!desc) return undefined;
   if (typeof desc === "string") return desc;
   if (typeof desc === "object" && desc !== null && "value" in desc) {
     const obj = desc as { value: unknown };
     if (typeof obj.value === "string") return obj.value;
   }
-  return "";
+  return undefined;
 };
 
 // ISBN-13 is exactly 13 characters; ISBN-10 is 10.
@@ -192,8 +192,8 @@ export const getFullExternalBook = async (
     authors: [dataAuthor.name || "Inconnu"],
     cover: coverUrl,
     description: parseDescription(dataWork.description),
-    publisher: dataIsbn.publishers?.[0] || "Éditeur inconnu",
-    publishedAt: dataIsbn.publish_date || "",
+    publisher: dataIsbn.publishers?.[0] || undefined,
+    publishedAt: dataIsbn.publish_date || undefined,
     pages: dataIsbn.number_of_pages || 0,
     language: dataIsbn.languages?.[0]?.key?.split("/").pop() || "en",
     categories: dataWork.subjects || [],

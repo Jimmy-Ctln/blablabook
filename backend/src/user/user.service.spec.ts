@@ -19,6 +19,7 @@ describe('UserService', () => {
   let mockDb: any;
 
   beforeEach(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { db } = require('../db/index');
     mockDb = db;
 
@@ -169,7 +170,6 @@ describe('UserService', () => {
       email: 'updated@example.com',
     };
 
-    const existingUser = { id: 1, email: 'other@example.com' };
     const updatedUser = { id: 1, ...updateData, role: 'USER', deletedAt: null };
 
     const selectChain = {
@@ -210,6 +210,7 @@ describe('UserService', () => {
   });
 
   it('should change password successfully', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { verify } = require('argon2');
     const mockUser = {
       id: 1,
@@ -245,6 +246,7 @@ describe('UserService', () => {
   });
 
   it('should throw error when current password is incorrect', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { verify } = require('argon2');
     const mockUser = {
       id: 1,

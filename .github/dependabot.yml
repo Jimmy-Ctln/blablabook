@@ -1,0 +1,24 @@
+# Dependabot automatically scans dependencies every week and opens pull requests
+# when a package has a known security vulnerability or an available update.
+# This complements the npm audit step in CI, which only runs on push.
+# With Dependabot, even if you don't touch the project for weeks, you'll still
+# be notified if a vulnerability is discovered in one of your dependencies.
+version: 2
+updates:
+  # Scan frontend npm packages (React, TanStack, Axios, etc.)
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+
+  # Scan backend npm packages (NestJS, Drizzle, Argon2, etc.)
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+
+  # Scan GitHub Actions versions (actions/checkout, actions/setup-node, etc.)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

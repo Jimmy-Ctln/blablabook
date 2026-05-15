@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Res,
-  UseGuards,
   Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -21,14 +20,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { AuthGuard } from './auth.guard';
 import { CookieService } from '../security/cookie/cookie.service';
 import { TokenService } from '../security/token/token.service';
 
@@ -96,8 +93,6 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('/logout')
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth('JWT')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'User is logout and token is destroyed',
@@ -106,8 +101,13 @@ export class AuthController {
     @Req() request: RequestWithUser,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const refreshToken = request['refresh_token'] as string;
-    await this.authService.logout(refreshToken);
+    // Use the refresh cookie to destroy the session — no JWT required.
+    // Requiring AuthGuard here would prevent logout on expired JWT, leaving
+    // the refresh token alive in the DB for up to 30 days.
+    const refreshToken = request.cookies?.['refresh_cookie'] as string;
+    if (refreshToken) {
+      await this.authService.logout(refreshToken);
+    }
 
     const cookieConfig = this.cookieService.generateCookiesConfig();
     response.clearCookie('jwt_cookie', cookieConfig.jwtCookieConfig);

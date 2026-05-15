@@ -7,7 +7,7 @@ export const useUpdateUser = (
   userId: number,
   options?: {
     onSuccess?: (data: UserProps) => void;
-    onError?: (error: any) => void;
+    onError?: (error: unknown) => void;
   },
 ) => {
   const queryClient = useQueryClient();

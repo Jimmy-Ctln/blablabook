@@ -5,11 +5,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, Clock, BookOpen, CheckCircle } from "lucide-react";
 import type { BookDisplay } from "../@types/books";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "./ui/button";
 import { BookCoverImage } from "@/components/BookCoverImage";
+
+const statusConfig = {
+  "À lire": { icon: Clock, description: "Dans votre liste de lecture" },
+  "En cours": { icon: BookOpen, description: "Lecture en cours" },
+  Lu: { icon: CheckCircle, description: "Lecture terminée" },
+} as const;
 
 type Props = {
   readonly book: BookDisplay;
@@ -37,32 +43,46 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
     if (!book.status) return null;
 
     if (onStatusChange) {
+      const { icon: CurrentIcon } = statusConfig[book.status as keyof typeof statusConfig] ?? {};
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow bg-chart-2 bg-primary transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold rounded-full shadow bg-primary transition-colors flex flex-col items-center gap-0.5 focus-visible:ring-2 focus-visible:ring-offset-2"
               aria-label={`Statut de lecture: ${book.status}. Cliquer pour changer`}
             >
-              {book.status}
-              <ChevronDown size={12} aria-hidden="true" />
+              <span className="flex items-center gap-1">
+                {CurrentIcon && <CurrentIcon size={11} aria-hidden="true" />}
+                {book.status}
+                <ChevronDown size={11} aria-hidden="true" />
+              </span>
+              <span className="text-[9px] font-normal opacity-80 leading-none">
+                Modifier
+              </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {statuses.map((status) => (
-              <DropdownMenuItem
-                key={status}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(status);
-                }}
-                className="cursor-pointer"
-              >
-                {status}
-              </DropdownMenuItem>
-            ))}
+          <DropdownMenuContent align="start" className="w-52">
+            {statuses.map((status) => {
+              const { icon: Icon, description } = statusConfig[status];
+              return (
+                <DropdownMenuItem
+                  key={status}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(status);
+                  }}
+                  className="flex items-center gap-3 py-2.5 cursor-pointer"
+                >
+                  <Icon size={16} className="shrink-0 text-muted-foreground" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{status}</span>
+                    <span className="text-xs text-muted-foreground">{description}</span>
+                  </div>
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       );

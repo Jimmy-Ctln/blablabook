@@ -15,26 +15,40 @@ interface BookStatusDropdownProps {
   isUpdatingStatus?: boolean;
 }
 
+const statusConfig: Record<
+  BookStatus,
+  { icon: React.ElementType; label: string; description: string }
+> = {
+  "À lire": {
+    icon: Clock,
+    label: "À lire",
+    description: "Dans votre liste de lecture",
+  },
+  "En cours": {
+    icon: BookOpen,
+    label: "En cours",
+    description: "Lecture en cours",
+  },
+  Lu: {
+    icon: CheckCircle,
+    label: "Lu",
+    description: "Lecture terminée",
+  },
+};
+
+const badgeVariantMap: Record<BookStatus, "success" | "warning" | "default"> =
+  {
+    Lu: "success",
+    "En cours": "warning",
+    "À lire": "default",
+  };
+
 export const BookStatusDropdown: React.FC<BookStatusDropdownProps> = ({
   status,
   onChangeStatus,
   isUpdatingStatus = false,
 }) => {
-  // configuration for each status
-  const statusConfig: Record<BookStatus, { icon: React.ElementType }> = {
-    Lu: { icon: CheckCircle },
-    "En cours": { icon: BookOpen },
-    "À lire": { icon: Clock },
-  };
-
-  const badgeVariantMap: Record<BookStatus, "success" | "warning" | "default"> =
-    {
-      Lu: "success",
-      "En cours": "warning",
-      "À lire": "default",
-    };
-
-  const Icon = statusConfig[status].icon;
+  const { icon: Icon } = statusConfig[status];
 
   return (
     <DropdownMenu>
@@ -51,18 +65,24 @@ export const BookStatusDropdown: React.FC<BookStatusDropdownProps> = ({
         </Badge>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start">
-        {(["À lire", "En cours", "Lu"] as BookStatus[]).map((s) => (
-          <DropdownMenuItem
-            key={s}
-            onSelect={() => {
-              onChangeStatus?.(s);
-            }}
-            disabled={isUpdatingStatus || s === status} // Disable if updating or same status
-          >
-            {s}
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="start" className="w-52">
+        {(["À lire", "En cours", "Lu"] as BookStatus[]).map((s) => {
+          const { icon: ItemIcon, label, description } = statusConfig[s];
+          return (
+            <DropdownMenuItem
+              key={s}
+              onSelect={() => onChangeStatus?.(s)}
+              disabled={isUpdatingStatus || s === status}
+              className="flex items-center gap-3 py-2.5 cursor-pointer"
+            >
+              <ItemIcon size={16} className="shrink-0 text-muted-foreground" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{label}</span>
+                <span className="text-xs text-muted-foreground">{description}</span>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
