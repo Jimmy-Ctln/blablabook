@@ -11,6 +11,7 @@ jest.mock('../db/index', () => ({
     insert: jest.fn(),
     select: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
@@ -232,8 +233,13 @@ describe('UserService', () => {
       returning: jest.fn().mockResolvedValue([mockUser]),
     };
 
+    const deleteChain = {
+      where: jest.fn().mockResolvedValue(undefined),
+    };
+
     mockDb.select.mockReturnValue(selectChain);
     mockDb.update.mockReturnValue(updateChain);
+    mockDb.delete.mockReturnValue(deleteChain);
 
     const result = await service.changePassword(
       1,
@@ -243,6 +249,7 @@ describe('UserService', () => {
 
     expect(result).toBeDefined();
     expect(result.message).toBe('Password changed successfully');
+    expect(mockDb.delete).toHaveBeenCalled();
   });
 
   it('should throw error when current password is incorrect', async () => {
