@@ -49,10 +49,7 @@ export class BooksService {
       .from(list)
       .where(eq(list.userId, userId));
     if (existing) return existing;
-    const [created] = await this.db
-      .insert(list)
-      .values({ userId })
-      .returning();
+    const [created] = await this.db.insert(list).values({ userId }).returning();
     return created;
   }
 
@@ -89,41 +86,55 @@ export class BooksService {
     return this.insertBook(dto);
   }
 
-  private async insertBook(dto: CreateBookDto): Promise<BookSelect> {
-    const normalizedSubjects = (dto.categories ?? [])
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0);
+  private normalizeSubjects(categories?: string[]): string[] {
+    return (categories ?? []).map((c) => c.trim()).filter((c) => c.length > 0);
+  }
 
-    let categoryId = 1;
-    let matchedKeywords: Array<{ keywordId: number; categoryId: number }> = [];
+  private async findMatchedKeywords(subjects: string[]) {
+    if (subjects.length === 0) return [];
+    return this.db
+      .select({ keywordId: keyword.id, categoryId: category.id })
+      .from(keyword)
+      .innerJoin(category, eq(category.id, keyword.categoryId))
+      .where(sql`${subjects.join(' ')} ~* ('\\m' || ${keyword.name} || '\\M')`);
+  }
 
-    if (normalizedSubjects.length > 0) {
-      // Join all OpenLibrary subjects into one string, then find every seeded keyword
-      // that appears as a whole word inside it (~* = case-insensitive regex, \m/\M = word boundaries).
-      // Using word boundaries prevents false positives where a short keyword like "imp"
-      // would wrongly match inside a longer word like "important".
-      matchedKeywords = await this.db
-        .select({ keywordId: keyword.id, categoryId: category.id })
-        .from(keyword)
-        .innerJoin(category, eq(category.id, keyword.categoryId))
-        .where(
-          sql`${normalizedSubjects.join(' ')} ~* ('\\m' || ${keyword.name} || '\\M')`,
+  private pickWinningCategory(
+    matchedKeywords: Array<{ categoryId: number }>,
+  ): number {
+    if (matchedKeywords.length === 0) return 1;
+    const counts = matchedKeywords.reduce<Record<number, number>>(
+      (acc, { categoryId: cId }) => {
+        acc[cId] = (acc[cId] ?? 0) + 1;
+        return acc;
+      },
+      {},
+    );
+    const [winnerId] = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
+    return Number(winnerId);
+  }
+
+  private async linkBookToKeywords(
+    bookId: number,
+    matchedKeywords: Array<{ keywordId: number }>,
+  ): Promise<void> {
+    if (matchedKeywords.length === 0) return;
+    try {
+      await this.db
+        .insert(bookKeyword)
+        .values(
+          matchedKeywords.map((kw) => ({ bookId, keywordId: kw.keywordId })),
         );
-
-      if (matchedKeywords.length > 0) {
-        // Count matched keywords per category, then pick the category with the most hits.
-        // e.g. { 3: 8, 2: 2 } → category 3 (fantasy) wins with 8 keyword matches.
-        const counts = matchedKeywords.reduce(
-          (acc, { categoryId: cId }) => {
-            acc[cId] = (acc[cId] ?? 0) + 1;
-            return acc;
-          },
-          {} as Record<number, number>,
-        );
-        const winner = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
-        categoryId = winner ? Number(winner[0]) : 1;
-      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      if (!errorMsg.toLowerCase().includes('unique')) throw err;
     }
+  }
+
+  private async insertBook(dto: CreateBookDto): Promise<BookSelect> {
+    const subjects = this.normalizeSubjects(dto.categories);
+    const matchedKeywords = await this.findMatchedKeywords(subjects);
+    const categoryId = this.pickWinningCategory(matchedKeywords);
 
     const [inserted] = await this.db
       .insert(book)
@@ -139,21 +150,7 @@ export class BooksService {
       })
       .returning();
 
-    if (matchedKeywords.length > 0) {
-      try {
-        await this.db.insert(bookKeyword).values(
-          matchedKeywords.map((kw) => ({
-            bookId: inserted.id,
-            keywordId: kw.keywordId,
-          })),
-        );
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        if (!errorMsg.includes('unique') && !errorMsg.includes('UNIQUE')) {
-          throw err;
-        }
-      }
-    }
+    await this.linkBookToKeywords(inserted.id, matchedKeywords);
 
     return inserted;
   }
@@ -323,7 +320,6 @@ export class BooksService {
 
       const userList = await this.getOrCreateUserList(userId);
 
-      // Link book to list in the join table
       await this.db
         .insert(listBook)
         .values({
@@ -335,6 +331,18 @@ export class BooksService {
       return existingBook;
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
+
+      const isUniqueViolation =
+        (err as { code?: string }).code === '23505' ||
+        error.message.toLowerCase().includes('unique');
+
+      if (isUniqueViolation) {
+        throw new HttpException(
+          'Book already in user library',
+          HttpStatus.CONFLICT,
+        );
+      }
+
       this.logger.error(
         'Failed to add book to user list',
         error.stack || error,
@@ -448,9 +456,7 @@ export class BooksService {
     const updated = await this.db
       .update(listBook)
       .set({ comment, updatedAt: new Date() })
-      .where(
-        and(eq(listBook.bookId, bookId), eq(listBook.listId, userList.id)),
-      )
+      .where(and(eq(listBook.bookId, bookId), eq(listBook.listId, userList.id)))
       .returning();
 
     if (!updated || updated.length === 0) {
