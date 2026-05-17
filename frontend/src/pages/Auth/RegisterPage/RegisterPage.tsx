@@ -107,76 +107,61 @@ export default function RegisterPage() {
 
   return (
     <form
-      className=" w-70 md:w-150 flex flex-col items-center mx-auto text-foreground"
+      className="w-full max-w-sm mx-auto flex flex-col items-center text-foreground px-4 py-10 md:py-16"
       onSubmit={(e) => {
         e.preventDefault();
         e.stopPropagation();
         form.handleSubmit();
       }}
     >
-      <FormTitle title="Inscription" />
-
-      <form.Field name="email">
-        {(field) => {
-          return (
-            <FormField
-              field={field}
-              type={"email"}
-              label={"Email"}
-              placeholder={""}
-            />
-          );
-        }}
-      </form.Field>
+      <FormTitle
+        title="Créer un compte"
+        subtitle="Rejoignez la communauté BlaBlaBook"
+      />
 
       <form.Field name="username">
-        {(field) => {
-          return (
-            <FormField
-              field={field}
-              type={"string"}
-              label={"Nom d'utilisateur"}
-              placeholder={""}
-            />
-          );
-        }}
+        {(field) => (
+          <FormField
+            field={field}
+            type="string"
+            label="Username"
+            placeholder=""
+          />
+        )}
+      </form.Field>
+
+      <form.Field name="email">
+        {(field) => (
+          <FormField
+            field={field}
+            type="email"
+            label="Adresse email"
+            placeholder=""
+          />
+        )}
       </form.Field>
 
       <form.Field name="password">
-        {(field) => {
-          return (
-            <FormField
-              field={field}
-              type={"password"}
-              label={"Mot de passe"}
-              placeholder={""}
-            />
-          );
-        }}
+        {(field) => (
+          <FormField
+            field={field}
+            type="password"
+            label="Mot de passe"
+            placeholder=""
+          />
+        )}
       </form.Field>
 
       <form.Field name="confirmPassword">
-        {(field) => {
-          return (
-            <FormField
-              field={field}
-              type={"password"}
-              label={"Confirmation du mot de passe"}
-              placeholder={""}
-            />
-          );
-        }}
+        {(field) => (
+          <FormField
+            field={field}
+            type="password"
+            label="Confirmer votre mot de passe"
+            placeholder=""
+          />
+        )}
       </form.Field>
-
-      <p className="text-sm text-center mt-4">
-        Vous avez déjà un compte ?{" "}
-        <Link
-          to="/login"
-          className="text-blue-600 underline hover:text-blue-800"
-        >
-          Connectez-vous
-        </Link>
-      </p>
 
       <form.Subscribe
         selector={(state) => ({
@@ -189,9 +174,22 @@ export default function RegisterPage() {
             form={form}
             canSubmit={canSubmit}
             isSubmitting={isSubmitting}
+            submitLabel="Créer mon compte →"
+            showReset={false}
+            fullWidth
           />
         )}
       </form.Subscribe>
+
+      <p className="text-sm text-center mt-4">
+        Vous avez déjà un compte ?{" "}
+        <Link
+          to="/login"
+          className="text-blue-600 underline hover:text-blue-800"
+        >
+          Connectez-vous
+        </Link>
+      </p>
     </form>
   );
 }
