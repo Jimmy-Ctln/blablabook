@@ -44,7 +44,7 @@ describe("Login Page", async () => {
 
   it("should render the login page with title 'Connexion'", async () => {
     await renderWithProviders("/login");
-    expect(await screen.findByText("Connexion")).toBeInTheDocument();
+    expect(await screen.findByText("Bon retour !")).toBeInTheDocument();
   });
 
   it("should submit login request with credentials", async () => {
@@ -56,7 +56,7 @@ describe("Login Page", async () => {
     const passwordInput = container.querySelector('input[type="password"]');
     await userEvent.type(emailInput, "test@example.com");
     await userEvent.type(passwordInput!, "testpass");
-    await userEvent.click(screen.getByText("Soumettre"));
+    await userEvent.click(screen.getByText("Se connecter →"));
     expect(postSpy).toHaveBeenCalledWith("/auth/login", {
       email: "test@example.com",
       password: "testpass",
@@ -74,7 +74,7 @@ describe("Login Page", async () => {
     const passwordInput = container.querySelector('input[type="password"]');
     await userEvent.type(emailInput, "wrong@example.com");
     await userEvent.type(passwordInput!, "wrongpass");
-    await userEvent.click(screen.getByText("Soumettre"));
+    await userEvent.click(screen.getByText("Se connecter →"));
     expect(
       await screen.findByText("Email ou mot de passe incorrect"),
     ).toBeInTheDocument();
