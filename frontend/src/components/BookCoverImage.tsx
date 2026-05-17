@@ -37,6 +37,7 @@ export function BookCoverImage({ src, alt, className, imgClassName }: BookCoverI
         <img
           src={src}
           alt={alt}
+          loading="lazy"
           className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"} ${imgClassName ?? ""}`}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
