@@ -31,7 +31,7 @@ export default function UserCardButton(
               {user.avatar_url ? (
                 <AvatarImage
                   src={`${user.avatar_url}`}
-                  alt={`Avatar de ${user.username ?? "X"}`}
+                  alt={`Avatar de ${user.username ?? "l'utilisateur"}`}
                 />
               ) : (
                 <AvatarFallback className="bg-primary text-foreground font-bold">

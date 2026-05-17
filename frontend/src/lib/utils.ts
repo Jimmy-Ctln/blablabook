@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Swaps the size suffix on an OpenLibrary cover URL.
+// S ≈ 38px wide, M ≈ 180px wide, L ≈ 300px wide.
+// Pass through any non-OpenLibrary URL unchanged.
+export function resizeOpenLibraryCover(
+  url: string | null | undefined,
+  size: "S" | "M" | "L",
+): string | undefined {
+  if (!url) return undefined;
+  if (!url.includes("covers.openlibrary.org")) return url;
+  return url.replace(/-[SML]\.jpg$/, `-${size}.jpg`);
+}
+
 export function getRandomQuery() {
   const words = [
     "Science",

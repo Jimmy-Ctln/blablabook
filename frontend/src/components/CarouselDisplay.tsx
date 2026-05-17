@@ -24,7 +24,7 @@ export default function CarouselDisplay({
       className="w-full mx-auto my-8 px-8 animate-in fade-in duration-500"
     >
       <div className="flex items-center gap-4 justify-between">
-        <h2 className="text-xl font-bold text-foreground">{title}</h2>
+        <h2 className="text-xl font-bold text-foreground uppercase tracking-widest">{title}</h2>
         <div className="flex gap-2 items-center">
           <CarouselPrevious className="sm:flex w-8 h-8" />
           <CarouselNext className="sm:flex w-8 h-8" />

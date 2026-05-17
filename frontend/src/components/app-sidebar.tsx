@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Home, Book, LogIn, Loader2, Moon, Sun } from "lucide-react";
+import { resizeOpenLibraryCover } from "@/lib/utils";
 import { useThemeStore } from "@/stores/themeStore";
 import {
   Sidebar,
@@ -49,11 +50,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
-  const handleClick = (bookIsbn: string) => {
-    closeMobileSidebar();
-    navigate({ to: `/books/${bookIsbn}` });
-  };
-
   const handleLoginClick = () => {
     closeMobileSidebar();
     navigate({ to: "/login" });
@@ -93,12 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="mt-4 sm:mt-6 gap-4">
-        <div
-          onClick={closeMobileSidebar}
-          className="items-center gap-2 text-foreground font-bold hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex"
-        >
-          <Logo />
-        </div>
+        <Logo onClick={closeMobileSidebar} className="hidden sm:flex hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md" />
       </SidebarHeader>
 
       <SidebarContent className="mt-4 sm:mt-6 flex flex-col gap-6">
@@ -118,10 +109,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuItem>
               <div className="flex flex-col gap-2 w-full">
                 {inProgressBooks.map((book) => (
-                  <div
+                  <Link
                     key={book.id}
-                    className="group flex gap-2 sm:gap-3 items-start cursor-pointer rounded-lg p-2 transition-colors duration-200 hover:bg-primary/10"
-                    onClick={() => handleClick(book.isbn)}
+                    to="/books/$isbn"
+                    params={{ isbn: book.isbn }}
+                    onClick={closeMobileSidebar}
+                    className="group flex gap-2 sm:gap-3 items-start rounded-lg p-2 transition-colors duration-200 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="relative w-8 h-12 sm:w-10 sm:h-14 shrink-0">
                       {!loadedImages[book.id] && (
@@ -130,12 +123,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </div>
                       )}
                       <img
-                        src={book.cover}
+                        src={resizeOpenLibraryCover(book.cover, "S")}
                         onLoad={() => handleImageLoad(book.id)}
+                        loading="lazy"
                         className={`w-8 h-12 sm:w-10 sm:h-14 object-cover rounded-md shadow-sm group-hover:shadow-md transition-all duration-200 ${
                           !loadedImages[book.id] ? "opacity-0" : "opacity-100"
                         }`}
-                        alt={book.name}
+                        alt={`Couverture de ${book.name}`}
                       />
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0 justify-start">
@@ -148,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -177,10 +171,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter className="mb-3 sm:mb-4 gap-3">
         <button
           onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
+          aria-label={
+            theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"
+          }
           className="flex items-center gap-3 w-full px-2 py-2 rounded-lg hover:bg-accent transition-colors text-sm text-muted-foreground hover:text-foreground"
         >
-          {theme === "dark" ? <Moon className="h-4 w-4 shrink-0" /> : <Sun className="h-4 w-4 shrink-0" />}
+          {theme === "dark" ? (
+            <Moon className="h-4 w-4 shrink-0" />
+          ) : (
+            <Sun className="h-4 w-4 shrink-0" />
+          )}
           <span>{theme === "dark" ? "Mode clair" : "Mode sombre"}</span>
         </button>
         <Separator />
@@ -192,7 +192,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <UserCard />
         ) : (
           <>
-            <Separator />
             <Button
               onClick={handleLoginClick}
               className="w-full rounded-lg gap-2"

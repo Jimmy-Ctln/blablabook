@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { usePageTitle, useNoIndex } from "@/hooks/usePageTitle";
 import {
   Mail,
   Eye,
@@ -66,6 +67,8 @@ const CHANGE_PASSWORD_ERRORS: Record<string, string> = {
 };
 
 export default function ProfilePage() {
+  usePageTitle("Mon profil");
+  useNoIndex();
   const { data: user, isLoading, isError } = useCurrentUser();
   const { logout } = useAuthStore();
 
@@ -687,7 +690,7 @@ export default function ProfilePage() {
                   <img
                     className="w-32 rounded-full"
                     src={selected.source}
-                    alt="Preview avatar utilisateur"
+                    alt={`Aperçu de l'avatar sélectionné`}
                   />
                 )}
               </div>
@@ -705,7 +708,7 @@ export default function ProfilePage() {
                   >
                     <img
                       src={avatar.source}
-                      alt="Avatar option"
+                      alt={`Avatar ${avatar.sexe === "Masculin" ? "masculin" : "féminin"} n°${avatar.id}`}
                       className="w-16"
                     />
                   </div>

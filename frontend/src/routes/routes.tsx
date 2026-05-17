@@ -4,19 +4,11 @@ import {
   createRootRoute,
   createRoute,
   redirect,
+  lazyRouteComponent,
 } from "@tanstack/react-router";
 import { useAuthStore } from "@/stores/authStore";
-import RegisterPage from "@/pages/Auth/RegisterPage/RegisterPage";
-import LoginPage from "@/pages/Auth/LoginPage/LoginPage";
 import NotFound from "@/pages/NotFound";
-import LibraryPage from "@/pages/LibraryPage";
-import BookDetails from "@/pages/Book/BookDetails";
 import HomePage from "@/pages/HomePage";
-import ProfilePage from "@/pages/ProfilePage/ProfilePage";
-import PrivacyPolicy from "@/pages/Legal/PrivacyPolicy";
-import LegalNotice from "@/pages/Legal/LegalNotice";
-import TermsOfUse from "@/pages/Legal/TermsOfUse";
-import SearchResultsPage from "@/pages/SearchResultsPage";
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,
@@ -44,57 +36,63 @@ const homeRoute = createRoute({
 const registerPage = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
-  component: () => <RegisterPage />,
+  component: lazyRouteComponent(
+    () => import("@/pages/Auth/RegisterPage/RegisterPage")
+  ),
 });
 
 const loginPage = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  component: () => <LoginPage />,
+  component: lazyRouteComponent(
+    () => import("@/pages/Auth/LoginPage/LoginPage")
+  ),
 });
 
 // Protected route - user must be authenticated
 const libraryRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/library",
-  component: () => <LibraryPage />,
+  component: lazyRouteComponent(() => import("@/pages/LibraryPage")),
 });
 
 // Protected route - user must be authenticated
 const profilePage = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/profile",
-  component: () => <ProfilePage />,
+  component: lazyRouteComponent(
+    () => import("@/pages/ProfilePage/ProfilePage")
+  ),
 });
 
 export const bookDetailsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/books/$isbn",
-  component: () => <BookDetails />,
+  component: lazyRouteComponent(() => import("@/pages/Book/BookDetails")),
 });
 
 const privacyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/privacy",
-  component: () => <PrivacyPolicy />,
+  component: lazyRouteComponent(() => import("@/pages/Legal/PrivacyPolicy")),
 });
 
 const legalRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/legal",
-  component: () => <LegalNotice />,
+  component: lazyRouteComponent(() => import("@/pages/Legal/LegalNotice")),
 });
 
 const termsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/terms",
-  component: () => <TermsOfUse />,
+  component: lazyRouteComponent(() => import("@/pages/Legal/TermsOfUse")),
 });
 
 const searchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/search",
-  component: () => <SearchResultsPage />,
+  component: lazyRouteComponent(() => import("@/pages/SearchResultsPage")),
 });
 
 const routeTree = rootRoute.addChildren([

@@ -10,6 +10,7 @@ import type { BookDisplay } from "../@types/books";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "./ui/button";
 import { BookCoverImage } from "@/components/BookCoverImage";
+import { resizeOpenLibraryCover } from "@/lib/utils";
 
 const statusConfig = {
   "À lire": { icon: Clock, description: "Dans votre liste de lecture" },
@@ -98,7 +99,7 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
 
   return (
     <div
-      className="w-full transform hover:scale-101 transition-transform duration-500 cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 rounded-xl"
+      className="w-full h-full transform hover:scale-101 transition-transform duration-500 cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 rounded-xl"
       onClick={() => goToBookDetails()}
       role="article"
     >
@@ -106,7 +107,7 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
         <div className="relative shrink-0">
           <div className="w-full aspect-2/3">
             <BookCoverImage
-              src={book.cover_url}
+              src={resizeOpenLibraryCover(book.cover_url, "M")}
               alt={`Couverture de ${book.name}`}
             />
           </div>

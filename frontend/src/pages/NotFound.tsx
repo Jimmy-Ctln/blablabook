@@ -1,8 +1,10 @@
 import { Book } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function NotFound() {
+  usePageTitle("Page introuvable");
   return (
     <div className="flex flex-col items-center mt-6 md:mt-32 min-h-[60vh] text-center px-4 text-foreground">
       <Book className="w-14 h-14 md:w-16 md:h-16 mb-4" aria-hidden="true" />

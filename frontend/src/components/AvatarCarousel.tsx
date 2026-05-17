@@ -9,7 +9,11 @@ type AvatarCarouselProps = {
   onSelect: (img: string | undefined) => void;
 };
 
-export default function AvatarCarousel({ images, selectedImage, onSelect }: AvatarCarouselProps) {
+export default function AvatarCarousel({
+  images,
+  selectedImage,
+  onSelect,
+}: AvatarCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     loop: true,
@@ -25,17 +29,18 @@ export default function AvatarCarousel({ images, selectedImage, onSelect }: Avat
       <Button
         type="button"
         onClick={scrollPrev}
-        className="absolute left-[-0.5rem] top-1/2 -translate-y-1/2 z-10 w-8 h-8"
+        aria-label="Avatar précédent"
+        className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8"
       >
-        <ArrowLeft />
+        <ArrowLeft aria-hidden="true" />
       </Button>
 
       {/* Carousel container */}
-      <div ref={emblaRef} className="overflow-hidden w-[200px]">
+      <div ref={emblaRef} className="overflow-hidden w-50">
         <div className="flex gap-x-1">
           {images.map((img, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="flex-none w-20 h-20 flex items-center justify-center"
             >
               <Avatar
@@ -46,7 +51,11 @@ export default function AvatarCarousel({ images, selectedImage, onSelect }: Avat
                 }`}
                 onClick={() => onSelect(img)}
               >
-                {img ? <AvatarImage src={`/images/${img}`} /> : <AvatarFallback>X</AvatarFallback>}
+                {img ? (
+                  <AvatarImage src={`/images/${img}`} alt={`Avatar ${i + 1}`} />
+                ) : (
+                  <AvatarFallback>X</AvatarFallback>
+                )}
               </Avatar>
             </div>
           ))}
@@ -57,9 +66,10 @@ export default function AvatarCarousel({ images, selectedImage, onSelect }: Avat
       <Button
         type="button"
         onClick={scrollNext}
-        className="absolute right-[-0.5rem] top-1/2 -translate-y-1/2 z-10 w-8 h-8"
+        aria-label="Avatar suivant"
+        className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8"
       >
-        <ArrowRight />
+        <ArrowRight aria-hidden="true" />
       </Button>
     </div>
   );

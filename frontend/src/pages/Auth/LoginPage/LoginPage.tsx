@@ -1,4 +1,5 @@
 import type { BackendErrorResponse } from "@/@types/form";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import api from "@/api/axios";
 import FormAction from "@/components/Form/FormAction/FormAction";
 import FormField from "@/components/Form/FormFields/FormField";
@@ -26,6 +27,7 @@ type LoginFormData = {
 };
 
 export default function LoginPage() {
+  usePageTitle("Connexion");
   const navigate = useNavigate();
   const authStore = useAuthStore();
 
