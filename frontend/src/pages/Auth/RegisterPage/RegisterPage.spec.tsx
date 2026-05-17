@@ -33,7 +33,7 @@ describe("Register Page", () => {
   describe("form", () => {
     it("should render the register page with title", async () => {
       await renderWithProviders("/register");
-      expect(await screen.findByText("Inscription")).toBeInTheDocument();
+      expect(await screen.findByText("Créer un compte")).toBeInTheDocument();
     });
 
     it("should submit registration request", async () => {
@@ -44,14 +44,14 @@ describe("Register Page", () => {
       const inputs = screen.getAllByRole("textbox");
       const passwordInput = container.querySelector('input[type="password"]');
       expect(passwordInput).not.toBeNull();
-      await userEvent.type(inputs[0], "test@email.com");
-      await userEvent.type(inputs[1], "testuser");
+      await userEvent.type(inputs[0], "testuser");
+      await userEvent.type(inputs[1], "test@email.com");
       await userEvent.type(passwordInput!, "Password123!");
       const confirmInput = container.querySelectorAll(
         'input[type="password"]',
       )[1];
       await userEvent.type(confirmInput!, "Password123!");
-      await userEvent.click(screen.getByText("Soumettre"));
+      await userEvent.click(screen.getByText("Créer mon compte →"));
       expect(postSpy).toHaveBeenCalledWith("/auth/register", {
         email: "test@email.com",
         username: "testuser",
@@ -69,14 +69,14 @@ describe("Register Page", () => {
       const { container } = await renderWithProviders("/register");
       const inputs = screen.getAllByRole("textbox");
       const passwordInput = container.querySelector('input[type="password"]');
-      await userEvent.type(inputs[0], "existing@email.com");
-      await userEvent.type(inputs[1], "user");
+      await userEvent.type(inputs[0], "user");
+      await userEvent.type(inputs[1], "existing@email.com");
       await userEvent.type(passwordInput!, "Password123!");
       const confirmInput = container.querySelectorAll(
         'input[type="password"]',
       )[1];
       await userEvent.type(confirmInput!, "Password123!");
-      await userEvent.click(screen.getByText("Soumettre"));
+      await userEvent.click(screen.getByText("Créer mon compte →"));
       expect(await screen.findByText("Cette adresse email est déjà utilisée")).toBeInTheDocument();
       postSpy.mockRestore();
     });
