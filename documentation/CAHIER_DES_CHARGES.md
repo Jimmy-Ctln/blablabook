@@ -96,6 +96,10 @@ Les fonctionnalités ci-dessous constituent le périmètre du MVP. Elles sont to
 Ces fonctionnalités dépassent le périmètre du MVP défini initialement, mais ont été développées et sont disponibles en production.
 
 - **Thème clair / sombre** : l'utilisateur peut basculer entre les deux modes d'affichage selon ses préférences.
+- **Notes et avis** :
+  - Dépôt d'une note (sur 5 étoiles) et d'un commentaire sur un livre.
+  - Consultation des avis déposés par les autres utilisateurs.
+  - Suppression de son propre avis.
 
 ### 4.3 Évolutions (hors MVP)
 

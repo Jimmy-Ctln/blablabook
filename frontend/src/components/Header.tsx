@@ -40,6 +40,15 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          {!user && (
+            <Link
+              to="/login"
+              className="hidden min-[1000px]:inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Se connecter
+            </Link>
+          )}
+
           {user && (
             <div className="hidden min-[1000px]:block">
             <DropdownMenu>

@@ -17,6 +17,21 @@ export default defineConfig({
       usePolling: true,
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-router": ["@tanstack/react-router"],
+          "vendor-query": [
+            "@tanstack/react-query",
+            "@tanstack/react-query-persist-client",
+            "@tanstack/query-sync-storage-persister",
+          ],
+          "vendor-ui": ["lucide-react", "sonner"],
+        },
+      },
+    },
+  },
   test: {
     coverage: {
       reporter: ["text", "json", "json-summary", "html"],
@@ -25,5 +40,5 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test-setup.ts"],
   },
-  base: './',
+  base: "./",
 });

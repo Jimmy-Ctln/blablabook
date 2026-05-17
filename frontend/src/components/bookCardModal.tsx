@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useAddBook } from "@/hooks/useAddBook";
 import { Loader } from "./Loader";
+import { resizeOpenLibraryCover } from "@/lib/utils";
 
 type BookCardModalProps = {
   book: BookDisplay;
@@ -49,8 +50,9 @@ export default function BookCardModal({ book }: BookCardModalProps) {
         <div className="shrink-0">
           {book.cover ? (
             <img
-              src={book.cover}
+              src={resizeOpenLibraryCover(book.cover, "M")}
               alt={`Couverture de ${book.name}`}
+              loading="lazy"
               className="h-16 w-11 rounded-md object-cover sm:h-18 sm:w-12.5"
             />
           ) : (

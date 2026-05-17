@@ -2,7 +2,15 @@
 <html lang="fr">
   <head>
     <!-- Prevent flash of wrong theme before React loads -->
-    <script>(function(){try{var s=localStorage.getItem('theme_storage');if(s&&JSON.parse(s).state.theme==='light')document.documentElement.classList.add('light')}catch(e){}})()</script>
+    <script>
+      (function () {
+        try {
+          var s = localStorage.getItem("theme_storage");
+          if (s && JSON.parse(s).state.theme === "light")
+            document.documentElement.classList.add("light");
+        } catch (e) {}
+      })();
+    </script>
     <!-- Character encoding and viewport settings -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,7 +25,7 @@
 
     <!-- Open Graph Meta Tags for Social Media -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://pooka-blablabook.surge.sh" />
+    <meta property="og:url" content="https://blablabook-sigma.vercel.app" />
     <meta
       property="og:title"
       content="Blablabook - Votre bibliothèque numérique"
@@ -26,14 +34,18 @@
       property="og:description"
       content="Découvrez et partagez vos lectures favoris. Gérez votre bibliothèque personnelle et explorez les meilleures sélections."
     />
+    <!-- og:image : remplacer /book.svg par une image PNG/JPG 1200×630 pour un meilleur rendu social -->
     <meta
       property="og:image"
-      content="https://pooka-blablabook.surge.sh/og-image.jpg"
+      content="https://blablabook-sigma.vercel.app/book.svg"
     />
 
     <!-- Twitter Meta Tags for Social Media -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://pooka-blablabook.surge.sh" />
+    <meta property="twitter:card" content="summary" />
+    <meta
+      property="twitter:url"
+      content="https://blablabook-sigma.vercel.app"
+    />
     <meta
       property="twitter:title"
       content="Blablabook - Votre bibliothèque numérique"
@@ -44,17 +56,29 @@
     />
     <meta
       property="twitter:image"
-      content="https://pooka-blablabook.surge.sh/og-image.jpg"
+      content="https://blablabook-sigma.vercel.app/book.svg"
     />
 
     <!-- Favicon and canonical URL -->
     <link rel="shortcut icon" type="image/svg+xml" href="/book.svg?v=1" />
-    <link rel="canonical" href="https://pooka-blablabook.surge.sh" />
+    <link rel="canonical" href="https://blablabook-sigma.vercel.app" />
+
+    <!-- Preload LCP image: hero background loaded before JS executes.
+         Browsers without WebP support ignore the type="image/webp" hint and fall back to the JPEG. -->
+    <link
+      rel="preload"
+      href="/hero-bg.webp"
+      as="image"
+      type="image/webp"
+      fetchpriority="high"
+    />
 
     <!-- Preconnect and DNS-prefetch for performance optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="dns-prefetch" href="https://pooka-blablabook.surge.sh" />
+    <link rel="preconnect" href="https://covers.openlibrary.org" crossorigin />
+    <link rel="preconnect" href="https://openlibrary.org" crossorigin />
+    <link rel="dns-prefetch" href="https://blablabook-sigma.vercel.app" />
 
     <!-- Google Fonts with async loading using media="print" trick for non-blocking load -->
     <link

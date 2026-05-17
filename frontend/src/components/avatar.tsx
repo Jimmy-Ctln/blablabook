@@ -32,7 +32,7 @@ export default function AvatarInfo() {
                           ? `/images/${user.avatar_url}`
                           : undefined
                       }
-                      alt={`Avatar de ${user.username || "X"}`}
+                      alt={`Avatar de ${user.username || "l'utilisateur"}`}
                     />
                     <AvatarFallback className="bg-bookbeige/50">
                       {user.username ? user.username[0].toUpperCase() : "X"}

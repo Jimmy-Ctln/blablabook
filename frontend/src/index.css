@@ -166,6 +166,20 @@
   }
 }
 
+/* Hero animations — replaces framer-motion */
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-22px); }
+}
+@keyframes hero-glow {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes hero-shadow {
+  0%, 100% { filter: drop-shadow(0 12px 40px rgba(59,130,246,0.3)); }
+  50% { filter: drop-shadow(0 20px 60px rgba(59,130,246,0.65)); }
+}
+
 /* Premium smooth scrolling */
 html {
   scroll-behavior: smooth;

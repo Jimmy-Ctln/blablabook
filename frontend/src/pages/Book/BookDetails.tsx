@@ -24,6 +24,7 @@ import { BookNoteSection } from "../../components/Book/BookNoteSection";
 import { Button } from "../../components/ui/button";
 import { BookSummary } from "@/components/Book/BookSummary";
 import { ReviewSection } from "@/components/Book/ReviewSection";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import type { AxiosError } from "axios";
 import { Separator } from "@/components/ui/separator";
 
@@ -113,6 +114,8 @@ const BookDetails = () => {
         currentBook: userBook,
       });
   };
+
+  usePageTitle(book?.title ?? "Détail du livre");
 
   const isBookInLibrary = userBooks.some((b) => b.isbn === book?.isbn);
   const userBookData = userBooks.find((b) => b.isbn === book?.isbn);

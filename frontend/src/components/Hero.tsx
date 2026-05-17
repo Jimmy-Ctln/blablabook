@@ -1,8 +1,8 @@
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import background from "@/assets/hero-bg.jpg";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { motion } from "framer-motion";
+
+const background = "/hero-bg.jpg";
 
 export default function Hero() {
   const currentUser = useCurrentUser();
@@ -12,11 +12,16 @@ export default function Hero() {
   return (
     <section className="relative flex min-h-[80vh] items-center overflow-hidden">
       <div className="absolute inset-0">
-        <img
-          src={background}
-          alt=""
-          className="absolute inset-0 object-cover h-full w-full"
-        />
+        <picture>
+          <source srcSet="/hero-bg.webp" type="image/webp" />
+          <img
+            src={background}
+            alt=""
+            fetchPriority="high"
+            loading="eager"
+            className="absolute inset-0 object-cover h-full w-full"
+          />
+        </picture>
         <div className="absolute inset-0 bg-linear-to-r from-[rgba(10,12,20,0.95)] via-[rgba(10,12,20,0.75)] to-[rgba(10,12,20,0.45)]" />
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-background to-transparent" />
       </div>
@@ -70,10 +75,10 @@ export default function Hero() {
                 </Link>
               ) : (
                 <Link
-                  to="/login"
+                  to="/register"
                   className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-primary/90 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_32px_rgba(59,130,246,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:shadow-[0_12px_40px_rgba(59,130,246,0.45)]"
                 >
-                  <span>Se connecter</span>
+                  <span>Commencer dès maintenant</span>
                   <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 shrink-0" />
                 </Link>
               )}
@@ -81,30 +86,21 @@ export default function Hero() {
           </div>
 
           <div className="hidden min-[1000px]:flex justify-center items-center shrink-0">
-            <motion.div
+            <div
               className="relative"
-              animate={{ y: [0, -22, 0], rotate: [-4, 4, -4] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              style={{ animation: "hero-float 6s ease-in-out infinite" }}
             >
-              <motion.div
+              <div
                 className="absolute -inset-8 bg-radial from-primary/40 via-blue-500/20 to-transparent rounded-full blur-3xl"
-                animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.15, 0.9] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                style={{ animation: "hero-glow 4s ease-in-out infinite" }}
               />
-              <motion.img
+              <img
                 src="/book.svg"
                 alt="Logo Blablabook"
                 className="relative w-56 h-56 min-[1200px]:w-72 min-[1200px]:h-72"
-                animate={{
-                  filter: [
-                    "drop-shadow(0 12px 40px rgba(59,130,246,0.3))",
-                    "drop-shadow(0 20px 60px rgba(59,130,246,0.65))",
-                    "drop-shadow(0 12px 40px rgba(59,130,246,0.3))",
-                  ],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                style={{ animation: "hero-shadow 4s ease-in-out infinite" }}
               />
-            </motion.div>
+            </div>
           </div>
 
         </div>
