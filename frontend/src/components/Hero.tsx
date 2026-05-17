@@ -60,7 +60,7 @@ export default function Hero() {
             <p className="mt-6 text-balance text-sm sm:text-base md:text-lg leading-relaxed text-white/70 max-w-lg">
               {isAuthenticated
                 ? "Retrouvez votre bibliothèque, suivez vos lectures en cours et découvrez de nouvelles aventures littéraires."
-                : "Blablabook est votre bibliothèque personnelle en ligne. Découvrez des livres, suivez vos lectures et explorez les collections de la communauté."}
+                : "Vous lisez, on s'occupe du reste. Retrouvez tous vos livres au même endroit, suivez vos lectures et ne perdez plus jamais le fil."}
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row min-[1000px]:items-start">
