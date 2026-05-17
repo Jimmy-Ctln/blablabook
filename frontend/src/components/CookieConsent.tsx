@@ -120,6 +120,7 @@ export default function CookieConsent() {
               </h3>
               <button
                 onClick={() => setIsExpanded(false)}
+                aria-label="Fermer"
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />

@@ -60,6 +60,8 @@ export function BookNoteSection({
       {isEditing ? (
         <div className="flex flex-col gap-3">
           <textarea
+            id="book-note"
+            name="note"
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Écris ta note ici..."

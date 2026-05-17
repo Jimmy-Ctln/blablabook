@@ -44,7 +44,7 @@ createRoot(document.getElementById("root")!).render(
     >
       <Toaster position="top-right" richColors />
       <RouterProvider router={router} />
-      <ReactQueryDevtools initialIsOpen={false} />
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </PersistQueryClientProvider>
   </StrictMode>,
 );

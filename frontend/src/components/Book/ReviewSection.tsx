@@ -116,6 +116,8 @@ export function ReviewSection({ book, currentUserId, isConnected }: ReviewSectio
           </div>
 
           <textarea
+            id="review-text"
+            name="review"
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={2000}

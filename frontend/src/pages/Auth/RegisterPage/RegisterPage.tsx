@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, Link } from "@tanstack/react-router";
 import api from "@/api/axios";
@@ -48,6 +49,7 @@ type RegisterFormData = {
 };
 
 export default function RegisterPage() {
+  usePageTitle("Inscription");
   const navigate = useNavigate();
 
   const mutation = useMutation<

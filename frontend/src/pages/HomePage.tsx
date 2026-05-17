@@ -1,5 +1,6 @@
 import CarouselDisplay from "@/components/CarouselDisplay";
 import Hero from "@/components/Hero";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { getBooks, getRandomBooks } from "@/api/books";
 import type { BookRow, BooksByCategory } from "@/@types/books";
 import {
@@ -16,6 +17,7 @@ import SearchResultsSkeleton from "@/components/SearchResultsSkeleton";
 import notFound from "@/assets/not-found.svg";
 
 export default function HomePage() {
+  usePageTitle("Accueil");
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState<string>("");
   const categories = [
@@ -26,6 +28,7 @@ export default function HomePage() {
     "horreur",
   ];
 
+  // staleTime/gcTime à 0 : intentionnel pour toujours récupérer de nouvelles suggestions aléatoires
   const { data: randomBooks = [], isLoading: isLoadingRandom } = useQuery<
     BookRow[]
   >({
@@ -135,14 +138,14 @@ export default function HomePage() {
     // Display carousels when no search
     <>
       <CarouselDisplay
-        title={"SUGGESTIONS ALEATOIRE"}
+        title="Suggestions aléatoires"
         books={randomBooksArray.map(mapBookRowToDisplay)}
         isLoading={isLoadingRandom || randomBooksArray.length === 0}
       />
 
       {categories.map((categoryTitle) => {
         const categoryKey = categoryTitle.toLowerCase();
-        const title = categoryTitle.toUpperCase();
+        const title = categoryTitle;
         const categoryBooks = books[categoryKey] ?? [];
         const isLoading = isFetching || categoryBooks.length === 0;
 

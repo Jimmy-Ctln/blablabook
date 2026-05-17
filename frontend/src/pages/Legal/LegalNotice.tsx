@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function LegalNotice() {
+  usePageTitle("Mentions légales");
   return (
     <main className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-12">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePageTitle, useNoIndex } from "@/hooks/usePageTitle";
 import { BookCard } from "@/components/BookCard";
 import {
   Plus,
@@ -20,6 +21,8 @@ import { Separator } from "@/components/ui/separator";
 type FilterStatus = "all" | "En cours" | "À lire" | "Lu";
 
 export default function LibraryPage() {
+  usePageTitle("Ma bibliothèque");
+  useNoIndex();
   const { user } = useAuthStore();
   const userId = user?.id;
 

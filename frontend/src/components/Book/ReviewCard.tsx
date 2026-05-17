@@ -24,7 +24,7 @@ export function ReviewCard({ review, currentUserId, onDelete, isDeleting }: Revi
         {review.avatar_url ? (
           <img
             src={review.avatar_url}
-            alt={review.username ?? "Utilisateur"}
+            alt={`Photo de profil de ${review.username ?? "cet utilisateur"}`}
             className="h-10 w-10 rounded-full object-cover"
           />
         ) : (
