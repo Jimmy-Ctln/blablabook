@@ -1,4 +1,5 @@
 import { useSearch } from "@tanstack/react-router";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { useExternalBooks } from "@/hooks/useExternalBooks";
 import { mapExternalBookToDisplay } from "@/lib/bookDisplayMapper";
@@ -15,6 +16,7 @@ export default function SearchResultsPage() {
   const navigate = useNavigate();
   const searchParams = useSearch({ from: "/search" }) as SearchParams;
   const searchText = searchParams.q || "";
+  usePageTitle(searchText ? `Recherche : "${searchText}"` : "Recherche");
 
   const {
     data: externalSearchResults = [],
