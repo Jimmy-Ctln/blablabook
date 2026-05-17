@@ -30,15 +30,16 @@ export default function SearchBar({
   }
 
   return (
-    <div className="relative w-full max-w-2xl">
+    <div role="search" className="relative w-full max-w-2xl">
       <CustomInput
+        id="search-query"
+        name="q"
         type="text"
         placeholder={placeholder}
         value={query}
         onChange={handleChange}
         aria-label="Rechercher un livre ou un auteur"
         className={`bg-background shadow-md placeholder:text-foreground/50${query ? " pr-8" : ""}`}
-        role="search"
         data-testid="search-input"
       />
       {query && (

@@ -83,10 +83,10 @@ export default function Footer() {
                   <a
                     key={link.label}
                     href={link.href}
+                    aria-label={link.label}
                     className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
-                    title={link.label}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4" aria-hidden="true" />
                   </a>
                 );
               })}
