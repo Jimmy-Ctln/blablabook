@@ -113,7 +113,7 @@ export function BookCard({ book, onRemove, onStatusChange }: Props) {
           </div>
 
           {book.categoryName && book.categoryName.length > 0 && (
-            <span className="absolute bottom-3 bg-primary right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-chart-2 text-foreground">
+            <span className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-semibold rounded-full shadow bg-primary text-white">
               {book.categoryName}
             </span>
           )}

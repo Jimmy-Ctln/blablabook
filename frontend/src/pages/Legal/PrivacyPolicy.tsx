@@ -52,10 +52,10 @@ export default function PrivacyPolicy() {
               <p>
                 <strong>Contact RGPD :</strong>{" "}
                 <a
-                  href="mailto:contact@blablabook.local"
+                  href="mailto:jimmy.catalano@oclock.school"
                   className="text-primary hover:underline"
                 >
-                  contact@blablabook.local
+                  jimmy.catalano@oclock.school
                 </a>
               </p>
             </div>
@@ -244,10 +244,10 @@ export default function PrivacyPolicy() {
             <p className="mt-4 text-sm bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
               Pour exercer vos droits, contactez-nous à{" "}
               <a
-                href="mailto:contact@blablabook.local"
+                href="mailto:jimmy.catalano@oclock.school"
                 className="text-primary hover:underline font-bold"
               >
-                contact@blablabook.local
+                jimmy.catalano@oclock.school
               </a>
               . Nous répondrons dans les 30 jours (Art. 12 RGPD).
             </p>
@@ -350,10 +350,10 @@ export default function PrivacyPolicy() {
               <p>
                 <strong>Email :</strong>{" "}
                 <a
-                  href="mailto:contact@blablabook.local"
+                  href="mailto:jimmy.catalano@oclock.school"
                   className="text-primary hover:underline"
                 >
-                  contact@blablabook.local
+                  jimmy.catalano@oclock.school
                 </a>
               </p>
               <p>
