@@ -56,7 +56,7 @@ export default function Footer() {
             <h3 className="font-semibold text-foreground mb-3 text-sm">
               Légal
             </h3>
-            <ul className="space-y-2 text-sm">
+            <ul className="flex flex-wrap justify-center sm:flex-col sm:justify-start gap-x-4 gap-y-2 text-sm">
               {footerLinks.map((link) => (
                 <li key={link.href}>
                   <Link
@@ -64,7 +64,7 @@ export default function Footer() {
                     to={link.href as any}
                     className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
                   >
-                    <link.icon className="w-3.5 h-3.5" />
+                    <link.icon className="hidden sm:block w-3.5 h-3.5" />
                     {link.label}
                   </Link>
                 </li>
