@@ -17,4 +17,5 @@ export type RotateTokensData = {
   newJwtToken: string;
   newRefreshToken: string;
   user: JwtPayload;
+  fullUser: typeof user.$inferSelect;
 };

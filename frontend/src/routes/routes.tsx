@@ -7,12 +7,35 @@ import {
   lazyRouteComponent,
 } from "@tanstack/react-router";
 import { useAuthStore } from "@/stores/authStore";
+import axios from "axios";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/HomePage";
+
+let silentRefreshAttempted = false;
 
 const rootRoute = createRootRoute({
   component: () => <RootLayout />,
   notFoundComponent: () => <NotFound />,
+  beforeLoad: async () => {
+    if (silentRefreshAttempted) return;
+    silentRefreshAttempted = true;
+
+    const { isAuthenticated, login } = useAuthStore.getState();
+    if (isAuthenticated) return;
+
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/refresh`,
+        {},
+        { withCredentials: true },
+      );
+      if (data?.user) {
+        login(data.user);
+      }
+    } catch {
+      // Pas de refresh cookie valide, l'utilisateur reste non connecté
+    }
+  },
 });
 
 // Protected route - checks authentication before allowing access to child routes
