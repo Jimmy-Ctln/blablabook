@@ -48,7 +48,7 @@ export function BookNoteSection({
           <Button
             variant="ghost"
             size="sm"
-            className="text-white hover:text-white hover:bg-white/10"
+            className="text-muted-foreground hover:text-foreground"
             onClick={() => setIsEditing(true)}
           >
             <Pencil className="h-4 w-4" />
@@ -72,7 +72,7 @@ export function BookNoteSection({
             <Button
               variant="ghost"
               size="sm"
-              className="text-white hover:text-white hover:bg-white/10"
+              className="text-muted-foreground hover:text-foreground"
               onClick={handleCancel}
             >
               <X className="h-4 w-4" />
