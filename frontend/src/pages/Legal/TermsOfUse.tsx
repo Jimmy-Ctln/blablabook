@@ -275,10 +275,10 @@ export default function TermsOfUse() {
               <p>
                 <strong>Contactez-nous :</strong>{" "}
                 <a
-                  href="mailto:contact@blablabook.local"
+                  href="mailto:jimmy.catalano@oclock.school"
                   className="text-primary hover:underline"
                 >
-                  contact@blablabook.local
+                  jimmy.catalano@oclock.school
                 </a>
               </p>
             </div>

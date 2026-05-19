@@ -46,10 +46,10 @@ export default function LegalNotice() {
                 <p className="font-bold">Contact :</p>
                 <p>
                   <a
-                    href="mailto:contact@blablabook.local"
+                    href="mailto:jimmy.catalano@oclock.school"
                     className="text-primary hover:underline"
                   >
-                    contact@blablabook.local
+                    jimmy.catalano@oclock.school
                   </a>
                 </p>
               </div>
@@ -230,10 +230,10 @@ export default function LegalNotice() {
               <p>
                 <strong>Email :</strong>{" "}
                 <a
-                  href="mailto:contact@blablabook.local"
+                  href="mailto:jimmy.catalano@oclock.school"
                   className="text-primary hover:underline"
                 >
-                  contact@blablabook.local
+                  jimmy.catalano@oclock.school
                 </a>
               </p>
               <p className="mt-2">

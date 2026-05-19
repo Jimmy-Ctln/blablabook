@@ -89,7 +89,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="mt-4 sm:mt-6 gap-4">
-        <Logo onClick={closeMobileSidebar} className="hidden sm:flex hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md" />
+        <Logo
+          onClick={closeMobileSidebar}
+          className="hidden sm:flex hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+        />
       </SidebarHeader>
 
       <SidebarContent className="mt-4 sm:mt-6 flex flex-col gap-6">
@@ -198,8 +201,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               size="sm"
             >
               <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Se connecter</span>
-              <span className="sm:hidden">Login</span>
+              <span>Se connecter</span>
             </Button>
           </>
         )}
