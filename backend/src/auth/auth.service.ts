@@ -97,7 +97,10 @@ export class AuthService {
       const rotatedTokens = await this.tokenService.rotateTokens(refreshToken);
       return rotatedTokens;
     } catch (error) {
-      console.error('Refresh token rotation failed:', error);
+      console.error(
+        'Refresh token rotation failed:',
+        error instanceof Error ? error.message : 'unknown',
+      );
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
