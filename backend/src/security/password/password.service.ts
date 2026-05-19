@@ -9,7 +9,10 @@ export class PasswordService {
     try {
       return await argon2.verify(hashPwd, plainPwd);
     } catch (err) {
-      console.error(err);
+      console.error(
+        'password verify failed:',
+        err instanceof Error ? err.message : 'unknown',
+      );
       return false;
     }
   }
@@ -18,7 +21,10 @@ export class PasswordService {
     try {
       return await argon2.hash(pwd);
     } catch (err) {
-      console.error(err);
+      console.error(
+        'password hash failed:',
+        err instanceof Error ? err.message : 'unknown',
+      );
       throw new InternalServerErrorException('hash failed');
     }
   }

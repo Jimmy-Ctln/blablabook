@@ -125,6 +125,7 @@ export class TokenService {
       newJwtToken,
       newRefreshToken,
       user,
+      fullUser: userFromDb.user,
     };
   }
   hashRefreshToken(refreshToken: string): string {

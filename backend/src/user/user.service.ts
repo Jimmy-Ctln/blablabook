@@ -1,6 +1,6 @@
 import * as argon2 from 'argon2';
 import { eq, or, and, isNull, ilike, not } from 'drizzle-orm';
-import { user } from '../db/schema';
+import { user, refreshToken } from '../db/schema';
 import {
   Injectable,
   NotFoundException,
@@ -233,6 +233,9 @@ export class UserService {
     if (!updatedUser) {
       throw new NotFoundException(`User not found`);
     }
+
+    // Invalidate all sessions after password change (security best practice)
+    await db.delete(refreshToken).where(eq(refreshToken.userId, id));
 
     return {
       message: 'Password changed successfully',
