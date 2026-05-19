@@ -149,6 +149,11 @@ export class AuthController {
       cookieConfig.refreshCookieConfig,
     );
 
-    return { message: 'Token refreshed successfully' };
+    return {
+      message: 'Token refreshed successfully',
+      user: plainToInstance(LoginResponseDto, rotatedTokens.fullUser, {
+        excludeExtraneousValues: true,
+      }),
+    };
   }
 }

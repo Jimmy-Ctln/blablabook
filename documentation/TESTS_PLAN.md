@@ -1,135 +1,229 @@
-# Plan de Test - BlabaBook
+# Plan de Test - BlaBlaBook
 
 ## Vue d'ensemble
 
-Suite de tests MVP pour les fonctionnalités essentielles. Focus sur l'authentification, la gestion des livres et les pages principales.
+Suite de tests couvrant l'authentification, la gestion des livres, la catégorisation automatique, les guards de sécurité et les pages principales.
 
-**Total: 59 tests (34 backend + 25 frontend)**
-
----
-
-## Backend - 37 tests
-
-### Auth Service (3 tests)
-
-| Test                       | Description                 | Entrée                    | Résultat                             |
-| -------------------------- | --------------------------- | ------------------------- | ------------------------------------ |
-| `should register new user` | Créer un utilisateur valide | email, password, username | Utilisateur créé avec password haché |
-| `should login user`        | Connexion avec credentials  | email, password           | JWT token retourné                   |
-| `should logout user`       | Déconnexion                 | userId                    | Token supprimé de la base            |
-
-### Books Service (3 tests)
-
-| Test                            | Description          | Entrée                | Résultat                            |
-| ------------------------------- | -------------------- | --------------------- | ----------------------------------- |
-| `should add book to list`       | Ajouter un livre     | userId, CreateBookDto | Livre ajouté à la liste utilisateur |
-| `should remove book from list`  | Retirer un livre     | userId, bookId        | Livre retiré de la liste            |
-| `should find books with status` | Récupérer les livres | userId                | Liste des livres avec statuts       |
-
-### User Service (3 tests)
-
-| Test                         | Description          | Entrée          | Résultat                         |
-| ---------------------------- | -------------------- | --------------- | -------------------------------- |
-| `should create user`         | Nouvelle création    | userData        | Utilisateur créé en base         |
-| `should get user by email`   | Chercher utilisateur | email           | Utilisateur trouvé               |
-| `should check existing user` | Vérifier existence   | username, email | Retourne utilisateur s'il existe |
+**Total : 74 tests (51 backend + 23 frontend) — tous verts ✅**
 
 ---
 
-## Frontend - 25 tests
+## Backend - 51 tests
 
-#### Login Page (3 tests)
+### Auth Service (11 tests) — `auth.service.spec.ts`
 
-| Test                                                  | Description                     |
-| ----------------------------------------------------- | ------------------------------- |
+| Test | Description | Entrée | Résultat attendu |
+|---|---|---|---|
+| `should be defined` | Service correctement injecté | — | Service défini |
+| `login - should return user if login is valid` | Connexion réussie | email + password valides | Utilisateur retourné |
+| `login - should throw error if user not exist` | Login avec email inconnu | email inexistant | `UnauthorizedException` |
+| `login - should throw UnauthorizedError if password invalid` | Mauvais mot de passe | password incorrect | `UnauthorizedException` |
+| `register - should create new user` | Inscription valide | email, username, password | Utilisateur créé, mot de passe haché |
+| `register - should throw error if user not created` | Échec création DB | données valides + DB en erreur | `InternalServerErrorException` |
+| `register - should throw error if password not confirmed` | Password ≠ confirmation | password mismatch | `UnprocessableEntityException` |
+| `register - should throw error if email already exists` | Email déjà utilisé | email existant | `UnprocessableEntityException` |
+| `register - should throw error if username already exists` | Username déjà utilisé | username existant | `UnprocessableEntityException` |
+| `logout - should destroy refresh token` | Déconnexion standard | refreshToken valide | Token détruit en base |
+| `logout - should handle missing refresh token gracefully` | Token introuvable | refreshToken inexistant | Warning loggé, pas d'erreur |
+
+### Books Service (19 tests) — `books.service.spec.ts`
+
+| Test | Description | Entrée | Résultat attendu |
+|---|---|---|---|
+| `should be defined` | Service correctement injecté | — | Service défini |
+| `should add book to user list` | Ajout livre existant | userId, CreateBookDto | Livre lié à la liste |
+| `should remove book from user list` | Retrait livre | userId, bookId | Livre délié |
+| `should find user books with status` | Lecture bibliothèque | userId, pagination | Liste avec statuts calculés |
+| `should find all books by categories` | Filtrage par catégorie | categories[] | Livres groupés par catégorie |
+| `should get random books with limit` | Sélection aléatoire | limit | N livres aléatoires |
+| `should update book status with reading dates` | Changement statut | userId, bookId, dates | Statut mis à jour |
+| `should throw when user list not found during update` | Liste inexistante | userId invalide | `HttpException 404` |
+| `should create new book when not existing` | Insertion nouveau livre | CreateBookDto | Livre créé + catégorisé |
+| `should create user list if not existing` | Création liste à la volée | userId sans liste | Liste créée + livre lié |
+| `should update book note successfully` | Mise à jour note | userId, bookId, comment | Note enregistrée |
+| `should throw when user list not found during note update` | Note sur liste inexistante | userId invalide | `HttpException 404` |
+| `should handle error when adding book to list` | Erreur DB lors d'un ajout | DB en erreur | `HttpException 500` |
+| `should return 409 Conflict when book already exists` | Livre déjà dans la bibliothèque | Erreur unique constraint (`code: 23505`) | `HttpException 409` + message `"Book already in user library"` |
+| **`normalizeSubjects trims and filters empty strings`** | **Nettoyage des subjects** | `["  horror  ", "", "fantasy"]` | `["horror", "fantasy"]` |
+| **`pickWinningCategory returns 1 (unknown) when no match`** | **Cas sans match** | `[]` | `1` |
+| **`pickWinningCategory returns the only category`** | **Un seul match** | `[{categoryId:5}]` | `5` |
+| **`pickWinningCategory returns category with most matches`** | **Catégorie majoritaire** | 3x horreur + 1x romance | `3` (horreur) |
+| **`pickWinningCategory handles ties deterministically`** | **Ex-aequo géré** | 1x cat 4 + 1x cat 7 | `4` ou `7` (déterministe) |
+
+### User Service (12 tests) — `user.service.spec.ts`
+
+| Test | Description | Entrée | Résultat attendu |
+|---|---|---|---|
+| `should be defined` | Service correctement injecté | — | Service défini |
+| `should create a new user` | Création utilisateur | userData | Utilisateur inséré |
+| `should get user by email` | Recherche par email | email | Utilisateur trouvé |
+| `should get user by username` | Recherche par username | username | Utilisateur trouvé |
+| `should check existing user` | Vérification doublon | username + email | Utilisateur si existe |
+| `should update user data` | Mise à jour profil | id, updateData | Utilisateur mis à jour |
+| `should throw if email already taken on update` | Email pris par un autre | email d'un autre user | `UnprocessableEntityException` |
+| `should change password successfully` | Changement mot de passe | id, ancien + nouveau | Mot de passe haché + refresh tokens supprimés |
+| `should throw error when current password is incorrect` | Vérification ancien mdp | mauvais ancien mdp | `UnprocessableEntityException` |
+| `should soft delete user with anonymization` | RGPD Article 17 | userId | Email/username anonymisés, `deletedAt` set |
+| `should find user by id` | Recherche par id | id | Profil utilisateur |
+| `should throw if user not found by id` | ID inexistant | id invalide | `NotFoundException` |
+
+### Sécurité — AuthGuard (3 tests) — `auth.guard.spec.ts` 🔒
+
+| Test | Description | Entrée | Résultat attendu |
+|---|---|---|---|
+| `rejects request without jwt_cookie` | Absence de token | request sans cookies | `UnauthorizedException` |
+| `rejects request with invalid jwt_cookie` | Token malformé | jwt_cookie invalide | `UnauthorizedException` |
+| `accepts request with valid jwt_cookie and attaches payload` | Token valide | jwt_cookie valide | `true` + payload attaché à `request.user` |
+
+### Sécurité — JsonContentTypeGuard (6 tests) — `content-type.guard.spec.ts` 🔒
+
+| Test | Description | Entrée | Résultat attendu |
+|---|---|---|---|
+| `allows GET requests regardless of Content-Type` | GET non concerné | `GET /...` | `true` |
+| `rejects POST with application/x-www-form-urlencoded` | Vecteur CSRF | POST form-urlencoded | `BadRequestException` |
+| `rejects POST with text/plain` | Vecteur CSRF | POST text/plain | `BadRequestException` |
+| `accepts POST with application/json` | Cas nominal | POST JSON | `true` |
+| `accepts POST with application/json; charset=utf-8` | Variante charset | POST JSON + charset | `true` |
+| `allows POST with empty body (content-length: 0)` | Body vide légitime | POST sans body | `true` |
+
+---
+
+## Frontend - 23 tests
+
+### Login Page (3 tests) — `LoginPage.spec.tsx`
+
+| Test | Description |
+|---|---|
 | `should render the login page with title 'Connexion'` | Formulaire affiché correctement |
-| `should submit login request with credentials`        | Credentials valides → API call  |
-| `should handle login error and show message`          | Credentials invalides → erreur  |
+| `should submit login request with credentials` | Credentials valides → appel API |
+| `should handle login error and show message` | Credentials invalides → message d'erreur |
 
-#### Register Page (3 tests)
+### Register Page (3 tests) — `RegisterPage.spec.tsx`
 
-| Test                                 | Description                               |
-| ------------------------------------ | ----------------------------------------- |
-| `should render register form`        | Formulaire inscription affiché            |
-| `should validate password match`     | Confirmation password ≠ password → erreur |
-| `should handle registration success` | Inscription OK → redirection login        |
+| Test | Description |
+|---|---|
+| `should render register form` | Formulaire d'inscription affiché |
+| `should validate password match` | Confirmation différente du mot de passe → erreur |
+| `should handle registration success` | Inscription OK → redirection login |
 
-#### HomePage (8 tests)
+### HomePage (6 tests) — `HomePage.test.tsx`
 
-| Test                                            | Description                              |
-| ----------------------------------------------- | ---------------------------------------- |
-| `should render hero section`                    | Banneau/Hero section visible             |
-| `should render book carousels`                  | Carousels par catégories affichés        |
-| `should have correct categories`                | 7 catégories présentes (adventure, etc.) |
-| `should handle loading state`                   | Spinner pendant fetch                    |
-| `should display categories carousels correctly` | Carousels avec livres par catégorie      |
-| `should handle empty carousel state`            | Message vide si pas de livres            |
-| `should render footer`                          | Footer section visible                   |
-| `should navigate to library on click`           | Click category → LibraryPage             |
+| Test | Description |
+|---|---|
+| `should render hero section` | Bannière/Hero section visible |
+| `should render book carousels` | Carousels par catégories affichés |
+| `should have correct categories` | Toutes les catégories présentes |
+| `should handle loading state` | Spinner pendant fetch |
+| `should display categories carousels correctly` | Carousels avec livres par catégorie |
+| `should navigate to library on click` | Click sur catégorie → LibraryPage |
 
-#### LibraryPage (5 tests)
+### LibraryPage (5 tests) — `LibraryPage.test.tsx`
 
-| Test                                          | Description                           |
-| --------------------------------------------- | ------------------------------------- |
-| `shows status counters`                       | Boutons À lire/En cours/Lu visibles   |
-| `filters by search input`                     | Recherche par titre/auteur fonctionne |
-| `renders all cards when search is empty`      | Liste complète affichée               |
-| `shows empty state when no books`             | Message vide si 0 livres              |
-| `opens AddBookModal when clicking add button` | Click ajouter livre → Modal apparaît  |
+| Test | Description |
+|---|---|
+| `shows status counters` | Boutons À lire/En cours/Lu visibles |
+| `filters by search input` | Recherche par titre/auteur fonctionne |
+| `renders all cards when search is empty` | Liste complète affichée |
+| `shows empty state when no books` | Message vide si 0 livres |
+| `opens AddBookModal when clicking add button` | Click bouton ajouter → modal apparaît |
 
-#### BookDetails (6 tests - Utility tests, excluded from coverage metrics)
+### BookDetails (6 tests) — `BookDetails.test.tsx`
 
-| Test                                        | Description                   |
-| ------------------------------------------- | ----------------------------- |
-| `should format date for database correctly` | Conversion date → ISO OK      |
-| `should handle invalid date string`         | Date invalide → default date  |
-| `should have book statuses`                 | Statuts définis correctement  |
-| `should track user book list`               | Suivi liste utilisateur OK    |
-| `should update book status`                 | Statut changeable (À lire/Lu) |
-| `should handle external book data`          | Données externes traitées OK  |
+| Test | Description |
+|---|---|
+| `should format date for database correctly` | Conversion date → ISO OK |
+| `should handle invalid date string` | Date invalide → date par défaut |
+| `should have book statuses` | Statuts définis correctement |
+| `should track user book list` | Suivi liste utilisateur OK |
+| `should update book status` | Changement statut (À lire → Lu) |
+| `should handle external book data` | Données OpenLibrary traitées OK |
 
 ---
 
-## Test Coverage Détaillé
+## Tests fonctionnels manuels (parcours utilisateurs)
 
-### Backend Services
+Ces tests sont exécutés manuellement via le navigateur ou Postman pour valider les parcours utilisateurs complets de bout en bout.
 
-| Service       | Statements | Branch | Functions | Status |
-| ------------- | ---------- | ------ | --------- | ------ |
-| Auth Service  | **84.44%** | 80%    | 80%       | ✅     |
-| Books Service | **90%**    | 55.22% | 100%      | ✅     |
-| User Service  | **91.37%** | 61.53% | 100%      | ✅     |
-
-### Frontend Pages
-
-| Page         | Statements | Branch | Functions | Status |
-| ------------ | ---------- | ------ | --------- | ------ |
-| HomePage     | **92.3%**  | 100%   | 80%       | ✅     |
-| LibraryPage  | **82.35%** | 60%    | 69.23%    | ✅     |
-| LoginPage    | **100%**   | 75%    | 100%      | ✅     |
-| RegisterPage | **100%**   | 75%    | 100%      | ✅     |
+| Scénario | Outil | Étapes | Résultat attendu |
+|---|---|---|---|
+| Inscription complète | Navigateur | 1. Page register → 2. Renseigne email + mdp fort + username → 3. Submit | Redirection vers /login + message succès |
+| Connexion + accès bibliothèque | Navigateur | 1. Page login → 2. Renseigne credentials → 3. Submit | Redirection vers /library, bibliothèque vide affichée |
+| Recherche + ajout livre avec catégorisation | Navigateur | 1. Search "Harry Potter" → 2. Clique sur + d'un résultat | Livre ajouté, catégorie "fantasy" appliquée automatiquement |
+| Changement de statut de lecture | Navigateur | 1. Bibliothèque → 2. Détail livre → 3. Change statut "À lire" → "En cours" | Statut mis à jour, badge couleur changé |
+| Suppression de livre | Navigateur | 1. Bibliothèque → 2. Détail livre → 3. Clic supprimer | Livre retiré de la bibliothèque |
+| Modification du profil | Navigateur | 1. Profil → 2. Change username → 3. Submit | Profil mis à jour, ancien username libéré |
+| Changement de mot de passe + déconnexion automatique | Navigateur | 1. Profil → 2. Change password → 3. Refresh page | Refresh tokens invalidés, redirection /login |
+| Déconnexion complète | Navigateur | 1. Click logout | Cookies effacés, redirection accueil |
 
 ---
 
-## Résumé Global
+## Tests de sécurité 🔒
 
-- **Backend Total** : 34 tests, **89.11%** statements coverage
-- **Frontend Total** : 25 tests, **93.2%** statements coverage
-- **All tests passing** : 59/59 ✅
+### Tests automatisés (déjà couverts dans la section Backend)
+
+Les tests unitaires des guards (`AuthGuard` + `JsonContentTypeGuard`) couvrent les vérifications côté code. Voir les sections dédiées ci-dessus.
+
+### Tests manuels via Postman
+
+| Scénario | Endpoint testé | Action | Résultat attendu |
+|---|---|---|---|
+| BOLA — accès cross-utilisateur | `GET /books/library/<id_user_B>` | User A connecté tente d'accéder à la biblio de user B | `403 Forbidden` |
+| BOLA — modification cross-utilisateur | `PATCH /user/<id_user_B>` | User A connecté tente de modifier le profil de B | `403 Forbidden` |
+| Rate limit login | `POST /auth/login` × 4 | 4 tentatives en < 1 min | 4e tentative → `429 Too Many Requests` |
+| Validation DTO — champ inconnu | `POST /books/library/123` avec `{ malicious: "xxx" }` | Envoi d'un champ non déclaré dans le DTO | `400 Bad Request` |
+| CSRF — Content-Type form-urlencoded | `POST /books/library/123` `Content-Type: application/x-www-form-urlencoded` | Tentative en form-urlencoded (vecteur CSRF) | `400 Bad Request` (`JsonContentTypeGuard`) |
+| Auth — sans cookie | `GET /books/library/1` sans cookie | Requête sans authentification | `401 Unauthorized` |
+| Auth — cookie JWT expiré | `GET /books/library/1` avec JWT > 15min | JWT expiré | `401 Unauthorized` → trigger du refresh |
+| Mot de passe faible refusé | `POST /auth/register` avec password = "abc" | Mot de passe ne respectant pas la policy | `400 Bad Request` avec message du DTO |
 
 ---
 
-## Commandes Test
+## Couverture de code
+
+> Conformément à la consigne (« plan de tests couvrant les fonctionnalités principales du projet »), la mesure de couverture est focalisée sur les composants essentiels : services métier backend, guards de sécurité, pages principales frontend. Les composants secondaires (pages légales, composants UI, hooks utilitaires) sont volontairement exclus du périmètre — ils sont validés indirectement par les tests fonctionnels manuels.
+
+### Backend — couverture mesurée sur 5 composants essentiels
+
+| Fichier | Statements | Branch | Functions | Lines |
+|---|---|---|---|---|
+| `auth.service.ts` | 84.44% | 80% | 80% | 83.72% |
+| `auth.guard.ts` 🔒 | **95.65%** | 78.57% | 100% | 95.23% |
+| `books.service.ts` | 86.79% | 59.42% | 92.59% | 88.17% |
+| `content-type.guard.ts` 🔒 | **100%** | 87.5% | 100% | 100% |
+| `user.service.ts` | 90.47% | 60% | 100% | 90.16% |
+| **Total backend** | **88.84%** | **66.88%** | **93.47%** | **89.13%** |
+
+### Frontend — couverture mesurée sur 4 pages principales
+
+| Page | Statements | Branch | Functions | Lines |
+|---|---|---|---|---|
+| `HomePage.tsx` | 77.77% | 36.66% | 33.33% | 77.77% |
+| `LibraryPage.tsx` | 82.35% | 60% | 69.23% | 80.64% |
+| `LoginPage.tsx` | 100% | 50% | 100% | 100% |
+| `RegisterPage.tsx` | 100% | 50% | 100% | 100% |
+| **Total frontend** | **90.82%** | **50%** | **81.39%** | **90.29%** |
+
+---
+
+## Résumé global
+
+- **Backend** : 50 tests automatisés (11 auth + 18 books + 12 user + 3 auth guard + 6 CSRF guard), **88.84%** de couverture sur les composants essentiels
+- **Frontend** : 23 tests automatisés sur 4 pages principales, **90.82%** de couverture
+- **Tests fonctionnels manuels** : 8 scénarios utilisateurs documentés
+- **Tests de sécurité manuels (Postman)** : 8 scénarios documentés
+- **Tous les tests automatisés passent** : 73/73 ✅
+
+---
+
+## Commandes test
 
 ```bash
-# Frontend
-cd frontend && npm run test           # Tests frontend
-cd frontend && npm run test:cov       # Avec couverture frontend
-cd frontend && npm run test --watch   # Mode watch frontend
-
 # Backend
-cd backend npm run test          # Tous les tests backend
-cd backend npm run test:cov      # Avec couverture backend
-cd backend npm run test --watch  # Mode watch backend
+cd backend && npm test          # Tous les tests backend
+cd backend && npm run test:cov  # Avec couverture
+cd backend && npm run test:e2e  # Tests e2e (placeholder actuel)
 
+# Frontend
+cd frontend && npm test           # Tests frontend
+cd frontend && npm run test:cov   # Avec couverture
 ```

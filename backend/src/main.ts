@@ -5,24 +5,31 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import { json, urlencoded } from 'express';
+import { json } from 'express';
 
 async function bootstrap() {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret || jwtSecret.length < 32) {
+    throw new Error(
+      'JWT_SECRET must be defined and at least 32 characters long',
+    );
+  }
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Trust the first reverse proxy (Render, Vercel...) so rate limiting
   // uses the real client IP from X-Forwarded-For instead of the proxy IP
   app.set('trust proxy', 1);
 
-  // Limit request body to 1 MB to prevent memory exhaustion DoS attacks
+  // Limit request body to 1 MB to prevent memory exhaustion DoS attacks.
+  // urlencoded() is deliberately not enabled: all API endpoints expect JSON,
+  // and refusing form-encoded bodies closes a CSRF vector via "simple requests".
   app.use(json({ limit: '1mb' }));
-  app.use(urlencoded({ limit: '1mb', extended: true }));
 
   app.use(helmet());
   app.use(cookieParser());
 
   const frontendUrl = process.env.FRONTEND_URL;
-
   // enabled CORS
   app.enableCors({
     origin: frontendUrl,

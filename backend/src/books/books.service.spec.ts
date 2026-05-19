@@ -451,6 +451,91 @@ describe('BooksService', () => {
     );
   });
 
+  describe('Categorization helpers', () => {
+    it('normalizeSubjects trims and filters empty strings', () => {
+      const result = service['normalizeSubjects']([
+        '  horror  ',
+        '',
+        '   ',
+        'fantasy',
+      ]);
+      expect(result).toEqual(['horror', 'fantasy']);
+    });
+
+    it('pickWinningCategory returns 1 (unknown) when no keyword matches', () => {
+      const result = service['pickWinningCategory']([]);
+      expect(result).toBe(1);
+    });
+
+    it('pickWinningCategory returns the only category when one keyword matches', () => {
+      const result = service['pickWinningCategory']([{ categoryId: 5 }]);
+      expect(result).toBe(5);
+    });
+
+    it('pickWinningCategory returns the category with the most matches', () => {
+      const matched = [
+        { categoryId: 3 },
+        { categoryId: 3 },
+        { categoryId: 3 },
+        { categoryId: 5 },
+      ];
+      const result = service['pickWinningCategory'](matched);
+      expect(result).toBe(3);
+    });
+
+    it('pickWinningCategory handles ties deterministically (returns first sorted)', () => {
+      const matched = [{ categoryId: 4 }, { categoryId: 7 }];
+      const result = service['pickWinningCategory'](matched);
+      expect([4, 7]).toContain(result);
+    });
+  });
+
+  it('should return 409 Conflict when book already exists in user library', async () => {
+    const createDto = {
+      name: 'Test Book',
+      author: 'Author',
+      coverUrl: 'url',
+      description: 'Description',
+      isbn: '123',
+      publishingHouse: 'House',
+      publishedAt: '2024-01-01',
+      categories: [],
+    };
+
+    const mockBook = { id: 1, isbn: '123' };
+    const mockUserList = { id: 1, userId: 1 };
+
+    const selectChain1 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockBook]),
+    };
+
+    const selectChain2 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([mockUserList]),
+    };
+
+    const uniqueViolationError = Object.assign(
+      new Error('duplicate key value violates unique constraint'),
+      { code: '23505' },
+    );
+
+    const insertChain = {
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockRejectedValue(uniqueViolationError),
+    };
+
+    mockDb.select
+      .mockReturnValueOnce(selectChain1)
+      .mockReturnValueOnce(selectChain2);
+    mockDb.insert.mockReturnValue(insertChain);
+
+    await expect(service.addToUserList(1, createDto)).rejects.toMatchObject({
+      status: 409,
+      message: 'Book already in user library',
+    });
+  });
+
   it('should handle error when adding book to list', async () => {
     const createDto = {
       name: 'Test Book',

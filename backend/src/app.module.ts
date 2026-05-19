@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { CategoryModule } from './category/category.module';
 import { DrizzleModule } from './db/drizzle.module';
 import { ReviewModule } from './review/review.module';
+import { JsonContentTypeGuard } from './security/content-type/content-type.guard';
 
 @Module({
   imports: [
@@ -35,6 +36,10 @@ import { ReviewModule } from './review/review.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JsonContentTypeGuard,
     },
   ],
 })
