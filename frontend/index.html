@@ -63,12 +63,11 @@
     <link rel="shortcut icon" type="image/svg+xml" href="/book.svg?v=1" />
     <link rel="canonical" href="https://blablabook-sigma.vercel.app" />
 
-    <!-- Preload LCP image: hero background loaded before JS executes.
-         Browsers without WebP support ignore the type="image/webp" hint and fall back to the JPEG. -->
+    <!-- Preload LCP image: hero background loaded before JS executes.-->
     <link
       rel="preload"
-      href="/hero-bg.webp"
       as="image"
+      imagesrcset="/hero-bg.webp"
       type="image/webp"
       fetchpriority="high"
     />
@@ -82,7 +81,7 @@
 
     <!-- Google Fonts with async loading using media="print" trick for non-blocking load -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
       media="print"
       onload="this.media = 'all'"
@@ -90,7 +89,7 @@
     <!-- Fallback for users with JavaScript disabled -->
     <noscript>
       <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet"
       />
     </noscript>

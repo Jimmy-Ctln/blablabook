@@ -25,7 +25,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 60 * 24, // 24 heures
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      refetchOnWindowFocus: false, // no auto-refetch when tab regains focus
+      retry: 1, // only 1 retry on error (instead of 3 by default)
     },
   },
 });
@@ -40,7 +42,13 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister }}
+      persistOptions={{
+        persister,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) =>
+            query.queryKey[0] !== "random-books",
+        },
+      }}
     >
       <Toaster position="top-right" richColors />
       <RouterProvider router={router} />
