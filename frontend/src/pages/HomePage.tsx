@@ -138,7 +138,7 @@ export default function HomePage() {
     // Display carousels when no search
     <>
       <CarouselDisplay
-        title="Suggestions aléatoires"
+        title="À découvrir"
         books={randomBooksArray.map(mapBookRowToDisplay)}
         isLoading={isLoadingRandom || randomBooksArray.length === 0}
       />
