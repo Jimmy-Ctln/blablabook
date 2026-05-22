@@ -43,6 +43,13 @@
       "when": 1778754625279,
       "tag": "0005_redundant_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779440008870,
+      "tag": "0006_gray_thaddeus_ross",
+      "breakpoints": true
     }
   ]
 }

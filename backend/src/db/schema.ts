@@ -94,7 +94,6 @@ export const review = pgTable('review', {
   review_text: text(),
   rating: integer().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
   bookId: integer('book_id')
     .references(() => book.id)
