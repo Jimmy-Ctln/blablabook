@@ -23,8 +23,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    /* Adding this for Tailwind */
-    "baseUrl": ".",
+    /* Path aliases (resolved relative to this tsconfig file) */
     "paths": {
       "@/*": ["./src/*"]
     }
