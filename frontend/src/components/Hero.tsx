@@ -22,7 +22,7 @@ export default function Hero() {
             className="absolute inset-0 object-cover h-full w-full"
           />
         </picture>
-        <div className="absolute inset-0 bg-linear-to-r from-[rgba(10,12,20,0.95)] via-[rgba(10,12,20,0.75)] to-[rgba(10,12,20,0.45)]" />
+        <div className="absolute inset-0 bg-linear-to-r from-[rgba(10,12,20,0.95)] via-[rgba(10,12,20,0.75)] to-[rgba(10,12,20,0.45)] [html.light_&]:from-[rgba(10,12,20,0.65)] [html.light_&]:via-[rgba(10,12,20,0.45)] [html.light_&]:to-[rgba(10,12,20,0.15)]" />
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-background to-transparent" />
       </div>
 

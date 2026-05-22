@@ -28,14 +28,14 @@ export default function HomePage() {
     "horreur",
   ];
 
-  // staleTime/gcTime à 0 : intentionnel pour toujours récupérer de nouvelles suggestions aléatoires
+  // Random books: always fresh on mount, excluded from persistence (see main.tsx).
   const { data: randomBooks = [], isLoading: isLoadingRandom } = useQuery<
     BookRow[]
   >({
     queryKey: ["random-books"],
     queryFn: () => getRandomBooks(20),
     staleTime: 0,
-    gcTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: books = {}, isFetching } = useQuery<BooksByCategory>({
@@ -138,7 +138,7 @@ export default function HomePage() {
     // Display carousels when no search
     <>
       <CarouselDisplay
-        title="Suggestions aléatoires"
+        title="À découvrir"
         books={randomBooksArray.map(mapBookRowToDisplay)}
         isLoading={isLoadingRandom || randomBooksArray.length === 0}
       />

@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 
 @theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
   --color-background: hsl(225 15% 6%);
   --color-foreground: hsl(210 20% 95%);
   --color-card: hsl(220 15% 10%);

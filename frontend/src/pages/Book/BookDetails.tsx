@@ -8,7 +8,10 @@ import {
   Check,
   Tag,
   Calendar,
+  BookX,
 } from "lucide-react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { addBookToUserList } from "../../api/books";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
@@ -37,7 +40,6 @@ const BookDetails = () => {
     data: book,
     isLoading,
     isError,
-    error,
   } = useQuery<ExternalBookDisplayData>({
     queryKey: ["external-book", isbn],
     queryFn: () => getFullExternalBook(isbn),
@@ -117,6 +119,12 @@ const BookDetails = () => {
 
   usePageTitle(book?.title ?? "Détail du livre");
 
+  useEffect(() => {
+    if (isError) {
+      toast.error("Impossible de récupérer les informations de ce livre.");
+    }
+  }, [isError]);
+
   const isBookInLibrary = userBooks.some((b) => b.isbn === book?.isbn);
   const userBookData = userBooks.find((b) => b.isbn === book?.isbn);
   const isConnected = !!currentUser?.id;
@@ -141,12 +149,21 @@ const BookDetails = () => {
 
   if (isError || !book) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-        <p className="text-destructive font-sans text-lg" role="alert">
-          Oups !{" "}
-          {(error as Error)?.message || "Impossible de charger ce livre."}
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 space-y-4">
+        <BookX className="w-14 h-14 text-muted-foreground" aria-hidden="true" />
+        <h2 className="text-2xl font-bold text-foreground">
+          Livre introuvable
+        </h2>
+        <p className="text-muted-foreground max-w-sm">
+          Les informations de ce livre sont temporairement inaccessibles.
+          Réessayez dans quelques instants.
         </p>
-        <Button variant="outline" onClick={() => router.history.back()}>
+        <Button
+          className="text-foreground"
+          variant="outline"
+          onClick={() => router.history.back()}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Retour
         </Button>
       </div>

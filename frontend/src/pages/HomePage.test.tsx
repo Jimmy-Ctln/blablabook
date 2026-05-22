@@ -93,7 +93,7 @@ describe("HomePage", () => {
 
   it("should render carousel with categories", () => {
     render(<HomePage />);
-    expect(screen.getByText("Suggestions aléatoires")).toBeInTheDocument();
+    expect(screen.getByText("À découvrir")).toBeInTheDocument();
   });
 
   it("should have book categories defined", () => {
@@ -111,12 +111,12 @@ describe("HomePage", () => {
   it("should handle loading state for carousel", () => {
     render(<HomePage />);
     expect(
-      screen.getByTestId("carousel-Suggestions aléatoires"),
+      screen.getByTestId("carousel-À découvrir"),
     ).toBeInTheDocument();
   });
 
   it("should render with multiple categories", () => {
     render(<HomePage />);
-    expect(screen.getByText("Suggestions aléatoires")).toBeInTheDocument();
+    expect(screen.getByText("À découvrir")).toBeInTheDocument();
   });
 });
