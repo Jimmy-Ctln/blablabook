@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtPayload, RotateTokensData, TokenInsert } from './types';
@@ -10,6 +11,7 @@ import { TokenRepository } from './token.respository';
 
 @Injectable()
 export class TokenService {
+  private readonly logger = new Logger(TokenService.name);
   private readonly jwtSecret: string;
 
   constructor(
@@ -39,7 +41,7 @@ export class TokenService {
       if (err instanceof Error) {
         errorMessage = err.message;
       }
-      console.error('failed to sign JWT token: ', errorMessage);
+      this.logger.error('failed to sign JWT token', errorMessage);
       throw new InternalServerErrorException(errorMessage);
     }
 
@@ -71,7 +73,7 @@ export class TokenService {
     // store token in db
     const token = await this.tokenRespository.storeRefreshToken(tokenData);
     if (!token) {
-      console.error('Failed to store new refresh token');
+      this.logger.error('Failed to store new refresh token');
       throw new InternalServerErrorException(
         'failed to store new refresh token',
       );

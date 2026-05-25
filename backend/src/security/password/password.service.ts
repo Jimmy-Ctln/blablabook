@@ -1,16 +1,22 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import argon2 from 'argon2';
 
 @Injectable()
 export class PasswordService {
+  private readonly logger = new Logger(PasswordService.name);
+
   constructor() {}
 
   async checkPassword(hashPwd: string, plainPwd: string): Promise<boolean> {
     try {
       return await argon2.verify(hashPwd, plainPwd);
     } catch (err) {
-      console.error(
-        'password verify failed:',
+      this.logger.error(
+        'Password verify failed',
         err instanceof Error ? err.message : 'unknown',
       );
       return false;
@@ -21,8 +27,8 @@ export class PasswordService {
     try {
       return await argon2.hash(pwd);
     } catch (err) {
-      console.error(
-        'password hash failed:',
+      this.logger.error(
+        'Password hash failed',
         err instanceof Error ? err.message : 'unknown',
       );
       throw new InternalServerErrorException('hash failed');

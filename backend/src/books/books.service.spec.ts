@@ -96,7 +96,7 @@ describe('BooksService', () => {
     const result = await service.removeFromUserList(1, 1);
 
     expect(result).toHaveLength(1);
-    expect(result![0].bookId).toBe(1);
+    expect(result[0].bookId).toBe(1);
   });
 
   it('should find user books with status', async () => {
