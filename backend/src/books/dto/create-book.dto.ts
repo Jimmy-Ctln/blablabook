@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsArray, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsArray,
+  IsOptional,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookDto {
@@ -38,7 +44,9 @@ export class CreateBookDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(5000, { message: 'description must be shorter than 5000 characters' })
+  @MaxLength(5000, {
+    message: 'description must be shorter than 5000 characters',
+  })
   description?: string;
 
   @ApiProperty({

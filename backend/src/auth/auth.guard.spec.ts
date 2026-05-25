@@ -11,16 +11,15 @@ describe('AuthGuard', () => {
     jwtService = { verifyAsync: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthGuard,
-        { provide: JwtService, useValue: jwtService },
-      ],
+      providers: [AuthGuard, { provide: JwtService, useValue: jwtService }],
     }).compile();
 
     guard = module.get<AuthGuard>(AuthGuard);
   });
 
-  const mockContext = (cookies: Record<string, string> = {}): ExecutionContext =>
+  const mockContext = (
+    cookies: Record<string, string> = {},
+  ): ExecutionContext =>
     ({
       switchToHttp: () => ({
         getRequest: () => ({ cookies }),
