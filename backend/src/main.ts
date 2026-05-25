@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { json } from 'express';
@@ -70,12 +70,14 @@ async function bootstrap() {
   }
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
-  console.log(`Server running on port ${process.env.PORT ?? 3000}`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`Server running on port ${process.env.PORT ?? 3000}`);
 }
 
 // best practice
 bootstrap().catch((err) => {
-  console.error('Fatal error during application bootstrap: ', err);
+  const logger = new Logger('Bootstrap');
+  logger.error('Fatal error during application bootstrap', err);
   // exit programme with failed error if failed
   process.exit(1);
 });

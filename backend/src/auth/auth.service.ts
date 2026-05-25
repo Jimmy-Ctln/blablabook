@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -15,6 +16,8 @@ import { TokenService } from '../security/token/token.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly userService: UserService,
     private readonly passwordService: PasswordService,
@@ -24,7 +27,7 @@ export class AuthService {
   async login(payload: LoginRequestDto) {
     const user = await this.userService.getUserByEmail(payload.email);
     if (!user) {
-      console.error('Login attempt failed');
+      this.logger.warn('Login attempt failed');
       throw new UnauthorizedException('email or password is invalid');
     }
 
@@ -34,7 +37,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      console.error('Login attempt failed');
+      this.logger.warn('Login attempt failed');
       throw new UnauthorizedException('email or password is invalid');
     }
 
@@ -83,7 +86,7 @@ export class AuthService {
     const isDestroyToken = await this.tokenService.destroyToken(refreshToken);
 
     if (!isDestroyToken) {
-      console.warn('refresh token not found in the db');
+      this.logger.warn('refresh token not found in the db');
     }
   }
 
@@ -97,8 +100,8 @@ export class AuthService {
       const rotatedTokens = await this.tokenService.rotateTokens(refreshToken);
       return rotatedTokens;
     } catch (error) {
-      console.error(
-        'Refresh token rotation failed:',
+      this.logger.warn(
+        'Refresh token rotation failed',
         error instanceof Error ? error.message : 'unknown',
       );
       throw new UnauthorizedException('Invalid or expired refresh token');
