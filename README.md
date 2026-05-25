@@ -181,7 +181,15 @@ docker exec -it backend npm run seed
 │   │   ├── db/                # Drizzle schema and DB connection
 │   │   ├── main.ts            # App entry point
 │   │   └── seed.ts            # Database seeding
+│   ├── test/
+│   │   ├── docker-compose.test.yml  # Isolated Postgres for integration tests
+│   │   ├── app.e2e-spec.ts          # Default NestJS e2e placeholder
+│   │   └── integration/             # Integration + functional test suites
+│   │       ├── db-setup.ts          # Migrations + seed for the test DB
+│   │       ├── findMatchedKeywords.spec.ts  # SQL regex matching (integration)
+│   │       └── books-functional.spec.ts     # POST /books/library full chain
 │   ├── drizzle/               # Migration files (version controlled in Git)
+│   ├── .env.test              # Test environment variables (committed, non-sensitive)
 │   ├── Dockerfile             # Production image
 │   ├── Dockerfile.dev         # Development image
 │   └── start.sh               # Production startup (migrate → seed → start)
@@ -230,13 +238,14 @@ docker exec -it backend npm run seed
 
 ### Backend
 
-| Command              | Purpose                          |
-| -------------------- | -------------------------------- |
-| `npm run start:dev`  | Start in watch mode              |
-| `npm run build`      | Build for production             |
-| `npm run start`      | Start production server          |
-| `npm run seed`       | Seed the database                |
-| `npm run test`       | Run tests (Jest)                 |
+| Command                    | Purpose                                                              |
+| -------------------------- | -------------------------------------------------------------------- |
+| `npm run start:dev`        | Start in watch mode                                                  |
+| `npm run build`            | Build for production                                                 |
+| `npm run start`            | Start production server                                              |
+| `npm run seed`             | Seed the database                                                    |
+| `npm run test`             | Run unit tests (Jest, mocked dependencies)                           |
+| `npm run test:integration` | Run integration & functional tests against an isolated Postgres (Docker) |
 
 ### Frontend
 
@@ -264,9 +273,15 @@ git push
 
 ## Testing
 
-### Backend (Jest)
+The project follows a three-tier testing strategy:
 
-Tests cover the three main service layers: auth, users, and books.
+- **Unit tests** — fast, isolated tests of individual functions and services (dependencies mocked)
+- **Integration tests** — tests of code that interacts with a real PostgreSQL instance, running in an isolated Docker container
+- **Functional tests** — full HTTP chain tests via supertest, against the same isolated PostgreSQL instance
+
+### Backend unit tests (Jest)
+
+Run quickly with mocked dependencies — no Docker required.
 
 ```bash
 cd backend
@@ -274,10 +289,40 @@ npm run test
 ```
 
 - `auth.service.spec.ts` — Registration, login, token refresh, logout
+- `auth.guard.spec.ts` — JWT validation, cookie extraction
 - `user.service.spec.ts` — Profile updates, password change, soft delete
-- `books.service.spec.ts` — Library operations, reading status, book search
+- `books.service.spec.ts` — Library operations, reading status, categorization helpers (`normalizeSubjects`, `pickWinningCategory`)
+- `content-type.guard.spec.ts` — Anti-CSRF JSON content-type enforcement
 
-### Frontend (Vitest)
+### Backend integration & functional tests (Jest + Docker)
+
+Spins up an isolated PostgreSQL container, applies the real Drizzle migrations, seeds the production keywords from `keywords.json`, and runs:
+
+- **`findMatchedKeywords.spec.ts`** (integration) — validates the SQL regex word-boundary behavior, case-insensitivity (`~*`), and multi-keyword matching directly against a real PostgreSQL instance (no mocks).
+- **`books-functional.spec.ts`** (functional) — sends a real HTTP `POST /books/library/:userId` via supertest, exercising the full chain (validation, controller, service, categorization, DB writes) and verifies both the response and the database side effects.
+
+```bash
+cd backend
+npm run test:integration
+```
+
+This single command:
+
+1. Starts an isolated PostgreSQL container defined in `test/docker-compose.test.yml` (port `5434`, tmpfs for speed, no persistence)
+2. Waits for the Postgres healthcheck to pass
+3. Applies Drizzle migrations and seeds categories + keywords + a test user
+4. Runs the integration and functional test suites
+5. Stops and removes the container (even if tests fail — no zombie containers)
+
+Test environment variables live in `backend/.env.test` (committed, non-sensitive values only). This single file is the **source of truth** for both local runs and CI:
+
+- The file is committed to the repo, so it's available wherever the code is checked out (local machine, CI runner, teammate's laptop)
+- `db-setup.ts` loads it with `dotenv` using `override: true`, which **forces these values to win** over any pre-existing environment variables (CI secrets, shell exports, etc.)
+- Result: the integration tests always connect to the disposable Docker test database — never to the dev or prod database — regardless of the execution environment
+
+The dev/prod database is never touched by these tests.
+
+### Frontend tests (Vitest)
 
 Tests cover the key pages and user flows.
 
@@ -304,10 +349,12 @@ No code reaches production without passing every quality gate. The pipelines enf
 Runs on every push and pull request to `dev`. No deployment — purely a validation pipeline.
 
 ```
-npm audit (high+)       → blocks if a dependency has a known vulnerability
-Tests                   → blocks if any test fails
-Lint                    → blocks if code style rules are violated
-Build                   → blocks if TypeScript compilation fails
+npm audit (high+)        → blocks if a dependency has a known vulnerability
+Unit tests               → blocks if any unit test fails
+Integration tests        → spins up an isolated Postgres container and runs SQL
+                           regex matching tests + full HTTP chain tests (supertest)
+Lint                     → blocks if code style rules are violated
+Build                    → blocks if TypeScript compilation fails
 Database migration check → validates migration files can be generated without errors
 Docker integration tests → spins up all containers and verifies that:
                            - PostgreSQL is reachable
