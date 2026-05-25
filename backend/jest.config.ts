@@ -24,7 +24,7 @@ const config: Config = {
     'src/auth/auth.guard.ts',
     'src/security/content-type/content-type.guard.ts',
   ],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/test/integration/'],
 };
 
 export default config;

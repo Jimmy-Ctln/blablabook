@@ -88,6 +88,10 @@ jobs:
       - name: Run backend tests
         run: npm run test
 
+      # Run integration tests against an isolated PostgreSQL test container
+      - name: Run integration tests (isolated PostgreSQL)
+        run: npm run test:integration
+
       # Lint backend source
       - name: Lint backend
         run: npm run lint
