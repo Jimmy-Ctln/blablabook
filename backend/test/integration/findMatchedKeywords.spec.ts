@@ -42,4 +42,14 @@ describe('findMatchedKeywords (integration with real database)', () => {
     const matched = await service['findMatchedKeywords'](['horror ghost vampire']);
     expect(matched.length).toBeGreaterThanOrEqual(3);
   });
+
+  it('subjects that do not match any known keyword return an empty array', async () => {
+    // "mathematics" and "accounting" are not in keywords.json
+    // → the book will fall back to the "unknown" category in pickWinningCategory
+    const matched = await service['findMatchedKeywords']([
+      'mathematics',
+      'accounting',
+    ]);
+    expect(matched).toEqual([]);
+  });
 });
