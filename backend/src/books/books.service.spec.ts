@@ -60,6 +60,12 @@ describe('BooksService', () => {
       where: jest.fn().mockResolvedValue([mockUserList]),
     };
 
+    // Pre-insert duplicate check: no existing link
+    const selectChain3 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
     const insertChain = {
       values: jest.fn().mockReturnThis(),
       returning: jest.fn().mockResolvedValue([]),
@@ -67,7 +73,8 @@ describe('BooksService', () => {
 
     mockDb.select
       .mockReturnValueOnce(selectChain1)
-      .mockReturnValueOnce(selectChain2);
+      .mockReturnValueOnce(selectChain2)
+      .mockReturnValueOnce(selectChain3);
     mockDb.insert.mockReturnValue(insertChain);
 
     const result = await service.addToUserList(1, createDto);
@@ -332,6 +339,12 @@ describe('BooksService', () => {
       where: jest.fn().mockResolvedValue([{ id: 1, userId: 1 }]),
     };
 
+    // Mock: pre-insert duplicate check (no existing link)
+    const selectChain4 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
     // Mock: insert book-keyword
     const insertChain2 = {
       values: jest.fn().mockReturnThis(),
@@ -346,7 +359,8 @@ describe('BooksService', () => {
     mockDb.select
       .mockReturnValueOnce(selectChain1)
       .mockReturnValueOnce(selectChain2)
-      .mockReturnValueOnce(selectChain3);
+      .mockReturnValueOnce(selectChain3)
+      .mockReturnValueOnce(selectChain4);
 
     mockDb.insert
       .mockReturnValueOnce(insertChain1)
@@ -386,6 +400,12 @@ describe('BooksService', () => {
       where: jest.fn().mockResolvedValue([]),
     };
 
+    // Mock: pre-insert duplicate check (no existing link)
+    const selectChain3 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
     // Mock: insert new list
     const insertChain1 = {
       values: jest.fn().mockReturnThis(),
@@ -400,7 +420,8 @@ describe('BooksService', () => {
 
     mockDb.select
       .mockReturnValueOnce(selectChain1)
-      .mockReturnValueOnce(selectChain2);
+      .mockReturnValueOnce(selectChain2)
+      .mockReturnValueOnce(selectChain3);
 
     mockDb.insert
       .mockReturnValueOnce(insertChain1)
@@ -505,35 +526,35 @@ describe('BooksService', () => {
     const mockBook = { id: 1, isbn: '123' };
     const mockUserList = { id: 1, userId: 1 };
 
+    // Book exists
     const selectChain1 = {
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([mockBook]),
     };
 
+    // User list exists
     const selectChain2 = {
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([mockUserList]),
     };
 
-    const uniqueViolationError = Object.assign(
-      new Error('duplicate key value violates unique constraint'),
-      { code: '23505' },
-    );
-
-    const insertChain = {
-      values: jest.fn().mockReturnThis(),
-      returning: jest.fn().mockRejectedValue(uniqueViolationError),
+    // Pre-insert duplicate check: link ALREADY exists → triggers 409
+    const selectChain3 = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([{ id: 42 }]),
     };
 
     mockDb.select
       .mockReturnValueOnce(selectChain1)
-      .mockReturnValueOnce(selectChain2);
-    mockDb.insert.mockReturnValue(insertChain);
+      .mockReturnValueOnce(selectChain2)
+      .mockReturnValueOnce(selectChain3);
 
     await expect(service.addToUserList(1, createDto)).rejects.toMatchObject({
       status: 409,
       message: 'Book already in user library',
     });
+
+    expect(mockDb.insert).not.toHaveBeenCalled();
   });
 
   it('should handle error when adding book to list', async () => {

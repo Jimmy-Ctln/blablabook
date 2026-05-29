@@ -306,7 +306,6 @@ export class BooksService {
     createBookDto: CreateBookDto,
   ): Promise<BookSelect> {
     try {
-      // Check if the book already exists by ISBN to avoid duplicates
       const found = await this.db
         .select()
         .from(book)
@@ -320,6 +319,23 @@ export class BooksService {
 
       const userList = await this.getOrCreateUserList(userId);
 
+      const [alreadyLinked] = await this.db
+        .select({ id: listBook.id })
+        .from(listBook)
+        .where(
+          and(
+            eq(listBook.bookId, existingBook.id),
+            eq(listBook.listId, userList.id),
+          ),
+        );
+
+      if (alreadyLinked) {
+        throw new HttpException(
+          'Book already in user library',
+          HttpStatus.CONFLICT,
+        );
+      }
+
       await this.db
         .insert(listBook)
         .values({
@@ -330,19 +346,9 @@ export class BooksService {
 
       return existingBook;
     } catch (err) {
+      if (err instanceof HttpException) throw err;
+
       const error = err instanceof Error ? err : new Error(String(err));
-
-      const isUniqueViolation =
-        (err as { code?: string }).code === '23505' ||
-        error.message.toLowerCase().includes('unique');
-
-      if (isUniqueViolation) {
-        throw new HttpException(
-          'Book already in user library',
-          HttpStatus.CONFLICT,
-        );
-      }
-
       this.logger.error(
         'Failed to add book to user list',
         error.stack || error,
