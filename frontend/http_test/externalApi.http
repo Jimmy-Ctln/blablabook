@@ -6,7 +6,7 @@
 @categoryName = fantasy
 @randomLikeQuery = science
 @isbn = 9780140328721
-@workId = /works/OL83573W
+@workId = OL19324556W
 @authorId = OL34184A
 @editionKey = OL7723154M
 @coverId = 15152634
