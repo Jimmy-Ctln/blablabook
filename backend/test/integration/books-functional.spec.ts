@@ -92,4 +92,32 @@ describe('POST /books/library/:userId (functional - full HTTP chain)', () => {
       .where(eq(schema.category.name, 'fantasy'));
     expect(insertedBook.categoryId).toBe(fantasyCategory.id);
   });
+
+  it('falls back to the "unknown" category when no subject matches any keyword', async () => {
+    const uniqueIsbn = `func-test-unknown-${Date.now()}`;
+
+    await request(app.getHttpServer())
+      .post(`/books/library/${testUserId}`)
+      .set('Content-Type', 'application/json')
+      .send({
+        name: 'Modern Accounting Practices',
+        author: 'Jane Doe',
+        isbn: uniqueIsbn,
+        // Subjects unrelated to any seeded keyword (no horror/romance/fantasy/etc.)
+        categories: ['mathematics', 'accounting'],
+      })
+      .expect(201);
+
+    const [insertedBook] = await db
+      .select()
+      .from(schema.book)
+      .where(eq(schema.book.isbn, uniqueIsbn));
+    expect(insertedBook).toBeDefined();
+
+    const [unknownCategory] = await db
+      .select()
+      .from(schema.category)
+      .where(eq(schema.category.name, 'unknown'));
+    expect(insertedBook.categoryId).toBe(unknownCategory.id);
+  });
 });

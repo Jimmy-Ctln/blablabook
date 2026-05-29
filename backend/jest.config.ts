@@ -14,16 +14,6 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^src/(.*)$': '<rootDir>/src/$1',
   },
-  collectCoverageFrom: [
-    // Coverage focused on essential features
-    // (instruction: “test plan covering the project's main features”)
-    'src/auth/auth.service.ts',
-    'src/books/books.service.ts',
-    'src/user/user.service.ts',
-    // Security guards (AuthGuard + JsonContentTypeGuard against CSRF)
-    'src/auth/auth.guard.ts',
-    'src/security/content-type/content-type.guard.ts',
-  ],
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/test/integration/'],
 };
 

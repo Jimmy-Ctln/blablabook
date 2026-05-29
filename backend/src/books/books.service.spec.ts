@@ -504,10 +504,10 @@ describe('BooksService', () => {
       expect(result).toBe(3);
     });
 
-    it('pickWinningCategory handles ties deterministically (returns first sorted)', () => {
-      const matched = [{ categoryId: 4 }, { categoryId: 7 }];
+    it('pickWinningCategory handles ties deterministically (smallest categoryId wins)', () => {
+      const matched = [{ categoryId: 7 }, { categoryId: 4 }];
       const result = service['pickWinningCategory'](matched);
-      expect([4, 7]).toContain(result);
+      expect(result).toBe(4);
     });
   });
 
