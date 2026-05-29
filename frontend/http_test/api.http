@@ -1,0 +1,120 @@
+### Test dataset — demonstrates the auto-categorization pipeline.
+### Each case sends controlled `categories` (= raw subjects) → the service
+### applies WordBoundary matching + scoring → result is predictable.
+### Categories: 1=unknown, 2=horreur, 3=romance, 4=aventure, 5=fantasy, 6=science-fiction
+
+@apiBaseUrl = http://localhost:3000
+@userId = 2
+
+### 1. REGISTER — run once on a fresh DB (422 if account already exists, expected)
+POST {{apiBaseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv DEMO_EMAIL}}",
+  "username": "{{$dotenv DEMO_USERNAME}}",
+  "password": "{{$dotenv DEMO_PASSWORD}}",
+  "confirmPassword": "{{$dotenv DEMO_PASSWORD}}"
+}
+
+###
+
+### 2. LOGIN — sets HttpOnly cookies, auto-replayed on next requests
+POST {{apiBaseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv DEMO_EMAIL}}",
+  "password": "{{$dotenv DEMO_PASSWORD}}"
+}
+
+###
+
+### 3. ME — current user info
+GET {{apiBaseUrl}}/user/{{userId}}
+
+###
+
+
+### CASE 1 — Scoring: 4 horror vs 1 romance → horreur wins
+POST {{apiBaseUrl}}/books/library/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "[DEMO] Case 1 - Scoring horror",
+  "author": "Demo",
+  "isbn": "DEMO-CASE-1",
+  "coverUrl": "",
+  "description": "",
+  "publishingHouse": "Demo",
+  "publishedAt": "2026-01-01",
+  "categories": ["horror", "vampire", "ghost", "zombie", "love"]
+}
+
+### Verify CASE 1 → categoryName: "horreur"
+GET {{apiBaseUrl}}/books/isbn/DEMO-CASE-1
+
+###
+
+
+### CASE 2 — No match → falls back to "unknown" (id=1)
+POST {{apiBaseUrl}}/books/library/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "[DEMO] Case 2 - No keyword match",
+  "author": "Demo",
+  "isbn": "DEMO-CASE-2",
+  "coverUrl": "",
+  "description": "",
+  "publishingHouse": "Demo",
+  "publishedAt": "2026-01-01",
+  "categories": ["cuisine", "philosophie", "essai"]
+}
+
+### Verify CASE 2 → categoryName: "unknown"
+GET {{apiBaseUrl}}/books/isbn/DEMO-CASE-2
+
+###
+
+
+### CASE 3 — Case-insensitive match (Postgres ~*)
+POST {{apiBaseUrl}}/books/library/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "[DEMO] Case 3 - Mixed casing",
+  "author": "Demo",
+  "isbn": "DEMO-CASE-3",
+  "coverUrl": "",
+  "description": "",
+  "publishingHouse": "Demo",
+  "publishedAt": "2026-01-01",
+  "categories": ["HORROR", "Vampires", "GhOsT"]
+}
+
+### Verify CASE 3 → categoryName: "horreur"
+GET {{apiBaseUrl}}/books/isbn/DEMO-CASE-3
+
+###
+
+
+### CASE 4 — Pure single-category match
+POST {{apiBaseUrl}}/books/library/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "[DEMO] Case 4 - Pure adventure",
+  "author": "Demo",
+  "isbn": "DEMO-CASE-4",
+  "coverUrl": "",
+  "description": "",
+  "publishingHouse": "Demo",
+  "publishedAt": "2026-01-01",
+  "categories": ["adventure", "quest", "expedition"]
+}
+
+### Verify CASE 4 → categoryName: "aventure"
+GET {{apiBaseUrl}}/books/isbn/DEMO-CASE-4
+
+###
