@@ -93,6 +93,58 @@ describe('POST /books/library/:userId (functional - full HTTP chain)', () => {
     expect(insertedBook.categoryId).toBe(fantasyCategory.id);
   });
 
+  it('picks the category with the highest keyword score (scoring)', async () => {
+    const uniqueIsbn = `func-test-scoring-${Date.now()}`;
+
+    await request(app.getHttpServer())
+      .post(`/books/library/${testUserId}`)
+      .set('Content-Type', 'application/json')
+      .send({
+        name: 'Scoring Test Book',
+        author: 'Demo',
+        isbn: uniqueIsbn,
+        categories: ['horror', 'vampire', 'ghost', 'zombie', 'love'],
+      })
+      .expect(201);
+
+    const [insertedBook] = await db
+      .select()
+      .from(schema.book)
+      .where(eq(schema.book.isbn, uniqueIsbn));
+
+    const [horreurCategory] = await db
+      .select()
+      .from(schema.category)
+      .where(eq(schema.category.name, 'horreur'));
+    expect(insertedBook.categoryId).toBe(horreurCategory.id);
+  });
+
+  it('matches keywords case-insensitively', async () => {
+    const uniqueIsbn = `func-test-casing-${Date.now()}`;
+
+    await request(app.getHttpServer())
+      .post(`/books/library/${testUserId}`)
+      .set('Content-Type', 'application/json')
+      .send({
+        name: 'Casing Test Book',
+        author: 'Demo',
+        isbn: uniqueIsbn,
+        categories: ['HORROR', 'Vampires', 'GhOsT'],
+      })
+      .expect(201);
+
+    const [insertedBook] = await db
+      .select()
+      .from(schema.book)
+      .where(eq(schema.book.isbn, uniqueIsbn));
+
+    const [horreurCategory] = await db
+      .select()
+      .from(schema.category)
+      .where(eq(schema.category.name, 'horreur'));
+    expect(insertedBook.categoryId).toBe(horreurCategory.id);
+  });
+
   it('falls back to the "unknown" category when no subject matches any keyword', async () => {
     const uniqueIsbn = `func-test-unknown-${Date.now()}`;
 
