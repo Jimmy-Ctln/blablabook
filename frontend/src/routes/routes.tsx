@@ -10,16 +10,16 @@ import { useAuthStore } from "@/stores/authStore";
 import axios from "axios";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/HomePage";
+import { Loader } from "@/components/Loader";
 
-let silentRefreshAttempted = false;
+// Silent refresh is attempted once per app load. We keep the in-flight promise
+// so protected routes can await the *same* attempt instead of firing their own.
+let silentRefreshPromise: Promise<void> | null = null;
 
-const rootRoute = createRootRoute({
-  component: () => <RootLayout />,
-  notFoundComponent: () => <NotFound />,
-  beforeLoad: async () => {
-    if (silentRefreshAttempted) return;
-    silentRefreshAttempted = true;
+function ensureSilentRefresh(): Promise<void> {
+  if (silentRefreshPromise) return silentRefreshPromise;
 
+  silentRefreshPromise = (async () => {
     const { isAuthenticated, login } = useAuthStore.getState();
     if (isAuthenticated) return;
 
@@ -27,22 +27,33 @@ const rootRoute = createRootRoute({
       const { data } = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/auth/refresh`,
         {},
-        { withCredentials: true },
+        // Timeout so a cold backend can't keep the app blank indefinitely.
+        { withCredentials: true, timeout: 10000 },
       );
       if (data?.user) {
         login(data.user);
       }
     } catch {
-      // Pas de refresh cookie valide, l'utilisateur reste non connecté
+      // No valid refresh cookie; the user remains logged out
     }
+  })();
+
+  return silentRefreshPromise;
+}
+
+const rootRoute = createRootRoute({
+  component: () => <RootLayout />,
+  notFoundComponent: () => <NotFound />,
+  beforeLoad: () => {
+    void ensureSilentRefresh();
   },
 });
 
-// Protected route - checks authentication before allowing access to child routes
 const protectedRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "protected",
-  beforeLoad: () => {
+  beforeLoad: async () => {
+    await ensureSilentRefresh();
     const { isAuthenticated } = useAuthStore.getState();
     if (!isAuthenticated) {
       throw redirect({ to: "/login" });
@@ -60,7 +71,7 @@ const registerPage = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   component: lazyRouteComponent(
-    () => import("@/pages/Auth/RegisterPage/RegisterPage")
+    () => import("@/pages/Auth/RegisterPage/RegisterPage"),
   ),
 });
 
@@ -68,7 +79,7 @@ const loginPage = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: lazyRouteComponent(
-    () => import("@/pages/Auth/LoginPage/LoginPage")
+    () => import("@/pages/Auth/LoginPage/LoginPage"),
   ),
 });
 
@@ -84,7 +95,7 @@ const profilePage = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/profile",
   component: lazyRouteComponent(
-    () => import("@/pages/ProfilePage/ProfilePage")
+    () => import("@/pages/ProfilePage/ProfilePage"),
   ),
 });
 
@@ -130,11 +141,17 @@ const routeTree = rootRoute.addChildren([
   protectedRoute.addChildren([libraryRoute, profilePage]),
 ]);
 
-// defaultPreload: "intent" - preloads code chunks on hover for instant navigation
 export const router = createRouter({
   routeTree,
   defaultPreload: "intent",
   scrollRestoration: true,
+  // Never leave the user on a blank screen while a route's beforeLoad resolves
+  // (e.g. a protected route waiting on the silent auth refresh).
+  defaultPendingComponent: () => (
+    <div className="flex min-h-[60vh] w-full items-center justify-center">
+      <Loader />
+    </div>
+  ),
 });
 
 export { rootRoute };
