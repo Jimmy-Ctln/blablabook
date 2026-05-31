@@ -33,7 +33,9 @@ function ensureSilentRefresh(): Promise<void> {
       if (data?.user) {
         login(data.user);
       }
-    } catch {}
+    } catch {
+      // No valid refresh cookie; the user remains logged out
+    }
   })();
 
   return silentRefreshPromise;
