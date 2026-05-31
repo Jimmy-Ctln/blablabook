@@ -87,12 +87,11 @@ const BookDetails = () => {
     },
     onSuccess: () => {
       refetch();
+      toast.success("Le livre a été ajouté à votre bibliothèque.");
     },
     onError: (err: AxiosError<{ message: string }>) => {
       console.error("Backend error:", err);
-      const message =
-        err.response?.data?.message || err.message || "Failed to add book.";
-      alert(`Error: ${message}`);
+      toast.error("Impossible d'ajouter le livre. Veuillez réessayer.");
     },
   });
 
