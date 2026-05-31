@@ -81,51 +81,42 @@ export default function CookieConsent() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-4">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-4">
+        {/* Close button: always pinned to the top-right corner */}
+        <button
+          onClick={() => setIsVisible(false)}
+          aria-label="Fermer"
+          className="absolute right-3 top-3 z-10 text-muted-foreground hover:text-foreground"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
         {/* Collapsed View */}
         {!isExpanded && (
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="font-bold mb-2 text-foreground">
-                Préférences de Cookies
-              </h3>
-              <p className="text-base text-muted-foreground mb-4">
-                Nous utilisons des cookies pour améliorer votre expérience. Vous
-                pouvez accepter tous les cookies ou{" "}
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="text-primary hover:underline font-bold cursor-pointer"
-                >
-                  personnaliser
-                </button>{" "}
-                vos préférences.
-              </p>
-            </div>
-            <button
-              onClick={() => setIsVisible(false)}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Fermer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          <div className="pr-8">
+            <h3 className="font-bold mb-2 text-foreground">
+              Préférences de Cookies
+            </h3>
+            <p className="text-base text-muted-foreground mb-4">
+              Nous utilisons des cookies pour améliorer votre expérience. Vous
+              pouvez accepter tous les cookies ou{" "}
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="text-primary hover:underline font-bold cursor-pointer"
+              >
+                personnaliser
+              </button>{" "}
+              vos préférences.
+            </p>
           </div>
         )}
 
         {/* Expanded View */}
         {isExpanded && (
           <div>
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h3 className="font-bold text-lg text-foreground">
-                Gérer vos préférences de cookies
-              </h3>
-              <button
-                onClick={() => setIsExpanded(false)}
-                aria-label="Fermer"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <h3 className="font-bold text-lg text-foreground mb-4 pr-8">
+              Gérer vos préférences de cookies
+            </h3>
 
             <div className="space-y-3 mb-4">
               {/* Essential Cookies */}
@@ -211,7 +202,7 @@ export default function CookieConsent() {
               <Button
                 onClick={handleAcceptAll}
                 size="sm"
-                className="flex-1 sm:flex-none text-foreground"
+                className="flex-1 sm:flex-none text-primary-foreground"
               >
                 Accepter tout
               </Button>
@@ -229,7 +220,7 @@ export default function CookieConsent() {
               <Button
                 onClick={handleSavePreferences}
                 size="sm"
-                className="flex-1 sm:flex-none text-foreground"
+                className="flex-1 sm:flex-none text-primary-foreground"
               >
                 Enregistrer les préférences
               </Button>
