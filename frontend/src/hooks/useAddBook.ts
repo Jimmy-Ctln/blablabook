@@ -4,6 +4,7 @@
  * and invalidates the related TanStack Query cache on success.
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { addBookToUserList } from "@/api/books";
 import type { CreateBookDto, BookRow, BookDisplay } from "@/@types/books";
 import { getOpenLibIsbnData, getOpenLibWorkData } from "@/api/externalBooks";
@@ -73,6 +74,10 @@ export const useAddBook = (userId?: number) => {
         queryKey: ["userBooks", userId],
         refetchType: "active",
       });
+      toast.success("Le livre a été ajouté à votre bibliothèque.");
+    },
+    onError: () => {
+      toast.error("Impossible d'ajouter le livre. Veuillez réessayer.");
     },
   });
 };
