@@ -65,8 +65,9 @@ export class BooksService {
     return 'À lire';
   }
   /**
-   * Get all books from the `book` table.
-   * @returns Array of persisted book records
+   * Find a book by its ISBN, joining the category name.
+   * @param isbn - The ISBN to look up
+   * @returns The matching book record, or `null` if not found
    */
   async findByIsbn(isbn: string) {
     const [found] = await this.db
