@@ -4,11 +4,13 @@
 
 Suite de tests couvrant l'authentification, la gestion des livres, la catégorisation automatique, les guards de sécurité et les pages principales.
 
-**Total : 74 tests (51 backend + 23 frontend) — tous verts ✅**
+**Total : 169 tests — tous verts ✅**
 
 ---
 
-## Backend - 51 tests
+## Backend - 74 tests (unitaires)
+
+> Les 5 suites ci-dessous couvrent les composants métier essentiels. 4 suites supplémentaires existent dans le projet (`category.service.spec.ts`, `password.service.spec.ts`, `token.service.spec.ts`, `token.repository.spec.ts`) et sont couvertes par la mesure globale.
 
 ### Auth Service (11 tests) — `auth.service.spec.ts`
 
@@ -86,9 +88,33 @@ Suite de tests couvrant l'authentification, la gestion des livres, la catégoris
 | `accepts POST with application/json; charset=utf-8` | Variante charset | POST JSON + charset | `true` |
 | `allows POST with empty body (content-length: 0)` | Body vide légitime | POST sans body | `true` |
 
+### Tests d'intégration PostgreSQL réel (4 tests) — `findMatchedKeywords.spec.ts`
+
+Ces tests s'exécutent contre une vraie instance PostgreSQL (Docker isolé) et valident le comportement de la requête SQL de catégorisation, sans aucun mock.
+
+| Test | Description | Résultat attendu |
+|---|---|---|
+| Word-boundary — anti faux positifs | Le sujet `"horror"` ne matche pas `"horreur"` ni `"horrorific"` | Seuls les mots exacts sont retournés |
+| Case-insensitivity via `~*` | Le sujet `"Horror"` (majuscule) matche les keywords en minuscules | Match insensible à la casse |
+| Multi-keyword — requête unique | Plusieurs subjects passés en une seule requête | Tous les keywords correspondants retournés |
+| Aucun keyword reconnu | Subjects sans correspondance dans la table KEYWORD | Liste vide retournée |
+
+### Tests fonctionnels HTTP (4 tests) — `books-functional.spec.ts`
+
+Tests end-to-end via supertest contre un serveur NestJS réel et une base PostgreSQL isolée. Valident la chaîne complète : validation DTO → contrôleur → service → catégorisation → écriture en base → réponse HTTP.
+
+| Test | Description | Résultat attendu |
+|---|---|---|
+| Ajout avec catégorisation | `POST /books/library/:userId` avec subjects reconnus (fantasy) | HTTP 201, livre créé, catégorie `fantasy` en base |
+| Scoring — catégorie majoritaire | Subjects avec dominante horreur (horror, vampire, ghost, zombie) + 1 love | Catégorie `horreur` gagne par score |
+| Case-insensitive | Subjects en majuscules (`HORROR`, `Vampires`, `GhOsT`) | Catégorie `horreur` → match insensible à la casse |
+| Fallback catégorie Unknown | Subjects sans correspondance (`mathematics`, `accounting`) | HTTP 201, catégorie `unknown` en base |
+
 ---
 
-## Frontend - 23 tests
+## Frontend - 87 tests (23 fichiers)
+
+> Les 5 pages ci-dessous sont détaillées. 18 fichiers de test supplémentaires couvrent les composants, hooks, stores, API et utilitaires (`axios`, `books`, `externalBooks`, `BookCardCarousel`, `BookCoverImage`, `Hero`, `CookieConsent`, `authStore`, `themeStore`, `useUserBooks`, `useExternalBooks`, `bookDisplayMapper`, `utils`, `routes`, etc.).
 
 ### Login Page (3 tests) — `LoginPage.spec.tsx`
 
@@ -191,7 +217,7 @@ Les tests unitaires des guards (`AuthGuard` + `JsonContentTypeGuard`) couvrent l
 | `books.service.ts` | 86.79% | 59.42% | 92.59% | 88.17% |
 | `content-type.guard.ts` 🔒 | **100%** | 87.5% | 100% | 100% |
 | `user.service.ts` | 90.47% | 60% | 100% | 90.16% |
-| **Total backend** | **88.84%** | **66.88%** | **93.47%** | **89.13%** |
+| **Total backend** | **87%** | — | — | **87%** |
 
 ### Frontend — couverture mesurée sur 4 pages principales
 
@@ -201,17 +227,19 @@ Les tests unitaires des guards (`AuthGuard` + `JsonContentTypeGuard`) couvrent l
 | `LibraryPage.tsx` | 82.35% | 60% | 69.23% | 80.64% |
 | `LoginPage.tsx` | 100% | 50% | 100% | 100% |
 | `RegisterPage.tsx` | 100% | 50% | 100% | 100% |
-| **Total frontend** | **90.82%** | **50%** | **81.39%** | **90.29%** |
+| **Total frontend** | **81%** | — | — | **81%** |
 
 ---
 
 ## Résumé global
 
-- **Backend** : 50 tests automatisés (11 auth + 18 books + 12 user + 3 auth guard + 6 CSRF guard), **88.84%** de couverture sur les composants essentiels
-- **Frontend** : 23 tests automatisés sur 4 pages principales, **90.82%** de couverture
+- **Backend unitaires** : 74 tests (9 suites — auth, books, user, guards, password, token) — **87%** de couverture
+- **Backend intégration PostgreSQL réel** : 4 tests (`findMatchedKeywords.spec.ts`)
+- **Backend fonctionnels HTTP** : 4 tests (`books-functional.spec.ts`)
+- **Frontend** : 87 tests (23 fichiers — pages, composants, hooks, stores, API, utilitaires) — **81%** de couverture
 - **Tests fonctionnels manuels** : 8 scénarios utilisateurs documentés
 - **Tests de sécurité manuels (Postman)** : 8 scénarios documentés
-- **Tous les tests automatisés passent** : 73/73 ✅
+- **Tous les tests automatisés passent** : 169/169 ✅
 
 ---
 

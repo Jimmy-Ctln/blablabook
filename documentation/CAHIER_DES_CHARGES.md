@@ -96,10 +96,8 @@ Les fonctionnalités ci-dessous constituent le périmètre du MVP. Elles sont to
 Ces fonctionnalités dépassent le périmètre du MVP défini initialement, mais ont été développées et sont disponibles en production.
 
 - **Thème clair / sombre** : l'utilisateur peut basculer entre les deux modes d'affichage selon ses préférences.
-- **Notes et avis** :
-  - Dépôt d'une note (sur 5 étoiles) et d'un commentaire sur un livre.
-  - Consultation des avis déposés par les autres utilisateurs.
-  - Suppression de son propre avis.
+- **Note privée sur un livre** : l'utilisateur peut saisir une note personnelle sur un livre de sa bibliothèque, visible uniquement par lui.
+- **Catégorisation automatique** : lors de l'ajout d'un livre, une catégorie lui est attribuée automatiquement à partir des sujets fournis par OpenLibrary. Un système de scoring par mots-clés (table `KEYWORD`, opérateur PostgreSQL `~*` avec boundary de mot `\m\M`) détermine la catégorie gagnante par vote. En l'absence de correspondance, la catégorie `Unknown` est appliquée par défaut.
 
 ### 4.3 Évolutions (hors MVP)
 
@@ -349,28 +347,22 @@ L'interface est pensée pour être accessible aux utilisateurs peu technophiles,
 
 ## 13. Documents de conception
 
-> ⚠️ **À mettre à jour** — cocher ce qui est fait, supprimer cette note une fois la section complète.
-
-| Document                             | État                 | Notes                                                        |
-| ------------------------------------ | -------------------- | ------------------------------------------------------------ |
-| **Diagramme ERD**                    | ✅ Fait              | Voir `documentation/erd_mvp.md`                              |
-| **Diagramme de séquence**            | ⬜ À faire           | Exemple : ajout d'un livre à la bibliothèque                 |
-| **Use Cases détaillés**              | ⬜ À faire           | Décrire les cas d'usage principaux avec acteurs et scénarios |
-| **Dictionnaire de données**          | ⬜ À faire           | Décrire chaque table, champ, type et contrainte              |
-| **Diagramme d'architecture globale** | ⬜ À faire _(bonus)_ | Schéma front / back / BDD / API externe                      |
-| **Diagramme d'activité**             | ⬜ À faire _(bonus)_ | Flux utilisateur (ex : connexion, ajout d'un livre)          |
+| Document                             | État    | Notes                                                                                      |
+| ------------------------------------ | ------- | ------------------------------------------------------------------------------------------ |
+| **Diagramme ERD**                    | ✅ Fait | `documentation/assets/base-de-donnees/` — ERD, MCD, MLD, MPD                               |
+| **Diagrammes de séquence**           | ✅ Fait | `documentation/assets/sequences/` — authentification, catégorisation, gestion utilisateur  |
+| **Use Cases**                        | ✅ Fait | `documentation/assets/cas-utilisation/` — use-case-1, use-case-2                           |
+| **Diagramme d'architecture globale** | ✅ Fait | `documentation/assets/architecture/` — architecture globale, front, back NestJS, flux HTTP |
+| **Diagramme CI/CD & déploiement**    | ✅ Fait | `documentation/assets/ci-cd/` — pipelines dev et prod, schéma de déploiement               |
 
 ---
 
 ## 14. Éléments graphiques
 
-> ⚠️ **À mettre à jour** — cocher ce qui est fait, supprimer cette note une fois la section complète.
-
-| Document             | État       | Notes                                             |
-| -------------------- | ---------- | ------------------------------------------------- |
-| **Wireframes**       | ⬜ À faire | Maquettes basse fidélité des pages principales    |
-| **Maquettes**        | ⬜ À faire | Versions desktop et mobile, haute fidélité        |
-| **Charte graphique** | ⬜ À faire | Couleurs, typographies, iconographie, espacements |
+| Document       | État    | Notes                                                                                     |
+| -------------- | ------- | ----------------------------------------------------------------------------------------- |
+| **Wireframes** | ✅ Fait | `documentation/assets/maquettes/wireframes/` — zoning desktop/mobile, wireframes complets |
+| **Maquettes**  | ✅ Fait | `documentation/assets/maquettes/desktop/` et `mobile/` — versions haute fidélité          |
 
 ---
 
@@ -447,22 +439,34 @@ Le statut d'un livre est **calculé automatiquement** à partir des dates de lec
 | **En cours** | Date de début renseignée, date de fin absente (`readStart` défini, `readEnd` null) |
 | **Lu**       | Les deux dates sont renseignées (`readStart` et `readEnd` définis)                 |
 
+### Livre
+
+- Un livre est identifié de manière unique par son **ISBN**. Si deux utilisateurs ajoutent le même livre, une seule entrée existe en base ; seule la relation `LIST_BOOK` est créée pour chaque utilisateur.
+- Les **catégories disponibles** sont : Horreur, Romance, Aventure, Fantasy, Science-fiction, Unknown.
+
+### Dates de lecture
+
+- La **date de fin de lecture ne peut pas être antérieure à la date de début**. Cette contrainte est vérifiée côté serveur avant toute mise à jour du statut.
+
 ### Avis et notes
 
+- Un utilisateur ne peut déposer **qu'un seul avis par livre**. Toute tentative de doublon est bloquée avec une `ConflictException` (HTTP 409).
 - Un avis est composé d'une **note obligatoire** (de 1 à 5 étoiles) et d'un **commentaire optionnel**.
 - Un utilisateur peut **supprimer son propre avis**. La suppression est un soft delete : l'avis est marqué comme supprimé (`deletedAt`) mais reste en base.
 - Les avis d'un compte supprimé sont **conservés mais dissociés** : le champ `userId` est mis à `NULL`. Ils restent visibles mais ne sont plus attribuables à une personne identifiable.
 
 ### Comptes utilisateurs
 
+- Les champs **email et pseudo sont uniques** en base de données. Une tentative de création ou de mise à jour avec un doublon est rejetée.
 - Un utilisateur **ne peut accéder et modifier que ses propres données**. Chaque requête authentifiée vérifie que l'identifiant du token JWT correspond à la ressource demandée.
 - La **suppression de compte** déclenche une anonymisation immédiate des données personnelles (email, pseudo, mot de passe, avatar) et marque le compte comme supprimé (`deletedAt`). L'enregistrement est conservé en base pour maintenir l'intégrité référentielle.
 - Un compte supprimé **ne peut plus se connecter**. Toutes les requêtes filtrent les comptes dont le champ `deletedAt` est renseigné.
 
 ### Authentification
 
-- L'accès aux fonctionnalités protégées nécessite un **access token JWT valide**, transmis via un cookie HttpOnly.
-- Lorsque l'access token expire, il est **automatiquement renouvelé** via un refresh token (mécanisme de rotation). À chaque renouvellement, un nouveau refresh token est généré et l'ancien est invalidé.
+- L'accès aux fonctionnalités protégées nécessite un **access token JWT valide** (durée de vie : 15 minutes), transmis via un cookie HttpOnly.
+- Lorsque l'access token expire, il est **automatiquement renouvelé** via un refresh token (durée de vie : 30 jours, mécanisme de rotation unique). À chaque renouvellement, un nouveau refresh token est généré et l'ancien est invalidé.
+- La **modification du mot de passe** entraîne la révocation immédiate de tous les refresh tokens actifs de l'utilisateur.
 
 ---
 
