@@ -43,7 +43,8 @@ A mobile-first personal book management web application. Search for books, build
 ### Additional
 
 - **Light / Dark theme** — Toggle between light and dark mode
-- **Category preferences** — Select your favorite genres during onboarding
+- **Automatic book categorization** — When a book is added, a category is assigned automatically from OpenLibrary subjects using a keyword-scoring system (PostgreSQL regex `~*` with word boundaries). Falls back to *Unknown* when no keyword matches.
+- **Private book note** — Users can add a personal private note to any book in their library, visible only to them.
 - **GDPR-compliant account deletion** — Account data is fully anonymized on deletion (email, username, password, avatar replaced with anonymous values). Reviews are preserved without any link to the original user.
 
 ---
@@ -458,7 +459,7 @@ Every endpoint that accesses user-specific data explicitly verifies that the aut
 
 ### Rate limiting
 
-`@nestjs/throttler` limits the number of requests per IP address globally (60 requests / 60 seconds by default), with stricter limits on sensitive endpoints. This mitigates brute-force and enumeration attacks.
+`@nestjs/throttler` limits the number of requests per IP address globally (60 requests / 60 seconds), with stricter limits on sensitive endpoints: 3 requests / 60 seconds on `/auth/login` and 10 requests / 60 seconds on `/auth/refresh`. This mitigates brute-force and enumeration attacks.
 
 ### HTTP security headers
 
