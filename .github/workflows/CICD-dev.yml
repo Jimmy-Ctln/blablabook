@@ -22,7 +22,7 @@ jobs:
 
     steps:
       # Checkout repository code into GitHub Actions runner
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Setup Node.js runtime with npm dependency caching for faster builds
       - uses: actions/setup-node@v4
@@ -67,7 +67,7 @@ jobs:
 
     steps:
       # Checkout repository code into GitHub Actions runner
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Setup Node.js runtime with npm dependency caching for faster builds
       - uses: actions/setup-node@v4
@@ -107,7 +107,7 @@ jobs:
 
     steps:
       # Checkout repository code into GitHub Actions runner
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Setup Node.js runtime with npm dependency caching for faster builds
       - uses: actions/setup-node@v4
@@ -154,7 +154,7 @@ jobs:
 
     steps:
       # Checkout repository code into GitHub Actions runner
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Start all services defined in docker-compose.dev.yml
       - name: Start docker compose
